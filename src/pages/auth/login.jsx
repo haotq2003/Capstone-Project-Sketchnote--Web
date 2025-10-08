@@ -18,8 +18,11 @@ const Login = () => {
       const { roles } = await authService.login(email, password);
       if (roles.includes("STAFF")) {
         navigate("/staff");
-      } else {
-        navigate("/"); 
+        
+      } else if (roles.includes("ADMIN")) {
+        navigate("/admin");
+      } else if (roles.includes("CUSTOMER")) {
+        navigate("/admin"); 
       }
     } catch (error) {
       alert(error.message);

@@ -9,17 +9,23 @@ import { publicApi } from "./axiosIntance";
 export const authApiController = {
 login: async (credentials) => {
     
-      return await publicApi.post(`/api/auth/login`, credentials); 
+      return await publicApi.post(`/api/auth/login`, credentials,{
+        baseURL: 'http://146.190.90.222:8089',
+      }); 
     
   },
 register: async (userData) => {
    
-        return await publicApi.post(`/api/auth/register`, userData);
+        return await publicApi.post(`/api/auth/register`, userData,{
+        baseURL: 'http://146.190.90.222:8089',
+      });
    
   },
 refeshToken : async (refreshToken) => {
 
-       return await publicApi.post(`/api/auth/refresh-token`, { refreshToken });
+       return await publicApi.post(`/api/auth/refresh-token`, { refreshToken },{
+        baseURL: 'http://146.190.90.222:8089',
+      });
  
 },
 logout: async () => {
