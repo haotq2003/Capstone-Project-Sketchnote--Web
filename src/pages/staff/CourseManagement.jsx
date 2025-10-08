@@ -13,7 +13,9 @@ import {
   Tag, 
   InputNumber,
   message,
-  Pagination
+  Pagination,
+  Spin,
+  BackTop,Empty  
 } from 'antd';
 import { 
   PlusOutlined, 
@@ -36,6 +38,9 @@ const CourseList = ({ onViewCourse }) => {
   const [editingCourse, setEditingCourse] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(8);
+  const [loading, setLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
   
   const [formData, setFormData] = useState({
     title: '',
@@ -47,14 +52,17 @@ const CourseList = ({ onViewCourse }) => {
   useEffect(() => {
     fetchCourses();
   }, []);
+
   const fetchCourses = async () => {
+    setLoading(true);
     try {
       const res = await courseService.getAllCourse();
-      
-      setCourses(res);
+      setCourses(res.data);
       console.log(res)  
     } catch (error) {
       message.error(error.message);
+    } finally {
+      setLoading(false);
     }
   };
   const showModal = (mode, course = null) => {
@@ -140,12 +148,35 @@ const CourseList = ({ onViewCourse }) => {
     return <Tag color={colors[category] || 'default'}>{category}</Tag>;
   };
 
+  // Lọc và tìm kiếm courses
+  const getFilteredCourses = () => {
+    if (!courses) return [];
+    
+    let filtered = courses;
+    
+    // Lọc theo tìm kiếm
+    if (searchTerm) {
+      filtered = filtered.filter(course => 
+        course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        course.subtitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        course.description.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+    
+    // Lọc theo danh mục
+    if (selectedCategory !== 'all') {
+      filtered = filtered.filter(course => course.category === selectedCategory);
+    }
+    
+    return filtered;
+  };
+
   // Tính toán dữ liệu cho pagination
   const getPaginatedCourses = () => {
-    if (!courses) return [];
+    const filteredCourses = getFilteredCourses();
     const startIndex = (currentPage - 1) * pageSize;
     const endIndex = startIndex + pageSize;
-    return courses.slice(startIndex, endIndex);
+    return filteredCourses.slice(startIndex, endIndex);
   };
 
   const handlePageChange = (page, size) => {
@@ -153,8 +184,18 @@ const CourseList = ({ onViewCourse }) => {
     setPageSize(size);
   };
 
+  const handleSearch = (value) => {
+    setSearchTerm(value);
+    setCurrentPage(1); // Reset về trang đầu khi tìm kiếm
+  };
+
+  const handleCategoryChange = (value) => {
+    setSelectedCategory(value);
+    setCurrentPage(1); // Reset về trang đầu khi lọc
+  };
+
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
+    <div className="p-6 bg-gray-50 min-h-screen overflow-auto">
       <div className="bg-white p-6 rounded-lg shadow-md">
         <div className="flex items-center justify-between mb-6">
           <Title level={3} className="!m-0">Quản Lý Khóa Học</Title>
@@ -168,8 +209,47 @@ const CourseList = ({ onViewCourse }) => {
           </Button>
         </div>
 
-        <Row gutter={[24, 24]}>
-          {getPaginatedCourses()?.map(course => (
+        {/* Search and Filter */}
+        <div className="mb-6">
+          <Row gutter={[16, 16]}>
+            <Col xs={24} sm={12} md={8}>
+              <Input.Search
+                placeholder="Tìm kiếm khóa học..."
+                size="large"
+                onSearch={handleSearch}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                allowClear
+              />
+            </Col>
+            <Col xs={24} sm={12} md={8}>
+              <Select
+                placeholder="Lọc theo danh mục"
+                size="large"
+                style={{ width: '100%' }}
+                value={selectedCategory}
+                onChange={handleCategoryChange}
+              >
+                <Select.Option value="all">Tất cả danh mục</Select.Option>
+                <Select.Option value="Art">Art</Select.Option>
+                <Select.Option value="Design">Design</Select.Option>
+                <Select.Option value="Digital Art">Digital Art</Select.Option>
+                <Select.Option value="Photography">Photography</Select.Option>
+              </Select>
+            </Col>
+            <Col xs={24} sm={12} md={8}>
+              <div className="text-right">
+                <Text type="secondary">
+                  Hiển thị {getPaginatedCourses().length} / {getFilteredCourses().length} khóa học
+                </Text>
+              </div>
+            </Col>
+          </Row>
+        </div>
+
+        <Spin  spinning={loading}>
+        
+          <Row gutter={[24, 24]}>
+            {getPaginatedCourses()?.map(course => (
             <Col xs={24} sm={12} lg={8} xl={6} key={course.courseId}>
               <Card
                 hoverable
@@ -228,16 +308,17 @@ const CourseList = ({ onViewCourse }) => {
                 </div>
               </Card>
             </Col>
-          ))}
-        </Row>
+            ))}
+          </Row>
+        </Spin>
 
         {/* Pagination */}
-        {courses && courses.length > 0 && (
+        {getFilteredCourses().length > 0 && (
           <div className="flex justify-center mt-8">
             <Pagination
               current={currentPage}
               pageSize={pageSize}
-              total={courses.length}
+              total={getFilteredCourses().length}
               onChange={handlePageChange}
               onShowSizeChange={handlePageChange}
               showSizeChanger
@@ -249,7 +330,19 @@ const CourseList = ({ onViewCourse }) => {
             />
           </div>
         )}
+
+        {/* Empty State */}
+        {!loading && getFilteredCourses().length === 0 && (
+          <div className="text-center py-12">
+            <Empty 
+              description="Không tìm thấy khóa học nào"
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
+            />
+          </div>
+        )}
       </div>
+
+      <BackTop />
 
       <Modal
         title={modalMode === 'add' ? 'Thêm Khóa Học Mới' : 'Chỉnh Sửa Khóa Học'}

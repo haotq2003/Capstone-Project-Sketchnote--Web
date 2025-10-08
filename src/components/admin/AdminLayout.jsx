@@ -1,16 +1,17 @@
 import { Outlet } from "react-router-dom";
-import StaffNavbar from "./StaffNavbar";
-import StaffHeader from "./StaffHeader";
+import AdminNav from "./AdminNav";
 
-export default function StaffLayout() {
+import { AdminHeader } from "./AdminHeader";
+
+export function AdminLayout() {
   return (
     <div className="flex min-h-screen bg-gray-50">
       {/* Sidebar */}
-      <StaffNavbar />
+      <AdminNav />
 
       {/* Main */}
       <div className="flex-1 flex flex-col">
-        <StaffHeader />
+        <AdminHeader />
         <main className="flex-1 overflow-y-auto p-6">
           <Outlet />
         </main>

@@ -1,35 +1,16 @@
-
-
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { jwtDecode } from "jwt-decode";
 
-export const decodeToken = (token) => {
+export function decodeUserFromToken(token) {
   try {
-    return jwtDecode(token); 
-  } catch (e) {
-    console.error("Invalid token:", e);
+    const decoded = jwtDecode(token);
+
+    const email = decoded?.email || decoded?.preferred_username || "";
+    const name = decoded?.name || `${decoded?.given_name || ""} ${decoded?.family_name || ""}`.trim();
+    const roles = decoded?.realm_access?.roles || [];
+
+    return { email, name, roles };
+  } catch (error) {
+    console.error("Invalid token:", error);
     return null;
   }
-};
-
-export const getUserFromToken = async () => {
-  try {
-    const token = await AsyncStorage.getItem("accessToken");
-    if (!token) return null;
-
-    const decoded = decodeToken(token);
-    if (!decoded) return null;
-
-    return {
-      name: decoded?.name,
-      email: decoded?.email,
-      username: decoded?.preferred_username,
-      roles: decoded?.realm_access?.roles || [],
-    };
-  } catch (e) {
-    console.error("Error getting user from token:", e);
-    return null;
-  }
-};
-
-
+}
