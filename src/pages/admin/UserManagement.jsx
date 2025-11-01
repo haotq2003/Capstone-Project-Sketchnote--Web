@@ -60,13 +60,13 @@ export default function ManageUsers() {
       const res = await userService.fetchUsers();
       console.log("Fetched:", res.result.content);
 
-      // 🧠 Map lại dữ liệu cho phù hợp với bảng
+      
       const formatted = res.result.content.map((u) => ({
         id: u.id,
         name: `${u.firstName || ""} ${u.lastName || ""}`.trim(),
         email: u.email,
         role: u.role || "CUSTOMER",
-        status: "Active", // Hoặc u.status nếu API có
+        status: "Active",
       }));
 
       setUsers(formatted);
