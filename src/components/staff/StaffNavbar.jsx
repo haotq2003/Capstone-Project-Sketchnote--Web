@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { LayoutDashboard, DollarSign, Headphones, BookOpen } from "lucide-react";
+import { LayoutDashboard, DollarSign, Headphones, BookOpen ,ScrollText } from "lucide-react";
 
 export default function StaffNavbar() {
   const menuItems = [
@@ -7,6 +7,7 @@ export default function StaffNavbar() {
     { path: "/staff/courses", icon: BookOpen, label: "Courses" },
     { path: "/staff/support", icon: Headphones, label: "Support" },
     { path: "/staff/withdrawals", icon: DollarSign, label: "Withdrawals" },
+    { path: "/staff/resources", icon: ScrollText, label: "Resources" },
   ];
  
   return (

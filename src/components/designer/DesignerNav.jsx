@@ -11,15 +11,14 @@ import {
 } from "lucide-react";
 
 const menuItems = [
-  { title: "Dashboard", icon: LayoutDashboard, path: "/admin" },
-  { title: "User Manager", icon: User, path: "/admin/users" },
-  { title: "Accept Resources", icon: FileText, path: "/admin/resources" },
-  { title: "Subscription Packages", icon: Box, path: "/admin/subscriptions" },
-  { title: "Revenue", icon: HandCoins, path: "/admin/revenue" },
-  { title: "Content Moderation", icon: BookA, path: "/admin/moderation" },
+  
+  { title: "Manager Resources", icon: FileText, path: "/designer/resource-manager" },
+ 
+  { title: "Reports", icon: HandCoins, path: "/designer/reports" },
+  
 ];
 
-export default function AdminNav() {
+export default function DesignerNav() {
   const [activeItem, setActiveItem] = useState(null);
   const navigate = useNavigate();
 
