@@ -1,87 +1,101 @@
-import React, { useState, useRef } from 'react';
-
+import React, { useState, useRef, useEffect } from 'react';
+import { Spin, Button, message, Radio } from 'antd';
+import { UploadOutlined, StarOutlined, StarFilled } from '@ant-design/icons';
+import { uploadService } from '../service/uploadService';
+import cld from '../util/cloudinary';
 import { AdvancedImage } from '@cloudinary/react';
 import { fill } from '@cloudinary/url-gen/actions/resize';
 
-import { Spin, Button, message } from 'antd';
-import { UploadOutlined } from '@ant-design/icons';
-import { uploadService } from '../service/uploadService';
-import cld from '../util/cloudinary';
-
-const ImageUploader = ({ onImageUploaded }) => {
+const ImageUploader = ({ onImageUploaded, multiple = false, resetTrigger }) => {
   const [uploading, setUploading] = useState(false);
-  const [imageUrl, setImageUrl] = useState('');
-  const [imagePublicId, setImagePublicId] = useState('');
-  const fileInputRef = useRef(null); // Create a ref for the file input
+  const [uploadedImages, setUploadedImages] = useState([]);
+  const [thumbnailIndex, setThumbnailIndex] = useState(0);
+  const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    setUploadedImages([]);
+    setThumbnailIndex(0);
+  }, [resetTrigger]);
 
   const handleFileChange = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
 
-    // Kiểm tra loại file
-    if (!file.type.includes('image/')) {
-      message.error('Vui lòng chọn file hình ảnh');
-      return;
-    }
+    const validFiles = files.filter(
+      (f) => f.type.includes('image/') && f.size <= 5 * 1024 * 1024
+    );
 
-    // Kiểm tra kích thước file (giới hạn 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      message.error('Kích thước file không được vượt quá 5MB');
-      return;
+    if (validFiles.length !== files.length) {
+      message.warning('Một số file không hợp lệ (chỉ nhận ảnh dưới 5MB)');
     }
 
     try {
       setUploading(true);
-      const result = await uploadService.uploadImage(file);
+      const results = [];
       
-      setImageUrl(result.secure_url);
-      setImagePublicId(result.public_id);
-      
-      // Gọi callback để truyền URL hình ảnh về component cha
-      if (onImageUploaded) {
-        onImageUploaded(result.secure_url, result.public_id);
+      for (const file of validFiles) {
+        const result = await uploadService.uploadImage(file);
+        results.push(result);
       }
-      
-      message.success('Tải ảnh lên thành công!');
-      console.log(imageUrl)
-    } catch (error) {
-      message.error('Lỗi khi tải ảnh lên: ' + error.message);
+
+      setUploadedImages((prev) => [...prev, ...results]);
+      message.success(`Đã tải lên ${results.length} ảnh thành công!`);
+    } catch (err) {
+      message.error('Lỗi khi tải ảnh: ' + err.message);
     } finally {
       setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
-  // Function to trigger file input click
-  const handleButtonClick = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.click(); // Programmatically trigger the file input
+  // Cập nhật callback khi có thay đổi
+  useEffect(() => {
+    if (uploadedImages.length > 0 && onImageUploaded) {
+      const imagesData = uploadedImages.map((img, idx) => ({
+        imageUrl: img.secure_url,
+        isThumbnail: idx === thumbnailIndex,
+      }));
+      onImageUploaded(imagesData);
+    }
+  }, [uploadedImages, thumbnailIndex]);
+
+  const handleSetThumbnail = (index) => {
+    setThumbnailIndex(index);
+  };
+
+  const handleRemoveImage = (index) => {
+    setUploadedImages((prev) => prev.filter((_, i) => i !== index));
+    if (thumbnailIndex === index) {
+      setThumbnailIndex(0);
+    } else if (thumbnailIndex > index) {
+      setThumbnailIndex(thumbnailIndex - 1);
     }
   };
+
+  const handleButtonClick = () => fileInputRef.current?.click();
 
   return (
-    <div className="image-uploader">
-      <div className="upload-container" style={{ marginBottom: '16px' }}>
-        <input
-          type="file"
-          id="file-upload"
-          ref={fileInputRef} // Attach ref to input
-          onChange={handleFileChange}
-          accept="image/*"
-          style={{ display: 'none' }}
-        />
-        <Button
-          icon={<UploadOutlined />}
-          loading={uploading}
-          onClick={handleButtonClick} // Handle click on button
-          style={{
-            backgroundColor: '#FF6B6B',
-            borderColor: '#FF6B6B',
-            color: 'white',
-          }}
-        >
-          Chọn ảnh
-        </Button>
-      </div>
+    <div>
+      <input
+        type="file"
+        ref={fileInputRef}
+        accept="image/*"
+        onChange={handleFileChange}
+        multiple={multiple}
+        style={{ display: 'none' }}
+      />
+      <Button
+        icon={<UploadOutlined />}
+        loading={uploading}
+        onClick={handleButtonClick}
+        style={{
+          backgroundColor: '#FF6B6B',
+          borderColor: '#FF6B6B',
+          color: 'white',
+        }}
+      >
+        Chọn ảnh {multiple && '(nhiều ảnh)'}
+      </Button>
 
       {uploading && (
         <div style={{ textAlign: 'center', margin: '16px 0' }}>
@@ -89,13 +103,60 @@ const ImageUploader = ({ onImageUploaded }) => {
         </div>
       )}
 
-      {imagePublicId && (
-        <div className="preview" style={{ marginTop: '16px' }}>
-          <h4>Ảnh đã tải lên:</h4>
-          <AdvancedImage
-            cldImg={cld.image(imagePublicId).resize(fill().width(300).height(200))}
-            style={{ maxWidth: '100%', borderRadius: '8px' }}
-          />
+      {uploadedImages.length > 0 && (
+        <div className="mt-3">
+          <p className="text-sm text-gray-600 mb-2">
+            Nhấn vào ngôi sao để chọn ảnh làm thumbnail
+          </p>
+          <div className="flex flex-wrap gap-3">
+            {uploadedImages.map((img, i) => (
+              <div
+                key={`${img.public_id}-${i}`}
+                className="relative group"
+                style={{ width: 120, height: 120 }}
+              >
+                <AdvancedImage
+                  cldImg={cld.image(img.public_id).resize(fill().width(150).height(150))}
+                  style={{
+                    borderRadius: '8px',
+                    border: thumbnailIndex === i ? '3px solid #FF6B6B' : '1px solid #ddd',
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                  }}
+                />
+                
+                {/* Nút chọn thumbnail */}
+                <button
+                  onClick={() => handleSetThumbnail(i)}
+                  className="absolute top-1 left-1 bg-white rounded-full p-1 shadow-md hover:scale-110 transition-transform"
+                  style={{ border: 'none', cursor: 'pointer' }}
+                >
+                  {thumbnailIndex === i ? (
+                    <StarFilled style={{ color: '#FF6B6B', fontSize: 18 }} />
+                  ) : (
+                    <StarOutlined style={{ color: '#999', fontSize: 18 }} />
+                  )}
+                </button>
+
+                {/* Nút xóa */}
+                <button
+                  onClick={() => handleRemoveImage(i)}
+                  className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                  style={{ border: 'none', cursor: 'pointer', fontSize: 14 }}
+                >
+                  ×
+                </button>
+
+                {/* Label thumbnail */}
+                {thumbnailIndex === i && (
+                  <div className="absolute bottom-0 left-0 right-0 bg-red-500 text-white text-xs text-center py-1 rounded-b-lg">
+                    Thumbnail
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>

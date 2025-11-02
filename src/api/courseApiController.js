@@ -12,7 +12,7 @@ export const courseApiController = {
       });
     },
     createCourse : async (courseData) =>{
-      return await publicApi.post(`/api/learning/courses/courses`, courseData, {
+      return await publicApi.post(`/api/learning/courses`, courseData, {
         baseURL: "http://146.190.90.222:8085"
       });
     },
