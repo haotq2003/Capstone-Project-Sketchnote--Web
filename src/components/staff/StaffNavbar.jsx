@@ -1,15 +1,23 @@
-import { NavLink } from "react-router-dom";
-import { LayoutDashboard, DollarSign, Headphones, BookOpen ,ScrollText } from "lucide-react";
+import { NavLink, useNavigate } from "react-router-dom";
+import { LayoutDashboard, DollarSign, Headphones, BookOpen ,ScrollText, LogOut } from "lucide-react";
+import { authService } from "../../service/authService";
 
 export default function StaffNavbar() {
+  const navigate = useNavigate();
   const menuItems = [
     { path: "/staff/dashboard", icon: LayoutDashboard, label: "Dashboard" },
     { path: "/staff/courses", icon: BookOpen, label: "Courses" },
     { path: "/staff/support", icon: Headphones, label: "Support" },
     { path: "/staff/withdrawals", icon: DollarSign, label: "Withdrawals" },
     { path: "/staff/resources", icon: ScrollText, label: "Resources" },
+    { path: "/staff/accept-blog", icon: ScrollText, label: "Accept Blog" },
   ];
  
+  const handleLogout = async () => {
+    await authService.logout();
+    navigate("/login");
+  };
+
   return (
     <aside className="w-72 bg-white border-r border-gray-200 flex flex-col">
       {/* Logo */}
@@ -57,9 +65,11 @@ export default function StaffNavbar() {
     </li>
   );
 })}
-
         </ul>
       </nav>
+      <div className="mt-auto px-4 pb-6 pt-4 border-t border-gray-100">
+     
+      </div>
     </aside>
   );
 }

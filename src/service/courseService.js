@@ -50,5 +50,45 @@ export const courseService = {
         error.response?.data?.message || error.message || "Create lesson failed.";
       throw new Error(message);
     }
+  },
+  updateCourse : async (id, courseData) =>{
+    try {
+      const res = await courseApiController.updateCourse(id, courseData);
+      return res.data;
+    } catch (error) {
+      const message =
+        error.response?.data?.message || error.message || "Update course failed.";
+      throw new Error(message);
+    }
+  },
+  deleteCourse : async (id) =>{
+    try {
+      const res = await courseApiController.deleteCourse(id);
+      return res.data;
+    } catch (error) {
+      const message =
+        error.response?.data?.message || error.message || "Delete course failed.";
+      throw new Error(message);
+    }
+  },
+  updateLesson : async (id, lessonData) =>{
+    try {
+      const res = await courseApiController.updateLesson(id, lessonData);
+      return res.data;
+    } catch (error) {
+      const message =
+        error.response?.data?.message || error.message || "Update lesson failed.";
+      throw new Error(message);
+    }
+  },
+  deleteLesson : async (id) =>{
+    try {
+      const res = await courseApiController.deleteLesson(id);
+      return res.data;
+    } catch (error) {
+      const message =
+        error.response?.data?.message || error.message || "Delete lesson failed.";
+      throw new Error(message);
+    }
   }
 }

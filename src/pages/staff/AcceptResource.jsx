@@ -14,8 +14,8 @@ const ResourceReviewPage = () => {
     total: 0,
   });
 
-  const [selectedResource, setSelectedResource] = useState(null); // 🆕
-  const [isModalVisible, setIsModalVisible] = useState(false); // 🆕
+  const [selectedResource, setSelectedResource] = useState(null); 
+  const [isModalVisible, setIsModalVisible] = useState(false); 
 
   const fetchResources = async (page = pagination.current, size = pagination.pageSize) => {
     try {
@@ -140,7 +140,7 @@ const ResourceReviewPage = () => {
         }}
       />
 
-      {/* 🆕 Modal xem chi tiết */}
+     
       <Modal
         open={isModalVisible}
         title={`Resource Details #${selectedResource?.resourceTemplateId}`}

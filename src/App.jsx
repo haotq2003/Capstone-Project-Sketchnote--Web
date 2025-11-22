@@ -9,6 +9,9 @@ import '@ant-design/v5-patch-for-react-19';
 import { AdminLayout } from "./components/admin/AdminLayout";
 import UserManagement from "./pages/admin/UserManagement";
 import ManageUsers from "./pages/admin/UserManagement";
+import AdminRevenueView from "./pages/admin/RevenueView";
+import AdminDashboard from "./pages/admin/Dashboard";
+import AdminProfile from "./pages/admin/Profile";
 
 import NotFound from "./pages/NotFound";
 
@@ -16,12 +19,15 @@ import DesignerResourceManager from "./pages/designer/ResourceManager";
 import DesignerReportView from "./pages/designer/ReportView";
 import { DesignerLayout } from "./components/designer/DesignerLayout";
 import ResourceReviewPage from "./pages/staff/AcceptResource";
+import AcceptBlog from "./pages/staff/AcceptBlog";
+import StaffProfile from "./pages/staff/Profile";
+import DesignerProfile from "./pages/designer/Profile";
 
 
 function App() {
   return (
     <Routes>
-   
+
       <Route path="/" element={<Navigate to="/login" replace />} />
       <Route path="/login" element={<Login />} />
 
@@ -31,22 +37,28 @@ function App() {
         <Route path="support" element={<CustomerSupport />} />
         <Route path="withdrawals" element={<WithdrawalManagement />} />
         <Route path="resources" element={<ResourceReviewPage />} />
+        <Route path="accept-blog" element={<AcceptBlog />} />
+        <Route path="profile" element={<StaffProfile />} />
       </Route>
 
-       {/* Designer (single role) */}
-       <Route path="/designer" element={<DesignerLayout />}>
-         <Route path="resource-manager" element={<DesignerResourceManager />} />
-         <Route path="reports" element={<DesignerReportView />} />
-       </Route>
+      {/* Designer (single role) */}
+      <Route path="/designer" element={<DesignerLayout />}>
+        <Route path="resource-manager" element={<DesignerResourceManager />} />
+        <Route path="reports" element={<DesignerReportView />} />
+        <Route path="profile" element={<DesignerProfile />} />
+      </Route>
 
-       
 
-       <Route path="/admin" element={<AdminLayout />}>
+
+      <Route path="/admin" element={<AdminLayout />}>
+        <Route index element={<AdminDashboard />} />
         <Route path="users" element={<ManageUsers />} />
-       
+        <Route path="revenue" element={<AdminRevenueView />} />
+        <Route path="profile" element={<AdminProfile />} />
+
       </Route>
 
-       <Route path="*" element={<NotFound />} />
+      <Route path="*" element={<NotFound />} />
     </Routes>
   );
 }

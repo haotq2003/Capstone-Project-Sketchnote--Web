@@ -8,7 +8,9 @@ import {
   BookA,
   FileText,
   ChevronDown,
+  LogOut,
 } from "lucide-react";
+import { authService } from "../../service/authService";
 
 const menuItems = [
   
@@ -22,8 +24,13 @@ export default function DesignerNav() {
   const [activeItem, setActiveItem] = useState(null);
   const navigate = useNavigate();
 
+  const handleLogout = async () => {
+    await authService.logout();
+    navigate("/login");
+  };
+
   return (
-    <div className="w-72 bg-white min-h-screen border-r border-gray-200">
+    <div className="w-72 bg-white min-h-screen border-r border-gray-200 flex flex-col">
       {/* Logo */}
       <div className="flex items-center gap-3 px-6 py-6 ">
         <div className="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center">
@@ -35,7 +42,7 @@ export default function DesignerNav() {
       </div>
 
       {/* Navigation */}
-      <nav className="px-4 py-4">
+      <nav className="px-4 py-4 flex-1">
         <p className="text-xs font-semibold text-gray-400 px-3 mb-3 uppercase tracking-wider">
           Menu
         </p>
@@ -75,6 +82,15 @@ export default function DesignerNav() {
           ))}
         </ul>
       </nav>
+      <div className="mt-auto px-4 pb-6 pt-4 border-t border-gray-100">
+        {/* <button
+          onClick={handleLogout}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
+        >
+          <LogOut className="w-5 h-5" />
+          <span className="text-base font-medium">Logout</span>
+        </button> */}
+      </div>
     </div>
   );
 }
