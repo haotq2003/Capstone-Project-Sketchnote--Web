@@ -13,7 +13,9 @@ import {
   Statistic,
   message,
   Form,
+  Typography,
 } from "antd";
+
 import {
   EyeOutlined,
   SearchOutlined,
@@ -25,6 +27,7 @@ import ImageUploader from "../../common/ImageUploader";
 import { resourceService } from "../../service/resourceService";
 
 const { Search } = Input;
+const { Text } = Typography;
 
 export default function DesignerResourceManager() {
   const [resources, setResources] = useState([]);
@@ -50,6 +53,33 @@ export default function DesignerResourceManager() {
     return { total, pending, approved, rejected };
   }, [resources]);
 
+  const statusColors = {
+    PENDING_REVIEW: "orange",
+    APPROVED: "green",
+    REJECTED: "red",
+    PUBLISHED: "blue",
+  };
+
+  const typeColors = {
+    brush: "cyan",
+    font: "purple",
+    icon: "gold",
+    texture: "magenta",
+    default: "blue",
+  };
+
+  const getTypeColor = (type) => {
+    if (!type) return typeColors.default;
+    const normalized = type.toLowerCase();
+    return typeColors[normalized] || typeColors.default;
+  };
+
+  const formatDate = (value) =>
+    value ? new Date(value).toLocaleDateString("en-US") : "-";
+
+  const formatCurrency = (value) =>
+    typeof value === "number" ? value.toLocaleString() : value || "-";
+
   const fetchResources = async (p = page, s = size) => {
     try {
       setLoading(true);
@@ -57,7 +87,7 @@ export default function DesignerResourceManager() {
       setResources(res.content || []);
       setTotal(res.totalElements || res.content?.length || 0);
     } catch (error) {
-      message.error(error.message || "Không thể tải dữ liệu");
+      message.error(error.message || "Unable to load data");
     } finally {
       setLoading(false);
     }
@@ -78,56 +108,57 @@ export default function DesignerResourceManager() {
 
   const handleDelete = (record) => {
     Modal.confirm({
-      title: "Xác nhận xóa?",
-      content: `Bạn có chắc muốn xóa "${record.name}" không?`,
-      okText: "Xóa",
-      cancelText: "Hủy",
+      title: "Delete confirmation",
+      content: `Are you sure you want to delete "${record.name}"?`,
+      okText: "Delete",
+      cancelText: "Cancel",
       okButtonProps: { danger: true },
       onOk: () => {
-        message.success(`Đã xóa resource ID: ${record.resourceTemplateId}`);
+        message.success(`Resource ID ${record.resourceTemplateId} removed`);
       },
     });
   };
 
   const columns = [
     { title: "ID", dataIndex: "resourceTemplateId", key: "id", width: 80 },
-    { title: "Tên", dataIndex: "name", key: "name" },
-    { title: "Mô tả", dataIndex: "description", key: "description" },
-    { title: "Loại", dataIndex: "type", key: "type", width: 100 },
+    { title: "Name", dataIndex: "name", key: "name" },
+    { title: "Description", dataIndex: "description", key: "description" },
+    {
+      title: "Type",
+      dataIndex: "type",
+      key: "type",
+      width: 120,
+      render: (type) => <Tag color={getTypeColor(type)}>{type || "N/A"}</Tag>,
+    },
     { 
-      title: "Giá (VNĐ)", 
+      title: "Price (VND)", 
       dataIndex: "price", 
       key: "price", 
       width: 120,
-      render: (price) => price?.toLocaleString()
+      render: (price) => formatCurrency(price)
     },
     {
-      title: "Ngày phát hành",
+      title: "Release Date",
       dataIndex: "releaseDate",
       key: "releaseDate",
       width: 130,
-      render: (d) => d?.split("T")[0],
+      render: (d) => formatDate(d),
     },
     {
-      title: "Ngày hết hạn",
+      title: "Expiration Date",
       dataIndex: "expiredTime",
       key: "expiredTime",
       width: 130,
-      render: (d) => d?.split("T")[0],
+      render: (d) => formatDate(d),
     },
     {
-      title: "Trạng thái",
+      title: "Status",
       dataIndex: "status",
       key: "status",
       width: 130,
-      render: (status) => {
-        const colors = {
-          PENDING_REVIEW: "orange",
-          APPROVED: "green",
-          REJECTED: "red",
-        };
-        return <Tag color={colors[status] || "default"}>{status}</Tag>;
-      },
+      render: (status) => (
+        <Tag color={statusColors[status] || "default"}>{status}</Tag>
+      ),
     },
     {
       title: "Actions",
@@ -160,7 +191,7 @@ export default function DesignerResourceManager() {
       const values = await form.validateFields();
 
       if (!imagesData || imagesData.length === 0) {
-        message.error("Vui lòng chọn ít nhất một ảnh!");
+        message.error("Please upload at least one image!");
         return;
       }
 
@@ -181,7 +212,7 @@ export default function DesignerResourceManager() {
       };
 
       await resourceService.uploadRecource(template);
-      message.success("Tải lên thành công!");
+      message.success("Asset uploaded successfully!");
       form.resetFields();
       setImagesData([]);
       setItemUrls([]);
@@ -189,7 +220,7 @@ export default function DesignerResourceManager() {
       setUploadVisible(false);
       fetchResources();
     } catch (err) {
-      message.error(err.message || "Upload thất bại!");
+      message.error(err.message || "Upload failed!");
       console.error(err);
     } finally {
       setLoading(false);
@@ -235,12 +266,13 @@ export default function DesignerResourceManager() {
 
       <div className="flex flex-col sm:flex-row gap-4">
         <Search
-          placeholder="Tìm theo tên..."
+          placeholder="Search by name..."
           allowClear
           className="flex-1 min-w-0"
           onChange={(e) => setSearchText(e.target.value)}
           prefix={<SearchOutlined />}
         />
+
         <Select
           value={filterStatus}
           onChange={setFilterStatus}
@@ -248,7 +280,7 @@ export default function DesignerResourceManager() {
         >
           <Select.Option value="all">All</Select.Option>
           <Select.Option value="PENDING_REVIEW">Pending</Select.Option>
-          <Select.Option value="PUBLISHED">PUBLISHED</Select.Option>
+          <Select.Option value="PUBLISHED">Published</Select.Option>
           <Select.Option value="REJECTED">Rejected</Select.Option>
         </Select>
         <Button
@@ -299,40 +331,45 @@ export default function DesignerResourceManager() {
               />
             )}
 
-            <Row gutter={[16, 16]}>
-              <Col span={12}>
-                <p>
-                  <strong>Tên tài nguyên:</strong> {selected.name}
-                </p>
-                <p>
-                  <strong>Loại:</strong> {selected.type}
-                </p>
-                <p>
-                  <strong>Giá:</strong> {selected.price?.toLocaleString()} VNĐ
-                </p>
-                <p>
-                  <strong>Mô tả:</strong> {selected.description}
-                </p>
-              </Col>
-              <Col span={12}>
-                <p>
-                  <strong>Ngày phát hành:</strong> {selected.releaseDate}
-                </p>
-                <p>
-                  <strong>Ngày hết hạn:</strong> {selected.expiredTime}
-                </p>
-                <p>
-                  <strong>Trạng thái:</strong>{" "}
-                  <Tag color={selected.status === "APPROVED" ? "green" : selected.status === "REJECTED" ? "red" : "orange"}>
-                    {selected.status}
-                  </Tag>
-                </p>
-              </Col>
-            </Row>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Card size="small" className="shadow-sm">
+                <Text type="secondary">Resource Name</Text>
+                <p className="text-base font-semibold mt-1">{selected.name}</p>
+              </Card>
+              <Card size="small" className="shadow-sm">
+                <Text type="secondary">Type</Text>
+                <div className="mt-1">
+                  <Tag color={getTypeColor(selected.type)}>{selected.type || "N/A"}</Tag>
+                </div>
+              </Card>
+              <Card size="small" className="shadow-sm">
+                <Text type="secondary">Price</Text>
+                <p className="text-base font-semibold mt-1">{formatCurrency(selected.price)} VND</p>
+              </Card>
+              <Card size="small" className="shadow-sm">
+                <Text type="secondary">Status</Text>
+                <div className="mt-1">
+                  <Tag color={statusColors[selected.status] || "default"}>{selected.status}</Tag>
+                </div>
+              </Card>
+              <Card size="small" className="shadow-sm">
+                <Text type="secondary">Release Date</Text>
+                <p className="text-base font-semibold mt-1">{formatDate(selected.releaseDate)}</p>
+              </Card>
+              <Card size="small" className="shadow-sm">
+                <Text type="secondary">Expiration Date</Text>
+                <p className="text-base font-semibold mt-1">{formatDate(selected.expiredTime)}</p>
+              </Card>
+            </div>
 
-            {selected.images && selected.images.length > 0 && (
+            <Card size="small" className="shadow-sm">
+              <Text type="secondary">Description</Text>
+              <p className="mt-2 text-gray-700 leading-relaxed">{selected.description || "No description provided."}</p>
+            </Card>
+
+            {selected.images && selected.images.filter((img) => !img.isThumbnail).length > 0 && (
               <div>
-                <h4 className="font-semibold mb-2">Ảnh liên quan:</h4>
+                <h4 className="font-semibold mb-3">Gallery</h4>
                 <div className="flex flex-wrap gap-3">
                   {selected.images
                     .filter((img) => !img.isThumbnail)
@@ -350,7 +387,7 @@ export default function DesignerResourceManager() {
 
             {selected.items && selected.items.length > 0 && (
               <div>
-                <h4 className="font-semibold mb-2">Các Item đính kèm:</h4>
+                <h4 className="font-semibold mb-3">Attached Items</h4>
                 <div className="flex flex-wrap gap-3">
                   {selected.items.map((item, index) => (
                     <div
@@ -394,16 +431,16 @@ export default function DesignerResourceManager() {
           className="space-y-4"
         >
           <Form.Item
-            label="Tên tài nguyên"
+            label="Resource name"
             name="name"
-            rules={[{ required: true, message: "Vui lòng nhập tên" }]}
+            rules={[{ required: true, message: "Please enter a name" }]}
           >
-            <Input placeholder="Nhập tên..." />
+            <Input placeholder="Enter resource name" />
           </Form.Item>
           <Form.Item
-            label="Mô tả"
+            label="Description"
             name="description"
-            rules={[{ required: true, message: "Vui lòng nhập mô tả" }]}
+            rules={[{ required: true, message: "Please enter a description" }]}
           >
             <Input.TextArea rows={3} />
           </Form.Item>
@@ -411,20 +448,20 @@ export default function DesignerResourceManager() {
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item
-                label="Loại"
+                label="Type"
                 name="type"
-                rules={[{ required: true, message: "Nhập loại" }]}
+                rules={[{ required: true, message: "Please enter a type" }]}
               >
-                <Input placeholder="Nhập loại..." />
+                <Input placeholder="Enter type" />
               </Form.Item>
             </Col>
             <Col span={12}>
               <Form.Item
-                label="Giá (VNĐ)"
+                label="Price (VND)"
                 name="price"
-                rules={[{ required: true, message: "Nhập giá" }]}
+                rules={[{ required: true, message: "Please enter a price" }]}
               >
-                <Input type="number" min={0} placeholder="Nhập giá..." />
+                <Input type="number" min={0} placeholder="Enter price" />
               </Form.Item>
             </Col>
           </Row>
@@ -432,25 +469,25 @@ export default function DesignerResourceManager() {
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item
-                label="Ngày phát hành"
+                label="Release date"
                 name="release"
-                rules={[{ required: true, message: "Chọn ngày phát hành" }]}
+                rules={[{ required: true, message: "Please choose a release date" }]}
               >
                 <Input type="date" />
               </Form.Item>
             </Col>
             <Col span={12}>
               <Form.Item
-                label="Ngày hết hạn"
+                label="Expiration date"
                 name="expired"
-                rules={[{ required: true, message: "Chọn ngày hết hạn" }]}
+                rules={[{ required: true, message: "Please choose an expiration date" }]}
               >
                 <Input type="date" />
               </Form.Item>
             </Col>
           </Row>
 
-          <Form.Item label="Ảnh tài nguyên" required>
+          <Form.Item label="Resource images" required>
             <ImageUploader
               multiple={true}
               onImageUploaded={(images) => setImagesData(images)}
@@ -458,7 +495,7 @@ export default function DesignerResourceManager() {
             />
           </Form.Item>
 
-          <Form.Item label="Các item (liên kết hoặc tệp liên quan)">
+          <Form.Item label="Items (links or files)">
             <div className="space-y-2">
               {itemUrls.map((url, idx) => (
                 <div key={idx} className="flex gap-2">
@@ -477,7 +514,7 @@ export default function DesignerResourceManager() {
                       setItemUrls((prev) => prev.filter((_, i) => i !== idx))
                     }
                   >
-                    Xóa
+                    Remove
                   </Button>
                 </div>
               ))}
@@ -486,7 +523,7 @@ export default function DesignerResourceManager() {
                 onClick={() => setItemUrls((prev) => [...prev, ""])}
                 style={{ width: "100%" }}
               >
-                + Thêm Item
+                + Add Item
               </Button>
             </div>
           </Form.Item>
@@ -498,7 +535,7 @@ export default function DesignerResourceManager() {
               loading={loading}
               className="w-full"
             >
-              Tải lên
+              Upload Asset
             </Button>
           </Form.Item>
         </Form>

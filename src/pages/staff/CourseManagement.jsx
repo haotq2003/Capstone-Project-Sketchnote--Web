@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import CourseDetail from './CourseDetail';
 import { 
   Typography, 
-  Card, 
+  Table,
   Button, 
   Row, 
   Col, 
@@ -13,42 +13,50 @@ import {
   Tag, 
   InputNumber,
   message,
-  Pagination,
-  Spin,
-  BackTop,Empty  
+  Image,
+  Popconfirm,
+  Steps,
+  Card,
+  Form,
+  Divider
 } from 'antd';
 import { 
   PlusOutlined, 
   EditOutlined, 
   DeleteOutlined, 
-  EyeOutlined
+  EyeOutlined,
+  BookOutlined,
+  VideoCameraOutlined
 } from '@ant-design/icons';
 import { courseService } from '../../service/courseService';
 
-const { Title, Text, Paragraph } = Typography;
+const { Title, Text } = Typography;
 const { TextArea } = Input;
+const { Step } = Steps;
 
 
 
-const CourseList = ({ onViewCourse }) => {
- 
-  const [courses, setCourses] = useState(null);
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [modalMode, setModalMode] = useState('add');
-  const [editingCourse, setEditingCourse] = useState(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(8);
+const CourseManagement = () => {
+  const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedCourse, setSelectedCourse] = useState(null);
   
-  const [formData, setFormData] = useState({
-    title: '',
-    subtitle: '',
-    description: '',
-    category: '',
-    price: 0
-  });
+  // Modal states
+  const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
+  const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+  const [currentStep, setCurrentStep] = useState(0);
+  const [editingCourse, setEditingCourse] = useState(null);
+  
+  // Form instances
+  const [courseForm] = Form.useForm();
+  const [lessonForm] = Form.useForm();
+  const [newCourseId, setNewCourseId] = useState(null);
+  const [lessonForms, setLessonForms] = useState([
+    { title: '', description: '', content: '', videoUrl: '', duration: 0, orderIndex: 1 }
+  ]);
+
   useEffect(() => {
     fetchCourses();
   }, []);
@@ -57,113 +65,27 @@ const CourseList = ({ onViewCourse }) => {
     setLoading(true);
     try {
       const res = await courseService.getAllCourse();
-      setCourses(res.data);
-      console.log(res)  
+      
+      setCourses(res.result || []);
     } catch (error) {
       message.error(error.message);
     } finally {
       setLoading(false);
     }
   };
-  const showModal = (mode, course = null) => {
-    setModalMode(mode);
-    setEditingCourse(course);
-    if (course) {
-      setFormData({
-        title: course.title,
-        subtitle: course.subtitle,
-        description: course.description,
-        category: course.category,
-        price: course.price
-      });
-    } else {
-      setFormData({
-        title: '',
-        subtitle: '',
-        description: '',
-        category: '',
-        price: 0
-      });
-    }
-    setIsModalVisible(true);
-  };
 
-  const handleCancel = () => {
-    setIsModalVisible(false);
-    setEditingCourse(null);
-  };
-
- const handleSubmit = async () => {
-  if (!formData.title || !formData.subtitle || !formData.description || !formData.category || formData.price <= 0) {
-    message.error('Vui lòng điền đầy đủ thông tin!');
-    return;
-  }
-
-  try {
-    if (modalMode === 'add') {
-      const newCourse = await courseService.createCourse(formData);
-      setCourses([...courses, newCourse]);
-      message.success('Đã thêm khóa học thành công!');
-    } else {
-
-      setCourses(courses.map(c => 
-        c.courseId === editingCourse.courseId 
-          ? { ...c, ...formData, updatedAt: new Date().toISOString() }
-          : c
-      ));
-      message.success('Đã cập nhật khóa học thành công!');
-    }
-
-    handleCancel();
-  } catch (error) {
-    message.error(error.message);
-  }
-};
-
-  const handleDelete = (courseId) => {
-    Modal.confirm({
-      title: 'Xác nhận xóa',
-      content: 'Bạn có chắc chắn muốn xóa khóa học này?',
-      okText: 'Xóa',
-      cancelText: 'Hủy',
-      okButtonProps: { danger: true },
-      onOk: () => {
-        setCourses(courses.filter(c => c.courseId !== courseId));
-        message.success('Đã xóa khóa học!');
-      }
-    });
-  };
-
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('vi-VN');
-  };
-
-  const getCategoryTag = (category) => {
-    const colors = { 
-      'Art': 'green', 
-      'Design': 'blue', 
-      'Digital Art': 'purple',
-      'Photography': 'orange'
-    };
-    return <Tag color={colors[category] || 'default'}>{category}</Tag>;
-  };
-
-  // Lọc và tìm kiếm courses
+  // Filter courses
   const getFilteredCourses = () => {
-    if (!courses) return [];
-    
     let filtered = courses;
     
-    // Lọc theo tìm kiếm
     if (searchTerm) {
       filtered = filtered.filter(course => 
-        course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        course.subtitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        course.description.toLowerCase().includes(searchTerm.toLowerCase())
+        course.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        course.subtitle?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        course.description?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
     
-    // Lọc theo danh mục
     if (selectedCategory !== 'all') {
       filtered = filtered.filter(course => course.category === selectedCategory);
     }
@@ -171,269 +93,605 @@ const CourseList = ({ onViewCourse }) => {
     return filtered;
   };
 
-  // Tính toán dữ liệu cho pagination
-  const getPaginatedCourses = () => {
-    const filteredCourses = getFilteredCourses();
-    const startIndex = (currentPage - 1) * pageSize;
-    const endIndex = startIndex + pageSize;
-    return filteredCourses.slice(startIndex, endIndex);
+  // Create Course Flow - Step 1: Create Course
+  const handleCreateCourse = async (values) => {
+    try {
+      const newCourse = await courseService.createCourse(values);
+      setNewCourseId(newCourse.result.courseId);
+      message.success('Course created! Continue by adding lessons.');
+      setCurrentStep(1);
+    } catch (error) {
+      message.error(error.message);
+    }
   };
 
-  const handlePageChange = (page, size) => {
-    setCurrentPage(page);
-    setPageSize(size);
+  // Create Course Flow - Step 2: Create Lessons
+  const handleCreateLessons = async () => {
+    if (lessonForms.some(l => !l.title || !l.description || l.duration <= 0)) {
+      message.error('Please provide all required information for every lesson!');
+      return;
+    }
+
+    try {
+      const res  = await courseService.createLesson(newCourseId, lessonForms);
+      console.log(res)
+      message.success('Lessons created successfully!');
+      handleCloseCreateModal();
+      fetchCourses();
+    } catch (error) {
+      message.error(error.message);
+    }
   };
 
-  const handleSearch = (value) => {
-    setSearchTerm(value);
-    setCurrentPage(1); // Reset về trang đầu khi tìm kiếm
+  const handleCloseCreateModal = () => {
+    setIsCreateModalVisible(false);
+    setCurrentStep(0);
+    setNewCourseId(null);
+    courseForm.resetFields();
+    setLessonForms([{ title: '', description: '', content: '', videoUrl: '', duration: 0, orderIndex: 1 }]);
   };
 
-  const handleCategoryChange = (value) => {
-    setSelectedCategory(value);
-    setCurrentPage(1); // Reset về trang đầu khi lọc
+  // Edit Course
+  const handleEditCourse = (course) => {
+    setEditingCourse(course);
+    setIsEditModalVisible(true);
   };
+
+  const handleUpdateCourse = async (values) => {
+    try {
+      await courseService.updateCourse(editingCourse.courseId, values);
+      message.success('Course updated successfully!');
+      setIsEditModalVisible(false);
+      setEditingCourse(null);
+      fetchCourses();
+    } catch (error) {
+      message.error(error.message);
+    }
+  };
+
+  // Delete Course
+  const handleDeleteCourse = async (courseId) => {
+    try {
+      await courseService.deleteCourse(courseId);
+      message.success('Course deleted successfully!');
+      fetchCourses();
+    } catch (error) {
+      message.error(error.message);
+    }
+  };
+
+  // Lesson Form Management
+  const addLessonForm = () => {
+    const currentMaxOrder = Math.max(...lessonForms.map(f => f.orderIndex), 0);
+    setLessonForms([
+      ...lessonForms,
+      {
+        title: '',
+        description: '',
+        content: '',
+        videoUrl: '',
+        duration: 0,
+        orderIndex: currentMaxOrder + 1
+      }
+    ]);
+  };
+
+  const removeLessonForm = (index) => {
+    const updated = [...lessonForms];
+    updated.splice(index, 1);
+    setLessonForms(updated);
+  };
+
+  const updateLessonForm = (index, field, value) => {
+    const updated = [...lessonForms];
+    updated[index][field] = value;
+    setLessonForms(updated);
+  };
+
+  // View Course Detail
+  if (selectedCourse) {
+    return (
+      <CourseDetail 
+        course={selectedCourse} 
+        onBack={() => {
+          setSelectedCourse(null);
+          fetchCourses();
+        }} 
+      />
+    );
+  }
+
+  // Table columns
+  const columns = [
+    {
+      title: 'Image',
+      dataIndex: 'imageUrl',
+      key: 'imageUrl',
+      width: 100,
+      render: (imageUrl, record) => {
+        if (!imageUrl || imageUrl === 'string' || imageUrl.length < 10) {
+          return <Text type="secondary" style={{ fontSize: 12 }}>No image</Text>;
+        }
+        return (
+          <Image
+            src={imageUrl}
+            alt={record.title}
+            width={80}
+            height={60}
+            style={{ objectFit: 'cover', borderRadius: 4 }}
+            fallback={<Text type="secondary" style={{ fontSize: 12 }}>Failed to load image</Text>}
+          />
+        );
+      },
+    },
+    {
+      title: 'Title',
+      dataIndex: 'title',
+      key: 'title',
+      render: (text, record) => (
+        <div>
+          <Text strong>{text}</Text>
+          <br />
+          <Text type="secondary" style={{ fontSize: 12 }}>{record.subtitle}</Text>
+        </div>
+      ),
+    },
+    {
+      title: 'Category',
+      dataIndex: 'category',
+      key: 'category',
+      width: 120,
+      render: (category) => {
+        const colors = { 
+          'Art': 'green', 
+          'Design': 'blue', 
+          'Digital Art': 'purple',
+          'Photography': 'orange',
+          'Icons': 'cyan'
+        };
+        return <Tag color={colors[category] || 'default'}>{category}</Tag>;
+      },
+    },
+    {
+      title: 'Price',
+      dataIndex: 'price',
+      key: 'price',
+      width: 120,
+      render: (price) => (
+        <Text strong style={{ color: '#ff6b35' }}>
+          {price?.toLocaleString() || '0'} VNĐ
+        </Text>
+      ),
+    },
+    {
+      title: 'Students',
+      dataIndex: 'studentCount',
+      key: 'studentCount',
+      width: 100,
+      align: 'center',
+      render: (count) => <Tag color="blue">{count || 0}</Tag>,
+    },
+    {
+      title: 'Lessons',
+      dataIndex: 'lessons',
+      key: 'lessons',
+      width: 100,
+      align: 'center',
+      render: (lessons) => <Tag color="green">{lessons?.length || 0}</Tag>,
+    },
+    {
+      title: 'Actions',
+      key: 'action',
+      width: 180,
+      render: (_, record) => (
+        <Space size="small">
+          <Button 
+            type="link" 
+            icon={<EyeOutlined />}
+            onClick={() => setSelectedCourse(record)}
+          >
+            View
+          </Button>
+          <Button 
+            type="link" 
+            icon={<EditOutlined />}
+            onClick={() => handleEditCourse(record)}
+          >
+            Edit
+          </Button>
+          <Popconfirm
+            title="Delete course confirmation"
+            description="Are you sure you want to delete this course?"
+            onConfirm={() => handleDeleteCourse(record.courseId)}
+            okText="Delete"
+            cancelText="Cancel"
+            okButtonProps={{ danger: true }}
+          >
+            <Button 
+              type="link" 
+              danger
+              icon={<DeleteOutlined />}
+            >
+              Delete
+            </Button>
+          </Popconfirm>
+        </Space>
+      ),
+    },
+  ];
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen overflow-auto">
+    <div className="p-6 bg-gray-50 min-h-screen">
       <div className="bg-white p-6 rounded-lg shadow-md">
+        {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <Title level={3} className="!m-0">Quản Lý Khóa Học</Title>
+          <Title level={3} className="!m-0">
+            <BookOutlined /> Course Management
+          </Title>
           <Button 
             type="primary" 
             icon={<PlusOutlined />} 
-            onClick={() => showModal('add')}
+            onClick={() => setIsCreateModalVisible(true)}
             size="large"
           >
-            Thêm Khóa Học Mới
+            Create New Course
           </Button>
         </div>
 
         {/* Search and Filter */}
         <div className="mb-6">
-          <Row gutter={[16, 16]}>
-            <Col xs={24} sm={12} md={8}>
-              <Input.Search
-                placeholder="Tìm kiếm khóa học..."
-                size="large"
-                onSearch={handleSearch}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                allowClear
-              />
-            </Col>
-            <Col xs={24} sm={12} md={8}>
-              <Select
-                placeholder="Lọc theo danh mục"
-                size="large"
-                style={{ width: '100%' }}
-                value={selectedCategory}
-                onChange={handleCategoryChange}
-              >
-                <Select.Option value="all">Tất cả danh mục</Select.Option>
-                <Select.Option value="Art">Art</Select.Option>
-                <Select.Option value="Design">Design</Select.Option>
-                <Select.Option value="Digital Art">Digital Art</Select.Option>
-                <Select.Option value="Photography">Photography</Select.Option>
-              </Select>
-            </Col>
-            <Col xs={24} sm={12} md={8}>
-              <div className="text-right">
-                <Text type="secondary">
-                  Hiển thị {getPaginatedCourses().length} / {getFilteredCourses().length} khóa học
-                </Text>
-              </div>
-            </Col>
-          </Row>
+          <Space size="middle" style={{ width: '100%' }}>
+            <Input.Search
+              placeholder="Search courses..."
+              size="large"
+              style={{ width: 300 }}
+              onSearch={(value) => setSearchTerm(value)}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              allowClear
+            />
+            <Select
+              placeholder="Filter by category"
+              size="large"
+              style={{ width: 200 }}
+              value={selectedCategory}
+              onChange={setSelectedCategory}
+            >
+              <Select.Option value="all">All categories</Select.Option>
+              <Select.Option value="Art">Art</Select.Option>
+              <Select.Option value="Design">Design</Select.Option>
+              <Select.Option value="Digital Art">Digital Art</Select.Option>
+              <Select.Option value="Photography">Photography</Select.Option>
+              <Select.Option value="Icons">Icons</Select.Option>
+            </Select>
+            <Text type="secondary">
+              Total: {getFilteredCourses().length} courses
+            </Text>
+          </Space>
         </div>
 
-        <Spin  spinning={loading}>
-        
-          <Row gutter={[24, 24]}>
-            {getPaginatedCourses()?.map(course => (
-            <Col xs={24} sm={12} lg={8} xl={6} key={course.courseId}>
-              <Card
-                hoverable
-                className="h-full"
-                actions={[
-                  <Button 
-                    type="text" 
-                    icon={<EyeOutlined />} 
-                    onClick={() => onViewCourse(course)}
-                  >
-                    Xem
-                  </Button>,
-                  <Button 
-                    type="text" 
-                    icon={<EditOutlined />} 
-                    onClick={() => showModal('edit', course)}
-                  >
-                    Sửa
-                  </Button>,
-                  <Button 
-                    type="text" 
-                    icon={<DeleteOutlined />} 
-                    danger
-                    onClick={() => handleDelete(course.courseId)}
-                  >
-                    Xóa
-                  </Button>
-                ]}
-              >
-                <div className="mb-3">
-                  {getCategoryTag(course.category)}
-                  <Tag color="orange" className="ml-2">
-                    {course?.price?.toLocaleString() || '0'} VNĐ
-                  </Tag>
-                </div>
-                <Title level={5} className="!mb-2">{course.title}</Title>
-                <Text type="secondary" className="block mb-3">{course.subtitle}</Text>
-                <Paragraph ellipsis={{ rows: 2 }} className="text-gray-600">
-                  {course?.description || ''}
-                </Paragraph>
-                <div className="mt-4 pt-3 border-t border-gray-200">
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <Text type="secondary">Học viên:</Text>
-                      <Text strong>{course?.student_count || 0}</Text>
-                    </div>
-                    <div className="flex justify-between">
-                      <Text type="secondary">Bài học:</Text>
-                      <Text strong>{course?.lessons?.length || 0}</Text>
-                    </div>
-                    <div className="flex justify-between">
-                      <Text type="secondary">Cập nhật:</Text>
-                      <Text>{formatDate(course?.updatedAt || new Date())}</Text>
-                    </div>
-                  </div>
-                </div>
-              </Card>
-            </Col>
-            ))}
-          </Row>
-        </Spin>
-
-        {/* Pagination */}
-        {getFilteredCourses().length > 0 && (
-          <div className="flex justify-center mt-8">
-            <Pagination
-              current={currentPage}
-              pageSize={pageSize}
-              total={getFilteredCourses().length}
-              onChange={handlePageChange}
-              onShowSizeChange={handlePageChange}
-              showSizeChanger
-              showQuickJumper
-              showTotal={(total, range) => 
-                `${range[0]}-${range[1]} của ${total} khóa học`
-              }
-              pageSizeOptions={['4', '8', '12', '16']}
-            />
-          </div>
-        )}
-
-        {/* Empty State */}
-        {!loading && getFilteredCourses().length === 0 && (
-          <div className="text-center py-12">
-            <Empty 
-              description="Không tìm thấy khóa học nào"
-              image={Empty.PRESENTED_IMAGE_SIMPLE}
-            />
-          </div>
-        )}
+        {/* Table */}
+        <Table
+          columns={columns}
+          dataSource={getFilteredCourses()}
+          rowKey="courseId"
+          loading={loading}
+          pagination={{
+            pageSize: 10,
+            showSizeChanger: true,
+            showQuickJumper: true,
+            showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} courses`,
+          }}
+        />
       </div>
 
-      <BackTop />
-
+      {/* Create Course Modal with Steps */}
       <Modal
-        title={modalMode === 'add' ? 'Thêm Khóa Học Mới' : 'Chỉnh Sửa Khóa Học'}
-        open={isModalVisible}
-        onCancel={handleCancel}
-        onOk={handleSubmit}
-        okText={modalMode === 'add' ? 'Tạo Khóa Học' : 'Lưu Thay Đổi'}
-        cancelText="Hủy"
-        width={600}
+        title={
+          <div>
+            <Title level={4} className="!mb-2">Create New Course</Title>
+            <Steps current={currentStep} size="small">
+              <Step title="Course information" icon={<BookOutlined />} />
+              <Step title="Add lessons" icon={<VideoCameraOutlined />} />
+            </Steps>
+          </div>
+        }
+        open={isCreateModalVisible}
+        onCancel={handleCloseCreateModal}
+        footer={null}
+        width={800}
+        destroyOnClose
       >
-        <div className="space-y-4 py-4">
-          <div>
-            <label className="block mb-2 font-medium">Tiêu đề khóa học *</label>
-            <Input 
-              placeholder="Nhập tiêu đề khóa học" 
-              size="large"
-              value={formData.title}
-              onChange={(e) => setFormData({...formData, title: e.target.value})}
-            />
-          </div>
-          
-          <div>
-            <label className="block mb-2 font-medium">Phụ đề *</label>
-            <Input 
-              placeholder="Nhập phụ đề" 
-              value={formData.subtitle}
-              onChange={(e) => setFormData({...formData, subtitle: e.target.value})}
-            />
-          </div>
-          
-          <div>
-            <label className="block mb-2 font-medium">Mô tả *</label>
-            <TextArea 
-              rows={4} 
-              placeholder="Nhập mô tả khóa học"
-              value={formData.description}
-              onChange={(e) => setFormData({...formData, description: e.target.value})}
-            />
-          </div>
-          
-          <Row gutter={16}>
-           <Col span={12}>
-  <label className="block mb-2 font-medium">Danh mục *</label>
-  <Select
-    mode="tags"
-    placeholder="Chọn hoặc nhập danh mục"
-    className="w-full"
-    value={formData.category ? [formData.category] : []}
-    onChange={(value) =>
-      setFormData({ ...formData, category: value[value.length - 1] })
-    }
-  >
-    <Select.Option value="Art">Art</Select.Option>
-    <Select.Option value="Design">Design</Select.Option>
-    <Select.Option value="Digital Art">Digital Art</Select.Option>
-    <Select.Option value="Photography">Photography</Select.Option>
-  </Select>
-</Col>
+        {currentStep === 0 && (
+          <Form
+            form={courseForm}
+            layout="vertical"
+            onFinish={handleCreateCourse}
+            className="mt-4"
+          >
+            <Form.Item
+              name="title"
+              label="Course title"
+              rules={[{ required: true, message: 'Please enter the course title!' }]}
+            >
+              <Input placeholder="Enter the course title" size="large" />
+            </Form.Item>
 
+            <Form.Item
+              name="subtitle"
+              label="Subtitle"
+              rules={[{ required: true, message: 'Please enter the subtitle!' }]}
+            >
+              <Input placeholder="Enter the subtitle" />
+            </Form.Item>
+
+            <Form.Item
+              name="description"
+              label="Description"
+              rules={[{ required: true, message: 'Please enter the description!' }]}
+            >
+              <TextArea rows={4} placeholder="Enter the course description" />
+            </Form.Item>
+
+            <Form.Item
+              name="imageUrl"
+              label="Course image URL"
+              rules={[{ required: true, message: 'Please enter the image URL!' }]}
+            >
+              <Input placeholder="https://example.com/image.jpg" />
+            </Form.Item>
+
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item
+                  name="category"
+                  label="Category"
+                  rules={[{ required: true, message: 'Please select a category!' }]}
+                >
+                  <Select placeholder="Select category">
+                    <Select.Option value="Art">Art</Select.Option>
+                    <Select.Option value="Design">Design</Select.Option>
+                    <Select.Option value="Digital Art">Digital Art</Select.Option>
+                    <Select.Option value="Photography">Photography</Select.Option>
+                    <Select.Option value="Icons">Icons</Select.Option>
+                  </Select>
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  name="price"
+                  label="Price (VND)"
+                  rules={[{ required: true, message: 'Please enter the price!' }]}
+                >
+                  <InputNumber 
+                    className="w-full"
+                    placeholder="Enter the price" 
+                    min={0}
+                    formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                    parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                  />
+                </Form.Item>
+              </Col>
+            </Row>
+
+            <Form.Item className="!mb-0">
+              <Space className="w-full justify-end">
+                <Button onClick={handleCloseCreateModal}>Cancel</Button>
+                <Button type="primary" htmlType="submit">
+                  Next: Add lessons
+                </Button>
+              </Space>
+            </Form.Item>
+          </Form>
+        )}
+
+        {currentStep === 1 && (
+          <div className="mt-4">
+            <div className="space-y-4 mb-4">
+              {lessonForms.map((form, index) => (
+                <Card
+                  key={index}
+                  title={`Lesson ${form.orderIndex}`}
+                  extra={
+                    lessonForms.length > 1 && (
+                      <Button 
+                        danger 
+                        size="small" 
+                        icon={<DeleteOutlined />}
+                        onClick={() => removeLessonForm(index)}
+                      >
+                        Delete
+                      </Button>
+                    )
+                  }
+                  className="shadow-sm"
+                >
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block mb-1 font-medium">Title *</label>
+                      <Input
+                        placeholder="Enter the lesson title"
+                        value={form.title}
+                        onChange={(e) => updateLessonForm(index, 'title', e.target.value)}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block mb-1 font-medium">Description *</label>
+                      <TextArea
+                        rows={2}
+                        placeholder="Enter the lesson description"
+                        value={form.description}
+                        onChange={(e) => updateLessonForm(index, 'description', e.target.value)}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block mb-1 font-medium">Content</label>
+                      <TextArea
+                        rows={3}
+                        placeholder="Enter detailed content (optional)"
+                        value={form.content}
+                        onChange={(e) => updateLessonForm(index, 'content', e.target.value)}
+                      />
+                    </div>
+
+                    <Row gutter={16}>
+                      <Col span={12}>
+                        <label className="block mb-1 font-medium">Duration (seconds) *</label>
+                        <InputNumber
+                          className="w-full"
+                          placeholder="Example: 3600"
+                          min={0}
+                          value={form.duration}
+                          onChange={(value) => updateLessonForm(index, 'duration', value)}
+                        />
+                      </Col>
+                      <Col span={12}>
+                        <label className="block mb-1 font-medium">Order</label>
+                        <InputNumber
+                          className="w-full"
+                          min={1}
+                          value={form.orderIndex}
+                          onChange={(value) => updateLessonForm(index, 'orderIndex', value)}
+                        />
+                      </Col>
+                    </Row>
+
+                    <div>
+                      <label className="block mb-1 font-medium">YouTube video URL</label>
+                      <Input
+                        placeholder="https://www.youtube.com/watch?v=..."
+                        value={form.videoUrl}
+                        onChange={(e) => updateLessonForm(index, 'videoUrl', e.target.value)}
+                      />
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+
+            <Button 
+              type="dashed" 
+              block 
+              icon={<PlusOutlined />} 
+              onClick={addLessonForm}
+              className="mb-4"
+            >
+              Add Another Lesson
+            </Button>
+
+            <Divider />
+
+            <Space className="w-full justify-end">
+              <Button onClick={() => setCurrentStep(0)}>Back</Button>
+              <Button type="primary" onClick={handleCreateLessons}>
+                Finish
+              </Button>
+            </Space>
+          </div>
+        )}
+      </Modal>
+
+      {/* Edit Course Modal */}
+      <Modal
+        title="Edit Course"
+        open={isEditModalVisible}
+        onCancel={() => {
+          setIsEditModalVisible(false);
+          setEditingCourse(null);
+        }}
+        footer={null}
+        width={700}
+        destroyOnClose
+      >
+        <Form
+          layout="vertical"
+          initialValues={editingCourse}
+          onFinish={handleUpdateCourse}
+          className="mt-4"
+        >
+          <Form.Item
+            name="title"
+            label="Course title"
+            rules={[{ required: true, message: 'Please enter the course title!' }]}
+          >
+            <Input placeholder="Enter the course title" size="large" />
+          </Form.Item>
+
+          <Form.Item
+            name="subtitle"
+            label="Subtitle"
+            rules={[{ required: true, message: 'Please enter the subtitle!' }]}
+          >
+            <Input placeholder="Enter the subtitle" />
+          </Form.Item>
+
+          <Form.Item
+            name="description"
+            label="Description"
+            rules={[{ required: true, message: 'Please enter the description!' }]}
+          >
+            <TextArea rows={4} placeholder="Enter the course description" />
+          </Form.Item>
+
+          <Form.Item
+            name="imageUrl"
+            label="Course image URL"
+            rules={[{ required: true, message: 'Please enter the image URL!' }]}
+          >
+            <Input placeholder="https://example.com/image.jpg" />
+          </Form.Item>
+
+          <Row gutter={16}>
             <Col span={12}>
-              <label className="block mb-2 font-medium">Giá (VNĐ) *</label>
-              <InputNumber 
-                className="w-full"
-                placeholder="Nhập giá" 
-                min={0}
-                value={formData.price}
-                onChange={(value) => setFormData({...formData, price: value})}
-                formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                parser={value => value.replace(/\$\s?|(,*)/g, '')}
-              />
+              <Form.Item
+                name="category"
+                label="Category"
+                rules={[{ required: true, message: 'Please select a category!' }]}
+              >
+                <Select placeholder="Select category">
+                  <Select.Option value="Art">Art</Select.Option>
+                  <Select.Option value="Design">Design</Select.Option>
+                  <Select.Option value="Digital Art">Digital Art</Select.Option>
+                  <Select.Option value="Photography">Photography</Select.Option>
+                  <Select.Option value="Icons">Icons</Select.Option>
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="price"
+                label="Price (VND)"
+                rules={[{ required: true, message: 'Please enter the price!' }]}
+              >
+                <InputNumber 
+                  className="w-full"
+                  placeholder="Enter the price" 
+                  min={0}
+                  formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                  parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                />
+              </Form.Item>
             </Col>
           </Row>
-        </div>
+
+          <Form.Item className="!mb-0">
+            <Space className="w-full justify-end">
+              <Button onClick={() => {
+                setIsEditModalVisible(false);
+                setEditingCourse(null);
+              }}>
+                Cancel
+              </Button>
+              <Button type="primary" htmlType="submit">
+                Save Changes
+              </Button>
+            </Space>
+          </Form.Item>
+        </Form>
       </Modal>
     </div>
   );
-};
-
-const CourseManagement = () => {
-  const [selectedCourse, setSelectedCourse] = useState(null);
-
-  if (selectedCourse) {
-    return (
-      <CourseDetail 
-        course={selectedCourse} 
-        onBack={() => setSelectedCourse(null)} 
-      />
-    );
-  }
-
-  return <CourseList onViewCourse={setSelectedCourse} />;
 };
 
 export default CourseManagement;

@@ -8,7 +8,9 @@ import {
   BookA,
   FileText,
   ChevronDown,
+  LogOut,
 } from "lucide-react";
+import { authService } from "../../service/authService";
 
 const menuItems = [
   { title: "Dashboard", icon: LayoutDashboard, path: "/admin" },
@@ -23,8 +25,13 @@ export default function AdminNav() {
   const [activeItem, setActiveItem] = useState(null);
   const navigate = useNavigate();
 
+  const handleLogout = async () => {
+    await authService.logout();
+    navigate("/login");
+  };
+
   return (
-    <div className="w-72 bg-white min-h-screen border-r border-gray-200">
+    <div className="w-72 bg-white min-h-screen border-r border-gray-200 flex flex-col">
       {/* Logo */}
       <div className="flex items-center gap-3 px-6 py-6 ">
         <div className="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center">
@@ -36,7 +43,7 @@ export default function AdminNav() {
       </div>
 
       {/* Navigation */}
-      <nav className="px-4 py-4">
+      <nav className="px-4 py-4 flex-1">
         <p className="text-xs font-semibold text-gray-400 px-3 mb-3 uppercase tracking-wider">
           Menu
         </p>
@@ -76,6 +83,7 @@ export default function AdminNav() {
           ))}
         </ul>
       </nav>
+      
     </div>
   );
 }

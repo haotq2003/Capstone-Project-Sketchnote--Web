@@ -2,6 +2,7 @@ import { Search, Bell, User, Settings, LogOut } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { decodeUserFromToken } from "../../util/authUtil";
+import { authService } from "../../service/authService";
 
 export default function StaffHeader() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -10,7 +11,15 @@ export default function StaffHeader() {
   const menuItems = [
     { icon: User, label: "Profile", path: "/staff/profile" },
     { icon: Settings, label: "Settings", path: "/staff/settings" },
-    { icon: LogOut, label: "Logout", path: "/login", danger: true },
+    {
+      icon: LogOut,
+      label: "Logout",
+      action: async () => {
+        await authService.logout();
+        navigate("/login");
+      },
+      danger: true,
+    },
   ];
   const token = localStorage.getItem("accessToken");
 const user = decodeUserFromToken(token);
@@ -57,18 +66,22 @@ const user = decodeUserFromToken(token);
             {menuOpen && (
               <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
                 <div className="p-4 border-b">
-                  <p className="font-semibold text-gray-800">Staff Member</p>
-                  <p className="text-xs text-gray-500">staff@sketchnote.com</p>
+                  <p className="font-semibold text-gray-800">{user?.name || "Staff Member"}</p>
+                  <p className="text-xs text-gray-500">{user?.email || "staff@sketchnote.com"}</p>
                 </div>
                 {menuItems.map((item, i) => {
                   const Icon = item.icon;
+                  const onClick = item.action || (() => navigate(item.path));
                   return (
                     <button
-                      key={i}
-                      onClick={() => navigate(item.path)}
+                      key={item.label}
+                      onClick={() => {
+                        setMenuOpen(false);
+                        onClick();
+                      }}
                       className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors ${
                         item.danger ? "text-red-600" : "text-gray-700"
-                      } ${i === 2 ? "border-t border-gray-200" : ""}`}
+                      } ${i === menuItems.length - 1 ? "border-t border-gray-200" : ""}`}
                     >
                       <Icon size={16} />
                       <span className="text-sm">{item.label}</span>

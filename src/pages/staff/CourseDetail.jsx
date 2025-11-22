@@ -66,7 +66,7 @@ const CourseDetail = ({ course, onBack }) => {
     setLoading(true);
     try {
       const res = await courseService.getLessonsByCourseId(id);
-      setLessons(res.data);
+      setLessons(res.result || []);
     } catch (error) {
       message.error(error.message);
     } finally {
@@ -109,29 +109,33 @@ const CourseDetail = ({ course, onBack }) => {
     setSearchTerm(value);
     setCurrentPage(1); // Reset về trang đầu khi tìm kiếm
   };
+const extractVideoId = (url) => {
+  if (!url) return null;
+  
+  const cleanUrl = url.trim();
+  
+  // Regex cải tiến hỗ trợ tất cả format YouTube
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=)([a-zA-Z0-9_-]{11})/, // youtube.com/watch?v=
+    /(?:youtu\.be\/)([a-zA-Z0-9_-]{11})/, // youtu.be/ (có thể có ?si= sau)
+    /(?:youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/, // youtube.com/embed/
+    /(?:youtube\.com\/v\/)([a-zA-Z0-9_-]{11})/, // youtube.com/v/
+    /(?:youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/ // youtube.com/shorts/
+  ];
 
-  // Lấy thumbnail từ YouTube URL
-  const getYoutubeThumbnail = (url) => {
-    if (!url) return null;
-    
-    // Extract video ID from various YouTube URL formats
-    let videoId = null;
-    
-    // Format: https://www.youtube.com/watch?v=VIDEO_ID
-    if (url.includes('youtube.com/watch?v=')) {
-      videoId = url.split('v=')[1]?.split('&')[0];
+  for (const pattern of patterns) {
+    const match = cleanUrl.match(pattern);
+    if (match && match[1]) {
+      return match[1];
     }
-    // Format: https://youtu.be/VIDEO_ID
-    else if (url.includes('youtu.be/')) {
-      videoId = url.split('youtu.be/')[1]?.split('?')[0];
-    }
-    
-    if (videoId) {
-      return `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
-    }
-    
-    return null;
-  };
+  }
+  
+  return null;
+};
+
+
+
+
 
   const showLessonModal = (mode = 'add', lesson = null) => {
     setModalMode(mode);
@@ -174,7 +178,7 @@ const CourseDetail = ({ course, onBack }) => {
 
   const handleLessonSubmit = async () => {
     if (lessonForms.some(l => !l.title || !l.description || l.duration <= 0)) {
-      message.error('Vui lòng điền đầy đủ thông tin cho tất cả bài học!');
+      message.error('Please provide all required information for every lesson!');
       return;
     }
 
@@ -189,7 +193,7 @@ const CourseDetail = ({ course, onBack }) => {
         setLessons(lessons.map(l => 
           l.lessonId === editingLesson.lessonId ? updatedLesson : l
         ));
-        message.success('Đã cập nhật bài học!');
+        message.success('Lesson updated successfully!');
       } else {
         // Thêm mới bài học
         const response = await courseService.createLesson(course.courseId, lessonForms);
@@ -197,16 +201,16 @@ const CourseDetail = ({ course, onBack }) => {
         
         if (newLessons.length > 0) {
           setLessons([...lessons, ...newLessons]);
-          message.success(`Đã thêm ${newLessons.length} bài học thành công!`);
+          message.success(`Successfully added ${newLessons.length} lessons!`);
         } else {
           await featchLessonsByCourseId(course.courseId);
-          message.success('Đã thêm bài học thành công!');
+          message.success('Lesson added successfully!');
         }
       }
       
       handleLessonCancel();
     } catch (error) {
-      message.error(error.message || 'Lỗi khi lưu bài học');
+      message.error(error.message || 'Error while saving lesson');
     }
   };
 
@@ -240,18 +244,18 @@ const CourseDetail = ({ course, onBack }) => {
 
   const handleDeleteLesson = (lessonId) => {
     Modal.confirm({
-      title: 'Xác nhận xóa',
-      content: 'Bạn có chắc chắn muốn xóa bài học này?',
-      okText: 'Xóa',
-      cancelText: 'Hủy',
+      title: 'Delete confirmation',
+      content: 'Are you sure you want to delete this lesson?',
+      okText: 'Delete',
+      cancelText: 'Cancel',
       okButtonProps: { danger: true },
       onOk: async () => {
         try {
           await courseService.deleteLesson(lessonId);
           setLessons(lessons.filter(l => l.lessonId !== lessonId));
-          message.success('Đã xóa bài học!');
+          message.success('Lesson deleted successfully!');
         } catch (error) {
-          message.error('Lỗi khi xóa bài học!');
+          message.error('Error while deleting lesson!');
         }
       }
     });
@@ -259,20 +263,20 @@ const CourseDetail = ({ course, onBack }) => {
 
   const handleDeleteCourse = () => {
     Modal.confirm({
-      title: 'Xác nhận xóa khóa học',
-      content: 'Bạn có chắc chắn muốn xóa khóa học này? Tất cả bài học sẽ bị xóa!',
-      okText: 'Xóa',
-      cancelText: 'Hủy',
+      title: 'Delete course confirmation',
+      content: 'Are you sure you want to delete this course? All lessons will be removed!',
+      okText: 'Delete',
+      cancelText: 'Cancel',
       okButtonProps: { danger: true },
       onOk: () => {
-        message.success('Đã xóa khóa học!');
+        message.success('Course deleted successfully!');
         onBack();
       }
     });
   };
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('vi-VN', {
+    return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',
       day: 'numeric'
@@ -284,7 +288,8 @@ const CourseDetail = ({ course, onBack }) => {
       'Art': 'green', 
       'Design': 'blue', 
       'Digital Art': 'purple',
-      'Photography': 'orange'
+      'Photography': 'orange',
+      'Icons': 'cyan'
     };
     return <Tag color={colors[category] || 'default'}>{category}</Tag>;
   };
@@ -294,81 +299,69 @@ const CourseDetail = ({ course, onBack }) => {
       <div className="bg-white p-6 rounded-lg shadow-md">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          {/* <Space>
+          <Space>
             <Button 
               icon={<ArrowLeftOutlined />} 
               onClick={onBack}
               size="large"
             >
-              Quay Lại
+              Back
             </Button>
             <Title level={3} className="!m-0">{course.title}</Title>
-          </Space> */}
+          </Space>
           <Button 
             type="primary" 
             icon={<PlusOutlined />} 
             onClick={() => showLessonModal('add')}
             size="large"
           >
-            Thêm Bài Học
+            Add Lesson
           </Button>
         </div>
 
         {/* Course Detail */}
-        <Row gutter={24}>
+        <Row gutter={24} align="stretch">
           {/* Left Column - Course Info */}
           <Col xs={24} lg={8}>
-            <Card title="Thông Tin Khóa Học" className="sticky top-6">
+            <Card title="Course Information" style={{ height: '100%' }}>
               <div className="space-y-4">
                 <div>
-                  <Text type="secondary" className="block mb-1">Tiêu đề:</Text>
+                  <Text type="secondary" className="block mb-1">Title:</Text>
                   <Title level={5} className="!m-0">{course.title}</Title>
                 </div>
                 
                 <div>
-                  <Text type="secondary" className="block mb-1">Phụ đề:</Text>
+                  <Text type="secondary" className="block mb-1">Subtitle:</Text>
                   <Text strong>{course.subtitle}</Text>
                 </div>
                 
                 <div>
-                  <Text type="secondary" className="block mb-1">Mô tả:</Text>
+                  <Text type="secondary" className="block mb-1">Description:</Text>
                   <Paragraph className="!mb-0">{course.description}</Paragraph>
                 </div>
                 
                 <Divider className="!my-3" />
                 
                 <div className="flex justify-between items-center">
-                  <Text type="secondary">Danh mục:</Text>
+                  <Text type="secondary">Category:</Text>
                   {getCategoryTag(course.category)}
                 </div>
                 
                 <div className="flex justify-between items-center">
-                  <Text type="secondary">Giá:</Text>
+                  <Text type="secondary">Price:</Text>
                   <Text strong className="text-lg text-orange-500">
-                    {course.price.toLocaleString()} VNĐ
+                    {course.price.toLocaleString()} VND
                   </Text>
                 </div>
                 
                 <div className="flex justify-between items-center">
-                  <Text type="secondary">Số học viên:</Text>
-                  <Text strong>{course.student_count}</Text>
+                  <Text type="secondary">Students:</Text>
+                  <Text strong>{course.studentCount || 0}</Text>
                 </div>
                 
                 <div className="flex justify-between items-center">
-                  <Text type="secondary">Số bài học:</Text>
-                  <Tag color="blue">{lessons.length} bài</Tag>
-                </div>
-                
-                <Divider className="!my-3" />
-                
-                <div>
-                  <Text type="secondary" className="block mb-1">Ngày tạo:</Text>
-                  <Text>{formatDate(course.createdAt)}</Text>
-                </div>
-                
-                <div>
-                  <Text type="secondary" className="block mb-1">Cập nhật:</Text>
-                  <Text>{formatDate(course.updatedAt)}</Text>
+                  <Text type="secondary">Lessons:</Text>
+                  <Tag color="blue">{lessons.length} lessons</Tag>
                 </div>
                 
                 <Divider className="!my-3" />
@@ -379,7 +372,7 @@ const CourseDetail = ({ course, onBack }) => {
                     block 
                     onClick={() => setIsCourseModalVisible(true)}
                   >
-                    Chỉnh Sửa Khóa Học
+                    Edit Course
                   </Button>
                   <Button 
                     icon={<DeleteOutlined />} 
@@ -387,7 +380,7 @@ const CourseDetail = ({ course, onBack }) => {
                     block
                     onClick={handleDeleteCourse}
                   >
-                    Xóa Khóa Học
+                    Delete Course
                   </Button>
                 </Space>
               </div>
@@ -399,13 +392,13 @@ const CourseDetail = ({ course, onBack }) => {
             <Card
               title={
                 <div className="flex items-center justify-between">
-                  <span>Danh Sách Bài Học</span>
-                  <Tag color="blue">{getFilteredLessons().length} bài học</Tag>
+                  <span>Lesson List</span>
+                  <Tag color="blue">{getFilteredLessons().length} lessons</Tag>
                 </div>
               }
               extra={
                 <Input.Search
-                  placeholder="Tìm kiếm bài học..."
+                  placeholder="Search lessons..."
                   style={{ width: 300 }}
                   onSearch={handleSearch}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -418,10 +411,7 @@ const CourseDetail = ({ course, onBack }) => {
                   <List
                     itemLayout="horizontal"
                     dataSource={getPaginatedLessons().sort((a, b) => a.orderIndex - b.orderIndex)}
-                    renderItem={lesson => {
-                    const thumbnail = getYoutubeThumbnail(lesson.videoUrl);
-                    
-                    return (
+                    renderItem={lesson => (
                       <List.Item 
                         className="hover:bg-gray-50 px-4 rounded transition-colors"
                         actions={[
@@ -430,7 +420,7 @@ const CourseDetail = ({ course, onBack }) => {
                             size="small" 
                             onClick={() => showLessonModal('edit', lesson)}
                           >
-                            Sửa
+                            Edit
                           </Button>,
                           <Button 
                             icon={<DeleteOutlined />} 
@@ -438,35 +428,14 @@ const CourseDetail = ({ course, onBack }) => {
                             size="small"
                             onClick={() => handleDeleteLesson(lesson.lessonId)}
                           >
-                            Xóa
+                            Delete
                           </Button>
                         ]}
                       >
                         <List.Item.Meta
-                          avatar={
-                            thumbnail ? (
-                              <div className="relative w-28 h-16 rounded overflow-hidden">
-                                <Image
-                                  src={thumbnail}
-                                  alt={lesson.title}
-                                  className="w-full h-full object-cover"
-                                  preview={false}
-                                />
-                                <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30">
-                                  <PlayCircleOutlined className="text-white text-2xl" />
-                                </div>
-                              </div>
-                            ) : (
-                              <Avatar 
-                                icon={<VideoCameraOutlined />} 
-                                className="bg-blue-500"
-                                size={56}
-                              />
-                            )
-                          }
                           title={
                             <Space>
-                              <Tag color="blue">Bài {lesson.orderIndex}</Tag>
+                              <Tag color="blue">Lesson {lesson.orderIndex}</Tag>
                               <Text strong className="text-base">{lesson.title}</Text>
                             </Space>
                           }
@@ -484,13 +453,12 @@ const CourseDetail = ({ course, onBack }) => {
                           }
                         />
                       </List.Item>
-                    );
-                  }}
+                    )}
                 />
                 </Spin>
               ) : (
                 <Empty
-                  description={searchTerm ? "Không tìm thấy bài học nào" : "Chưa có bài học nào"} 
+                  description={searchTerm ? "No lessons found" : "No lessons yet"} 
                   image={Empty.PRESENTED_IMAGE_SIMPLE}
                   className="py-12"
                 >
@@ -501,7 +469,7 @@ const CourseDetail = ({ course, onBack }) => {
                       onClick={() => showLessonModal('add')}
                       size="large"
                     >
-                      Thêm Bài Học Đầu Tiên
+                      Add First Lesson
                     </Button>
                   )}
                 </Empty>
@@ -519,7 +487,7 @@ const CourseDetail = ({ course, onBack }) => {
                     showSizeChanger
                     showQuickJumper
                     showTotal={(total, range) => 
-                      `${range[0]}-${range[1]} của ${total} bài học`
+                      `${range[0]}-${range[1]} of ${total} lessons`
                     }
                     pageSizeOptions={['5', '10', '15', '20']}
                   />
@@ -532,12 +500,12 @@ const CourseDetail = ({ course, onBack }) => {
 
       {/* Lesson Modal */}
       <Modal
-        title={modalMode === 'edit' ? 'Chỉnh Sửa Bài Học' : 'Thêm Nhiều Bài Học'}
+        title={modalMode === 'edit' ? 'Edit Lesson' : 'Add Multiple Lessons'}
         open={isModalVisible}
         onCancel={handleLessonCancel}
         onOk={handleLessonSubmit}
-        okText={modalMode === 'edit' ? 'Cập Nhật' : 'Lưu Bài Học'}
-        cancelText="Hủy"
+        okText={modalMode === 'edit' ? 'Update' : 'Save Lessons'}
+        cancelText="Cancel"
         width={900}
         styles={{
           body: {
@@ -553,7 +521,7 @@ const CourseDetail = ({ course, onBack }) => {
               key={index}
               title={
                 <div className="flex items-center justify-between">
-                  <span className="font-semibold">Bài {form.orderIndex}</span>
+                  <span className="font-semibold">Lesson {form.orderIndex}</span>
                   {modalMode === 'add' && lessonForms.length > 1 && (
                     <Button 
                       danger 
@@ -571,10 +539,10 @@ const CourseDetail = ({ course, onBack }) => {
               <div className="space-y-4">
                 <div>
                   <label className="block mb-2 font-medium text-gray-700">
-                    Tiêu đề bài học <span className="text-red-500">*</span>
+                    Lesson title <span className="text-red-500">*</span>
                   </label>
                   <Input
-                    placeholder="Nhập tiêu đề bài học"
+                    placeholder="Enter the lesson title"
                     size="large"
                     value={form.title}
                     onChange={(e) => {
@@ -587,11 +555,11 @@ const CourseDetail = ({ course, onBack }) => {
 
                 <div>
                   <label className="block mb-2 font-medium text-gray-700">
-                    Mô tả bài học <span className="text-red-500">*</span>
+                    Lesson description <span className="text-red-500">*</span>
                   </label>
                   <TextArea
                     rows={3}
-                    placeholder="Nhập mô tả chi tiết bài học"
+                    placeholder="Enter the detailed lesson description"
                     value={form.description}
                     onChange={(e) => {
                       const updated = [...lessonForms];
@@ -603,11 +571,11 @@ const CourseDetail = ({ course, onBack }) => {
 
                 <div>
                   <label className="block mb-2 font-medium text-gray-700">
-                    Nội dung bài học
+                    Lesson content
                   </label>
                   <TextArea
                     rows={4}
-                    placeholder="Nhập nội dung chi tiết của bài học (optional)"
+                    placeholder="Enter the detailed lesson content (optional)"
                     value={form.content}
                     onChange={(e) => {
                       const updated = [...lessonForms];
@@ -620,11 +588,11 @@ const CourseDetail = ({ course, onBack }) => {
                 <Row gutter={16}>
                   <Col span={12}>
                     <label className="block mb-2 font-medium text-gray-700">
-                      Thời lượng (giây) <span className="text-red-500">*</span>
+                      Duration (seconds) <span className="text-red-500">*</span>
                     </label>
                     <InputNumber
                       className="w-full"
-                      placeholder="Ví dụ: 3600"
+                      placeholder="Example: 3600"
                       size="large"
                       min={0}
                       value={form.duration}
@@ -637,7 +605,7 @@ const CourseDetail = ({ course, onBack }) => {
                   </Col>
                   <Col span={12}>
                     <label className="block mb-2 font-medium text-gray-700">
-                      Thứ tự hiển thị
+                      Display order
                     </label>
                     <InputNumber
                       className="w-full"
@@ -667,17 +635,25 @@ const CourseDetail = ({ course, onBack }) => {
                       setLessonForms(updated);
                     }}
                   />
-                  {form.videoUrl && getYoutubeThumbnail(form.videoUrl) && (
-                    <div className="mt-3">
-                      <Text type="secondary" className="block mb-2">Preview:</Text>
-                      <Image
-                        src={getYoutubeThumbnail(form.videoUrl)}
-                        alt="Video preview"
-                        className="rounded"
-                        style={{ maxWidth: '300px' }}
-                      />
-                    </div>
-                  )}
+{form.videoUrl && (
+  <div className="mt-3">
+    <Text type="secondary" className="block mb-2">Preview:</Text>
+    <div className="relative inline-block">
+      <iframe
+        width="300"
+        height="170"
+        src={`https://www.youtube.com/embed/${extractVideoId(form.videoUrl)}`}
+        title="YouTube video preview"
+        frameBorder="0"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowFullScreen
+        className="rounded"
+      ></iframe>
+    </div>
+  </div>
+)}
+
+
                 </div>
               </div>
             </Card>
@@ -691,7 +667,7 @@ const CourseDetail = ({ course, onBack }) => {
               icon={<PlusOutlined />} 
               onClick={addLessonForm}
             >
-              Thêm Bài Học Khác
+              Add Another Lesson
             </Button>
           )}
         </div>
@@ -699,26 +675,26 @@ const CourseDetail = ({ course, onBack }) => {
 
       {/* Course Modal */}
       <Modal
-        title="Chỉnh Sửa Khóa Học"
+        title="Edit Course"
         open={isCourseModalVisible}
         onCancel={() => setIsCourseModalVisible(false)}
         onOk={() => {
           if (!courseForm.title || !courseForm.subtitle || !courseForm.description || !courseForm.category || courseForm.price <= 0) {
-            message.error('Vui lòng điền đầy đủ thông tin khóa học!');
+            message.error('Please fill in all required course information!');
             return;
           }
-          message.success('Đã cập nhật thông tin khóa học!');
+          message.success('Course information updated successfully!');
           setIsCourseModalVisible(false);
         }}
-        okText="Lưu Thay Đổi"
-        cancelText="Hủy"
+        okText="Save Changes"
+        cancelText="Cancel"
         width={700}
       >
         <div className="space-y-4 py-4">
           <div>
-            <label className="block mb-2 font-medium">Tiêu đề khóa học *</label>
+            <label className="block mb-2 font-medium">Course title *</label>
             <Input 
-              placeholder="Nhập tiêu đề khóa học" 
+              placeholder="Enter the course title" 
               size="large"
               value={courseForm.title}
               onChange={(e) => setCourseForm({...courseForm, title: e.target.value})}
@@ -726,19 +702,19 @@ const CourseDetail = ({ course, onBack }) => {
           </div>
 
           <div>
-            <label className="block mb-2 font-medium">Phụ đề *</label>
+            <label className="block mb-2 font-medium">Subtitle *</label>
             <Input 
-              placeholder="Nhập phụ đề khóa học"
+              placeholder="Enter the course subtitle"
               value={courseForm.subtitle}
               onChange={(e) => setCourseForm({...courseForm, subtitle: e.target.value})}
             />
           </div>
 
           <div>
-            <label className="block mb-2 font-medium">Mô tả *</label>
+            <label className="block mb-2 font-medium">Description *</label>
             <TextArea 
               rows={4} 
-              placeholder="Nhập mô tả chi tiết khóa học"
+              placeholder="Enter the detailed course description"
               value={courseForm.description}
               onChange={(e) => setCourseForm({...courseForm, description: e.target.value})}
             />
@@ -746,18 +722,18 @@ const CourseDetail = ({ course, onBack }) => {
 
           <Row gutter={16}>
             <Col span={12}>
-              <label className="block mb-2 font-medium">Danh mục *</label>
+              <label className="block mb-2 font-medium">Category *</label>
               <Input 
-                placeholder="Nhập danh mục (Art, Design...)" 
+                placeholder="Enter category (Art, Design...)" 
                 value={courseForm.category}
                 onChange={(e) => setCourseForm({...courseForm, category: e.target.value})}
               />
             </Col>
             <Col span={12}>
-              <label className="block mb-2 font-medium">Giá (VNĐ) *</label>
+              <label className="block mb-2 font-medium">Price (VND) *</label>
               <InputNumber 
                 className="w-full"
-                placeholder="Nhập giá" 
+                placeholder="Enter price" 
                 min={0}
                 value={courseForm.price}
                 onChange={(value) => setCourseForm({...courseForm, price: value})}

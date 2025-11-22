@@ -2,36 +2,26 @@ import { privateApi } from "./axiosIntance";
 
 export const ResourceApiController = {
   uploadResource: async (template) => {
-    return await privateApi.post(
-      "/api/orders/template",
-      template,
-      { baseURL: "http://146.190.90.222:8083" } 
-    );
+    return await privateApi.post("/api/orders/template", template);
   },
-  getResourceByUserId: async (page,size) => {
+
+  getResourceByUserId: async (page, size) => {
     return await privateApi.get(
-      `/api/orders/template/my-template?page=${page}&size=${size}`,
-      { baseURL: "http://146.190.90.222:8083" } 
+      `/api/orders/template/my-template?page=${page}&size=${size}`
     );
   },
+
   acceptResource: async (resourceId) => {
-    return await privateApi.post(
-      `/api/orders/template/${resourceId}/confirm`,
-      {},
-      { baseURL: "http://146.190.90.222:8083" } 
-    );
+    return await privateApi.post(`/api/orders/template/${resourceId}/confirm`);
   },
+
   rejectResource: async (resourceId) => {
-    return await privateApi.post(
-      `/api/orders/template/${resourceId}/reject`,
-      {},
-      { baseURL: "http://146.190.90.222:8083" } 
-    );
+    return await privateApi.post(`/api/orders/template/${resourceId}/reject`);
   },
-  getResourceByStatus: async (status,page,size) => {
+
+  getResourceByStatus: async (status, page, size) => {
     return await privateApi.get(
-      `/api/orders/template/review-status/${status}?page=${page}&size=${size}`,
-      { baseURL: "http://146.190.90.222:8083" } 
+      `/api/orders/template/review-status/${status}?page=${page}&size=${size}`
     );
   },
 };

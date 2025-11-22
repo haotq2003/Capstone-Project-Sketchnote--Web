@@ -1,29 +1,39 @@
-import { publicApi } from "./axiosIntance";
+import { privateApi, publicApi } from "./axiosIntance";
 
 export const courseApiController = {
- getAll: async () => {
-    return await publicApi.get("/api/learning/courses", {
-      baseURL: "http://146.190.90.222:8085"
-    });
+  getAll: async () => {
+    return await publicApi.get("/api/learning/courses");
   },
-    getCourseById : async (id) =>{
-      return await publicApi.get(`/api/learning/courses/${id}`, {
-        baseURL: "http://146.190.90.222:8085"
-      });
-    },
-    createCourse : async (courseData) =>{
-      return await publicApi.post(`/api/learning/courses`, courseData, {
-        baseURL: "http://146.190.90.222:8085"
-      });
-    },
-    getLessonsByCourseId : async (id) =>{
-      return await publicApi.get(`/api/learning/lessons/${id}`, {
-        baseURL: "http://146.190.90.222:8085"
-      });
-    },
-    createLesson : async (id,lessonData) =>{
-      return await publicApi.post(`/api/learning/lessons/${id}`, lessonData, {
-        baseURL: "http://146.190.90.222:8085"
-      });
-    }
-  }
+
+  getCourseById: async (id) => {
+    return await publicApi.get(`/api/learning/courses/${id}`);
+  },
+
+  createCourse: async (courseData) => {
+    return await privateApi.post(`/api/learning/courses`, courseData);
+  },
+
+  getLessonsByCourseId: async (id) => {
+    return await privateApi.get(`/api/learning/lessons/${id}`);
+  },
+
+  createLesson: async (id, lessonData) => {
+    return await privateApi.post(`/api/learning/lessons/${id}`, lessonData);
+  },
+
+  updateCourse: async (id, courseData) => {
+    return await privateApi.put(`/api/learning/courses/${id}`, courseData);
+  },
+
+  deleteCourse: async (id) => {
+    return await privateApi.delete(`/api/learning/courses/${id}`);
+  },
+
+  updateLesson: async (id, lessonData) => {
+    return await privateApi.put(`/api/learning/lessons/${id}`, lessonData);
+  },
+
+  deleteLesson: async (id) => {
+    return await privateApi.delete(`/api/learning/lessons/${id}`);
+  },
+};
