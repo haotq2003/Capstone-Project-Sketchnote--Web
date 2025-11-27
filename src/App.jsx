@@ -22,6 +22,7 @@ import ResourceReviewPage from "./pages/staff/AcceptResource";
 import AcceptBlog from "./pages/staff/AcceptBlog";
 import StaffProfile from "./pages/staff/Profile";
 import DesignerProfile from "./pages/designer/Profile";
+import Chat from "./pages/admin/Chat";
 
 
 function App() {
@@ -55,7 +56,7 @@ function App() {
         <Route path="users" element={<ManageUsers />} />
         <Route path="revenue" element={<AdminRevenueView />} />
         <Route path="profile" element={<AdminProfile />} />
-
+        <Route path="chat" element={<Chat />} />
       </Route>
 
       <Route path="*" element={<NotFound />} />
