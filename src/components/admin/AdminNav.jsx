@@ -18,7 +18,7 @@ const menuItems = [
   { title: "Accept Resources", icon: FileText, path: "/admin/resources" },
   { title: "Subscription Packages", icon: Box, path: "/admin/subscriptions" },
   { title: "Revenue", icon: HandCoins, path: "/admin/revenue" },
-  { title: "Content Moderation", icon: BookA, path: "/admin/moderation" },
+  { title: "Chat", icon: BookA, path: "/admin/chat" },
 ];
 
 export default function AdminNav() {
