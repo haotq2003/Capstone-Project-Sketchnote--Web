@@ -202,9 +202,7 @@ const WithdrawalManagement = () => {
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       {/* Header */}
-      <h1 className="text-2xl font-bold text-gray-800 mb-6">
-        Withdrawal Request Management
-      </h1>
+     
 
       {/* Stats Section */}
       <div className="mb-6">

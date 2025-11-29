@@ -23,6 +23,7 @@ import AcceptBlog from "./pages/staff/AcceptBlog";
 import StaffProfile from "./pages/staff/Profile";
 import DesignerProfile from "./pages/designer/Profile";
 import Chat from "./pages/admin/Chat";
+import SketchNoteChat from "./pages/admin/chat2";
 
 
 function App() {
@@ -57,6 +58,7 @@ function App() {
         <Route path="revenue" element={<AdminRevenueView />} />
         <Route path="profile" element={<AdminProfile />} />
         <Route path="chat" element={<Chat />} />
+        <Route path="chat2" element={<SketchNoteChat />} />
       </Route>
 
       <Route path="*" element={<NotFound />} />

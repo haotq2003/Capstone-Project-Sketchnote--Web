@@ -17,6 +17,7 @@ import {
   FileImageOutlined,
 } from "@ant-design/icons";
 import { dashboardAminService } from "../../service/dashboardAdminService";
+import { userService } from "../../service/userService";
 
 const { Title, Text } = Typography;
 
@@ -26,13 +27,29 @@ export default function AdminDashboard() {
   const [topCourses, setTopCourses] = useState([]);
   const [topResources, setTopResources] = useState([]);
   const [topDesigners, setTopDesigners] = useState([]);
+  const [designerNames, setDesignerNames] = useState({});
 
   useEffect(() => {
     dashboardAminService.fetchUser().then(setUserData);
     dashboardAminService.fetchTotalOrderAndEnrollments().then(setTotalOrderAndEnrollments);
     dashboardAminService.fetchTopCourses(5).then(setTopCourses);
     dashboardAminService.fetchTopResources(5).then(setTopResources);
-    dashboardAminService.fetchTopDesigners(5).then(setTopDesigners);
+    dashboardAminService.fetchTopDesigners(5).then((designers) => {
+      setTopDesigners(designers);
+      // Fetch designer names
+      designers.forEach(designer => {
+        userService.fetchUserById(designer.designerId)
+          .then(response => {
+            setDesignerNames(prev => ({
+              ...prev,
+              [designer.designerId]: `${response.result.firstName} ${response.result.lastName}`
+            }));
+          })
+          .catch(error => {
+            console.error(`Failed to fetch designer ${designer.designerId}:`, error);
+          });
+      });
+    });
   }, []);
 
   // ================= DESIGNER TABLE COLUMNS =================
@@ -63,7 +80,7 @@ export default function AdminDashboard() {
       render: (id) => (
         <span style={{ fontWeight: 600 }}>
           <CrownOutlined style={{ marginRight: 6, color: "#faad14" }} />
-          Designer #{id}
+          {designerNames[id] || `Designer #${id}`}
         </span>
       ),
     },

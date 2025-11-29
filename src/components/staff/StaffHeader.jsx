@@ -1,12 +1,15 @@
-import { Search, Bell, User, Settings, LogOut } from "lucide-react";
+import { Bell, User, Settings, LogOut } from "lucide-react";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { decodeUserFromToken } from "../../util/authUtil";
 import { authService } from "../../service/authService";
 
 export default function StaffHeader() {
   const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+  const token = localStorage.getItem("accessToken");
+  const user = decodeUserFromToken(token);
 
   const menuItems = [
     { icon: User, label: "Profile", path: "/staff/profile" },
@@ -21,33 +24,30 @@ export default function StaffHeader() {
       danger: true,
     },
   ];
-  const token = localStorage.getItem("accessToken");
-const user = decodeUserFromToken(token);
+
+  // Map routes to page titles
+  const pageTitles = {
+    '/staff/dashboard': 'Dashboard',
+    '/staff/courses': 'Course Management',
+    '/staff/resources': 'Resource Review',
+    '/staff/accept-blog': 'Accept Blog',
+    '/staff/profile': 'Profile',
+    '/staff/withdrawals': 'Withdrawals',
+  };
+
+  // Get current page title
+  const currentPageTitle = pageTitles[location.pathname] || 'Staff Portal';
+
   return (
     <header className="sticky top-0 z-40 w-full bg-white border-b border-gray-200">
       <div className="flex h-16 items-center justify-between px-6">
-        {/* Left: Search bar */}
-        <div className="flex items-center gap-3 flex-1 max-w-lg">
-          <div className="relative w-full">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <input
-              type="text"
-              placeholder="Search in dashboard..."
-              className="w-full rounded-md border border-gray-200 pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-          </div>
+        {/* Left: Page Title */}
+        <div className="flex items-center">
+          <h1 className="text-xl font-semibold text-gray-800">{currentPageTitle}</h1>
         </div>
 
         {/* Right: Actions */}
         <div className="flex items-center gap-4">
-          {/* Notifications */}
-          <button className="relative p-2 rounded-full hover:bg-gray-100">
-            <Bell className="w-5 h-5 text-gray-500" />
-            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center">
-              2
-            </span>
-          </button>
-
           {/* User Avatar */}
           <div className="relative">
             <button
@@ -59,7 +59,7 @@ const user = decodeUserFromToken(token);
                 alt="avatar"
                 className="w-8 h-8 rounded-full"
               />
-              <span className="text-sm font-medium text-gray-700">{user?.name}</span>
+              <span className="text-sm font-medium text-gray-700">{user?.name || "Staff"}</span>
             </button>
 
             {/* Dropdown */}
@@ -79,9 +79,8 @@ const user = decodeUserFromToken(token);
                         setMenuOpen(false);
                         onClick();
                       }}
-                      className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors ${
-                        item.danger ? "text-red-600" : "text-gray-700"
-                      } ${i === menuItems.length - 1 ? "border-t border-gray-200" : ""}`}
+                      className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors ${item.danger ? "text-red-600" : "text-gray-700"
+                        } ${i === menuItems.length - 1 ? "border-t border-gray-200" : ""}`}
                     >
                       <Icon size={16} />
                       <span className="text-sm">{item.label}</span>

@@ -1,12 +1,159 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Send, Smile, Paperclip, Search, MoreVertical } from "lucide-react";
 import { chatService } from "../../service/chatService";
+import { webSocketService } from "../../service/webSocketService";
+import { authService } from "../../service/authService";
 
 const Chat = () => {
   const [selectedChat, setSelectedChat] = useState(null);
   const [inputText, setInputText] = useState("");
   const [conversations2, setConversations2] = useState(null);
   const [messages, setMessages] = useState([]);
+  const [wsConnected, setWsConnected] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState(null);
+  const subscriptionRef = useRef(null);
+  const messagesEndRef = useRef(null);
+
+  // Use refs to avoid closure issues in WebSocket callback
+  const selectedChatRef = useRef(null);
+  const currentUserIdRef = useRef(null);
+
+  // Get current user ID from backend profile
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const profile = await authService.getProfile();
+        if (profile && profile.id) {
+          setCurrentUserId(profile.id);
+          currentUserIdRef.current = profile.id; // Update ref
+        }
+      } catch (error) {
+        console.error("Error fetching current user profile:", error);
+      }
+    };
+
+    fetchCurrentUser();
+  }, []);
+
+  // Connect to WebSocket
+  useEffect(() => {
+    if (!currentUserId) {
+      console.log("[Chat] No currentUserId yet, skip WebSocket connect");
+      return;
+    }
+
+    // Build WebSocket URL from API base URL
+    const apiUrl = import.meta.env.VITE_API_URL; // e.g. https://sketchnote.litecsys.com/
+    const wsUrl = apiUrl.replace(/^http/, "ws") + "ws"; // -> wss://sketchnote.litecsys.com/ws
+    console.log("[Chat] Connecting WebSocket to:", wsUrl, "for user:", currentUserId);
+
+    webSocketService.connect(
+      wsUrl,
+      () => {
+        console.log("✅ Connected to WebSocket (Chat.jsx)");
+        setWsConnected(true);
+
+        // Subscribe to private messages for current user
+        const subId = webSocketService.subscribe(
+          `/queue/private/${currentUserId}`,
+          (message) => {
+            console.log("📨 Received WebSocket message:", message);
+            handleIncomingMessage(message);
+          }
+        );
+        subscriptionRef.current = subId;
+      },
+      (error) => {
+        console.error("❌ WebSocket connection error (Chat.jsx):", error);
+        setWsConnected(false);
+      }
+    );
+
+    // Cleanup on unmount
+    return () => {
+      if (subscriptionRef.current) {
+        webSocketService.unsubscribe(subscriptionRef.current);
+      }
+      webSocketService.disconnect();
+    };
+  }, [currentUserId]);
+
+  // Handle incoming WebSocket messages
+  const handleIncomingMessage = (message) => {
+    console.log("📨 Processing incoming message:", message);
+
+    // Use refs to get latest values (avoid closure issue)
+    const currentSelected = selectedChatRef.current;
+    const currentUser = currentUserIdRef.current;
+
+    console.log("🔍 Current state:", {
+      currentUserId: currentUser,
+      selectedChatUserId: currentSelected?.userId,
+      selectedChatUserName: currentSelected?.userName,
+      messageSenderId: message.senderId,
+      messageReceiverId: message.receiverId
+    });
+
+    // ⚠️ BỎ QUA tin nhắn từ chính mình (đã được thêm vào state trong handleSendMessage)
+    if (message.senderId === currentUser) {
+      console.log("⚠️ Skipping message from myself (already added optimistically)");
+      // Vẫn update conversations list
+      fetchAllConversations();
+      return;
+    }
+
+    // Kiểm tra tin nhắn có thuộc conversation hiện tại không
+    // Chỉ nhận tin nhắn từ người khác gửi cho mình
+    const isForCurrentConversation = currentSelected &&
+      message.senderId === currentSelected.userId &&
+      message.receiverId === currentUser;
+
+    console.log("✅ isForCurrentConversation:", isForCurrentConversation);
+
+    if (isForCurrentConversation) {
+      setMessages((prevMessages) => {
+        // Check if message already exists (để tránh duplicate)
+        const exists = prevMessages.some((msg) => {
+          if (msg.id && message.id) {
+            return msg.id === message.id;
+          }
+          return (
+            msg.content === message.content &&
+            msg.senderId === message.senderId &&
+            Math.abs(new Date(msg.createdAt) - new Date(message.timestamp || message.createdAt)) < 1000
+          );
+        });
+
+        if (exists) {
+          console.log("⚠️ Message already exists, skipping");
+          return prevMessages;
+        }
+
+        console.log("✅ Adding new message to chat");
+        return [...prevMessages, {
+          id: message.id,
+          senderId: message.senderId,
+          senderName: message.senderName,
+          senderAvatarUrl: message.senderAvatarUrl,
+          receiverId: message.receiverId,
+          receiverName: message.receiverName,
+          receiverAvatarUrl: message.receiverAvatarUrl,
+          content: message.content,
+          createdAt: message.timestamp || message.createdAt,
+          updatedAt: message.updatedAt
+        }];
+      });
+    } else {
+      console.log("❌ Message is NOT for current conversation");
+    }
+
+    // Update conversations list
+    fetchAllConversations();
+  };
+  // Scroll to bottom when new message arrives
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   const fetchAllConversations = async () => {
     try {
@@ -20,10 +167,28 @@ const Chat = () => {
 
   const getConversationById = async (userId) => {
     try {
-      const response = await chatService.getMessagesByUserId(userId, 0, 20);
-      console.log("Messages:", response.content);
-      // Đảo ngược thứ tự để tin nhắn mới nhất ở dưới
-      setMessages(response.content.reverse());
+      // Load page 0 first to get totalPages
+      const initialResponse = await chatService.getMessagesByUserId(userId, 0, 20);
+      const totalPages = initialResponse.totalPages || 0;
+
+      console.log(`📄 Total pages: ${totalPages}`);
+
+      if (totalPages > 0) {
+        // Load last page for newest messages
+        const lastPage = totalPages - 1;
+        console.log(`🔄 Loading last page (${lastPage}) for newest messages`);
+
+        const response = await chatService.getMessagesByUserId(userId, lastPage, 20);
+        console.log("Messages:", response.content);
+
+        // Sắp xếp theo thời gian tăng dần (tin nhắn cũ nhất ở trên, mới nhất ở dưới)
+        const sortedMessages = [...response.content].sort((a, b) =>
+          new Date(a.createdAt) - new Date(b.createdAt)
+        );
+        setMessages(sortedMessages);
+      } else {
+        setMessages([]);
+      }
     } catch (error) {
       console.error("Error fetching messages:", error);
     }
@@ -34,38 +199,67 @@ const Chat = () => {
   }, []);
 
   const handleSelectChat = (conversation) => {
+    console.log("🎯 Selected conversation:", conversation);
     setSelectedChat(conversation);
+    selectedChatRef.current = conversation; // Update ref
     getConversationById(conversation.userId);
   };
 
   const handleSendMessage = async () => {
     if (!inputText.trim() || !selectedChat) return;
 
+    const messageContent = inputText.trim();
+    setInputText("");
+
     try {
       const data = {
         receiverId: selectedChat.userId,
-        content: inputText,
+        content: messageContent,
       };
 
+      // Step 1: Send via REST API
       const response = await chatService.sendMessage(data);
-      console.log("Message sent:", response);
+      console.log("Message saved to database:", response);
 
-      // Thêm tin nhắn mới vào danh sách
+      // Thêm tin nhắn vào state ngay
       const newMessage = {
-        id: Date.now(),
-        content: inputText,
-        senderId: "currentUserId", // Thay bằng ID người dùng hiện tại
+        id: response.id,
+        senderId: currentUserId,
+        senderName: response.senderName,
+        senderAvatarUrl: response.senderAvatarUrl,
         receiverId: selectedChat.userId,
-        createdAt: new Date().toISOString(),
+        receiverName: selectedChat.userName,
+        receiverAvatarUrl: selectedChat.userAvatarUrl,
+        content: messageContent,
+        createdAt: response.createdAt || new Date().toISOString(),
+        updatedAt: response.updatedAt
       };
 
-      setMessages([...messages, newMessage]);
-      setInputText("");
+      setMessages((prevMessages) => [...prevMessages, newMessage]);
 
-      // Cập nhật lại danh sách conversations
+      // ✅ CẬP NHẬT DANH SÁCH CONVERSATIONS NGAY SAU KHI GỬI
       fetchAllConversations();
+
+      // Step 2: Send via WebSocket
+      if (wsConnected) {
+        const wsMessage = {
+          senderId: currentUserId,
+          senderName: response.senderName,
+          senderAvatarUrl: response.senderAvatarUrl,
+          receiverId: selectedChat.userId,
+          receiverName: selectedChat.userName,
+          receiverAvatarUrl: selectedChat.userAvatarUrl,
+          content: messageContent,
+          timestamp: newMessage.createdAt,
+          id: response.id
+        };
+
+        webSocketService.send("/app/chat.private", wsMessage);
+        console.log("Message sent via WebSocket:", wsMessage);
+      }
     } catch (error) {
       console.error("Error sending message:", error);
+      setInputText(messageContent);
     }
   };
 
@@ -78,19 +272,24 @@ const Chat = () => {
 
   // Hàm để xác định tin nhắn là của mình hay người khác
   const isMyMessage = (message) => {
-    // Giả sử bạn có currentUserId - thay thế bằng ID thực của người dùng hiện tại
-    // return message.senderId === currentUserId;
-    return message.senderId !== selectedChat?.userId;
+    return message.senderId === currentUserId;
   };
-const formatTime = (timeString) => {
-  if (!timeString) return "";
 
-  return new Date(timeString).toLocaleTimeString("vi-VN", {
-    hour: "2-digit",
-    minute: "2-digit",
-    timeZone: "Asia/Ho_Chi_Minh",
-  });
-};
+  const formatTime = (timeString) => {
+    if (!timeString) return "";
+
+    // Parse the time string as UTC and convert to Vietnam time
+    const date = new Date(timeString);
+
+    // Add 'Z' if the string doesn't have timezone info to force UTC parsing
+    const utcDate = timeString.endsWith('Z') ? date : new Date(timeString + 'Z');
+
+    return utcDate.toLocaleTimeString("vi-VN", {
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone: "Asia/Ho_Chi_Minh",
+    });
+  };
 
   return (
     <div className="flex h-screen bg-gray-100">
@@ -98,7 +297,20 @@ const formatTime = (timeString) => {
       <div className="w-96 bg-white border-r border-gray-200 flex flex-col">
         {/* Sidebar Header */}
         <div className="px-4 py-5 border-b border-gray-200">
-          <h1 className="text-2xl font-bold text-gray-800 mb-4">Tin nhắn</h1>
+          <div className="flex justify-between items-center mb-4">
+            <h1 className="text-2xl font-bold text-gray-800">Tin nhắn</h1>
+            {wsConnected ? (
+              <span className="text-xs text-green-600 flex items-center">
+                <span className="w-2 h-2 bg-green-600 rounded-full mr-1 animate-pulse"></span>
+                Đã kết nối
+              </span>
+            ) : (
+              <span className="text-xs text-red-600 flex items-center">
+                <span className="w-2 h-2 bg-red-600 rounded-full mr-1"></span>
+                Chưa kết nối
+              </span>
+            )}
+          </div>
           <div className="relative">
             <Search
               className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
@@ -119,16 +331,14 @@ const formatTime = (timeString) => {
               ? conv.userName.charAt(0).toUpperCase()
               : "?";
 
-          const timeFormatted = formatTime(conv.lastMessageTime);
-
+            const timeFormatted = formatTime(conv.lastMessageTime);
 
             return (
               <div
                 key={conv.userId}
                 onClick={() => handleSelectChat(conv)}
-                className={`px-4 py-3 flex items-center space-x-3 hover:bg-gray-50 cursor-pointer transition-colors ${
-                  selectedChat?.userId === conv.userId ? "bg-blue-50" : ""
-                }`}
+                className={`px-4 py-3 flex items-center space-x-3 hover:bg-gray-50 cursor-pointer transition-colors ${selectedChat?.userId === conv.userId ? "bg-blue-50" : ""
+                  }`}
               >
                 {/* Avatar */}
                 <div className="relative">
@@ -191,9 +401,7 @@ const formatTime = (timeString) => {
                       {selectedChat.userName}
                     </h2>
                     <p className="text-xs text-gray-500">
-                      {selectedChat.online
-                        ? "Đang hoạt động"
-                        : "Không hoạt động"}
+                      {wsConnected ? "Đang hoạt động" : "Không hoạt động"}
                     </p>
                   </div>
                 </div>
@@ -205,24 +413,26 @@ const formatTime = (timeString) => {
 
             {/* Messages Area */}
             <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
-              {messages?.map((message) => {
+              {messages?.map((message, index) => {
                 const isMine = isMyMessage(message);
-                
+
                 // Chuyển UTC sang giờ Việt Nam (UTC+7)
                 const messageTime = formatTime(message.createdAt);
 
+                // Debug log
+                if (!messageTime) {
+                  console.warn("No time for message:", message);
+                }
 
                 return (
                   <div
-                    key={message.id}
-                    className={`flex ${
-                      isMine ? "justify-end" : "justify-start"
-                    }`}
+                    key={message.id || `msg-${index}`}
+                    className={`flex ${isMine ? "justify-end" : "justify-start"
+                      }`}
                   >
                     <div
-                      className={`flex items-start space-x-2 max-w-md ${
-                        isMine ? "flex-row-reverse space-x-reverse" : ""
-                      }`}
+                      className={`flex items-start space-x-2 max-w-md ${isMine ? "flex-row-reverse space-x-reverse" : ""
+                        }`}
                     >
                       {!isMine && (
                         <div className="w-8 h-8 rounded-full flex-shrink-0">
@@ -242,26 +452,25 @@ const formatTime = (timeString) => {
                       )}
                       <div>
                         <div
-                          className={`px-4 py-2 rounded-2xl ${
-                            isMine
-                              ? "bg-blue-500 text-white rounded-br-none"
-                              : "bg-white text-gray-800 rounded-bl-none shadow-sm"
-                          }`}
+                          className={`px-4 py-2 rounded-2xl ${isMine
+                            ? "bg-blue-500 text-white rounded-br-none"
+                            : "bg-white text-gray-800 rounded-bl-none shadow-sm"
+                            }`}
                         >
                           <p className="text-sm">{message.content}</p>
                         </div>
                         <p
-                          className={`text-xs text-gray-500 mt-1 ${
-                            isMine ? "text-right" : "text-left"
-                          }`}
+                          className={`text-xs text-gray-500 mt-1 ${isMine ? "text-right" : "text-left"
+                            }`}
                         >
-                          {messageTime}
+                          {messageTime || "N/A"}
                         </p>
                       </div>
                     </div>
                   </div>
                 );
               })}
+              <div ref={messagesEndRef} />
             </div>
 
             {/* Input Area */}
@@ -278,6 +487,7 @@ const formatTime = (timeString) => {
                     onKeyPress={handleKeyPress}
                     placeholder="Nhập tin nhắn..."
                     className="flex-1 bg-transparent outline-none text-sm text-gray-800 placeholder-gray-500"
+                    disabled={!wsConnected}
                   />
                   <button className="p-1 text-gray-500 hover:text-gray-700 transition-colors">
                     <Smile size={20} />
@@ -285,7 +495,11 @@ const formatTime = (timeString) => {
                 </div>
                 <button
                   onClick={handleSendMessage}
-                  className="p-3 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-colors shadow-md"
+                  disabled={!wsConnected || !inputText.trim()}
+                  className={`p-3 rounded-full transition-colors shadow-md ${wsConnected && inputText.trim()
+                    ? "bg-blue-500 text-white hover:bg-blue-600"
+                    : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    }`}
                 >
                   <Send size={18} />
                 </button>

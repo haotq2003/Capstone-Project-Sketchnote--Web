@@ -21,6 +21,7 @@ const ResourceReviewPage = () => {
     try {
       setLoading(true);
       const data = await resourceService.getResourceByStatus("PENDING_REVIEW", page - 1, size);
+      console.log(data);
       setResources(data.content || []);
       setPagination({
         ...pagination,
@@ -123,7 +124,7 @@ const ResourceReviewPage = () => {
 
   return (
     <div style={{ padding: 24 }}>
-      <h2 style={{ marginBottom: 16 }}>Pending Resource Review</h2>
+      
       <Table
         columns={columns}
         dataSource={resources}
@@ -161,7 +162,12 @@ const ResourceReviewPage = () => {
               <Descriptions.Item label="Status">
                 <Tag color="orange">{selectedResource.status}</Tag>
               </Descriptions.Item>
-              <Descriptions.Item label="Price">{selectedResource.price}</Descriptions.Item>
+              <Descriptions.Item label="Price">
+        {new Intl.NumberFormat("vi-VN", {
+          style: "currency",
+          currency: "VND",
+        }).format(selectedResource.price)}
+      </Descriptions.Item>
               <Descriptions.Item label="Expired Time">{selectedResource.expiredTime}</Descriptions.Item>
               <Descriptions.Item label="Release Date">{selectedResource.releaseDate}</Descriptions.Item>
             </Descriptions>
@@ -179,19 +185,19 @@ const ResourceReviewPage = () => {
               </div>
 
               <h4 style={{ marginTop: 16 }}>Items</h4>
-              <ul>
-                {selectedResource.items?.length > 0 ? (
-                  selectedResource.items.map((item) => (
-                    <li key={item.resourceItemId}>
-                      <a href={item.itemUrl} target="_blank" rel="noopener noreferrer">
-                        {item.itemUrl}
-                      </a>
-                    </li>
-                  ))
-                ) : (
-                  <p>No items</p>
-                )}
-              </ul>
+        
+<ul className="flex gap-3">
+  {selectedResource.items?.length > 0 ? (
+    selectedResource.items.map((item) => (
+      <li key={item.resourceItemId} className="gap-3">
+        <img src={item.imageUrl} alt={`Price ${item.itemIndex}`} style={{ maxWidth: '200px' }} />
+      </li>
+    ))
+  ) : (
+    <p>No items</p>
+  )}
+</ul>
+
             </div>
           </>
         )}

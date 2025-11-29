@@ -162,7 +162,7 @@ const AcceptBlog = () => {
 
   return (
     <div style={{ padding: 24 }}>
-      <h2 style={{ marginBottom: 16 }}>Approve Pending Blogs</h2>
+    
       <Table
         columns={columns}
         dataSource={paginatedBlogs}
