@@ -1,16 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import CourseDetail from './CourseDetail';
-import { 
-  Typography, 
+import {
+  Typography,
   Table,
-  Button, 
-  Row, 
-  Col, 
-  Modal, 
-  Input, 
-  Select, 
-  Space, 
-  Tag, 
+  Button,
+  Row,
+  Col,
+  Modal,
+  Input,
+  Select,
+  Space,
+  Tag,
   InputNumber,
   message,
   Image,
@@ -18,17 +18,19 @@ import {
   Steps,
   Card,
   Form,
-  Divider
+  Divider,
+  Spin
 } from 'antd';
-import { 
-  PlusOutlined, 
-  EditOutlined, 
-  DeleteOutlined, 
+import {
+  PlusOutlined,
+  EditOutlined,
+  DeleteOutlined,
   EyeOutlined,
   BookOutlined,
   VideoCameraOutlined
 } from '@ant-design/icons';
 import { courseService } from '../../service/courseService';
+import ImageUploader from '../../common/ImageUploader';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -42,13 +44,13 @@ const CourseManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedCourse, setSelectedCourse] = useState(null);
-  
+
   // Modal states
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [editingCourse, setEditingCourse] = useState(null);
-  
+
   // Form instances
   const [courseForm] = Form.useForm();
   const [lessonForm] = Form.useForm();
@@ -56,6 +58,8 @@ const CourseManagement = () => {
   const [lessonForms, setLessonForms] = useState([
     { title: '', description: '', content: '', videoUrl: '', duration: 0, orderIndex: 1 }
   ]);
+  const [uploadedImageUrl, setUploadedImageUrl] = useState('');
+  const [fetchingDuration, setFetchingDuration] = useState({});
 
   useEffect(() => {
     fetchCourses();
@@ -65,7 +69,7 @@ const CourseManagement = () => {
     setLoading(true);
     try {
       const res = await courseService.getAllCourse();
-      
+
       setCourses(res.result || []);
     } catch (error) {
       message.error(error.message);
@@ -77,19 +81,19 @@ const CourseManagement = () => {
   // Filter courses
   const getFilteredCourses = () => {
     let filtered = courses;
-    
+
     if (searchTerm) {
-      filtered = filtered.filter(course => 
+      filtered = filtered.filter(course =>
         course.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         course.subtitle?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         course.description?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
-    
+
     if (selectedCategory !== 'all') {
       filtered = filtered.filter(course => course.category === selectedCategory);
     }
-    
+
     return filtered;
   };
 
@@ -113,7 +117,7 @@ const CourseManagement = () => {
     }
 
     try {
-      const res  = await courseService.createLesson(newCourseId, lessonForms);
+      const res = await courseService.createLesson(newCourseId, lessonForms);
       console.log(res)
       message.success('Lessons created successfully!');
       handleCloseCreateModal();
@@ -188,15 +192,131 @@ const CourseManagement = () => {
     setLessonForms(updated);
   };
 
+  // Extract YouTube video ID from URL
+  const extractYouTubeId = (url) => {
+    if (!url) return null;
+    const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*$/;
+    const match = url.match(regExp);
+    return (match && match[7].length === 11) ? match[7] : null;
+  };
+
+  // Fetch YouTube video duration using YouTube Data API v3
+  const fetchYouTubeDuration = async (videoId) => {
+    try {
+      const apiKey = import.meta.env.VITE_YOUTUBE_API_KEY;
+      console.log('🔑 API Key exists:', !!apiKey);
+      console.log('🔑 API Key preview:', apiKey ? apiKey.substring(0, 10) + '...' : 'none');
+
+      if (!apiKey || apiKey.includes('xZ9x')) {
+        message.warning('YouTube API key not configured. Please add a valid API key to .env file.');
+        return null;
+      }
+
+      const url = `https://www.googleapis.com/youtube/v3/videos?id=${videoId}&part=contentDetails,snippet&key=${apiKey}`;
+      console.log('🌐 Fetching from YouTube API...');
+
+      const response = await fetch(url);
+      console.log('📡 Response status:', response.status);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ API Error response:', errorText);
+        throw new Error(`API returned ${response.status}: ${errorText}`);
+      }
+
+      const data = await response.json();
+      console.log('📦 API Response data:', data);
+
+      if (!data.items || data.items.length === 0) {
+        message.error('Video not found. Please check the URL.');
+        return null;
+      }
+
+      const video = data.items[0];
+      const duration = video.contentDetails.duration; // Format: PT1H2M10S
+      const title = video.snippet.title;
+
+      console.log('⏱️ Raw duration:', duration);
+
+      // Parse ISO 8601 duration to seconds
+      const durationInSeconds = parseDuration(duration);
+      console.log('⏱️ Parsed duration (seconds):', durationInSeconds);
+
+      message.success(`Video found: "${title}" (${formatDuration(durationInSeconds)})`);
+      return durationInSeconds;
+    } catch (error) {
+      console.error('❌ YouTube API error:', error);
+      console.error('❌ Error details:', {
+        message: error.message,
+        stack: error.stack
+      });
+      message.error(`Could not fetch video info: ${error.message}`);
+      return null;
+    }
+  };
+
+  // Parse ISO 8601 duration (PT1H2M10S) to seconds
+  const parseDuration = (duration) => {
+    const match = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+    if (!match) return 0;
+
+    const hours = parseInt(match[1] || 0);
+    const minutes = parseInt(match[2] || 0);
+    const seconds = parseInt(match[3] || 0);
+
+    return hours * 3600 + minutes * 60 + seconds;
+  };
+
+  // Format seconds to readable duration (HH:MM:SS)
+  const formatDuration = (seconds) => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+
+    if (hours > 0) {
+      return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+    return `${minutes}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // Handle YouTube URL change
+  const handleYouTubeUrlChange = async (index, url) => {
+    console.log('🎬 YouTube URL changed:', { index, url });
+    updateLessonForm(index, 'videoUrl', url);
+
+    const videoId = extractYouTubeId(url);
+    console.log('📹 Extracted video ID:', videoId);
+
+    if (videoId) {
+      setFetchingDuration(prev => ({ ...prev, [index]: true }));
+      console.log('⏳ Fetching duration for video ID:', videoId);
+
+      const duration = await fetchYouTubeDuration(videoId);
+      console.log('✅ Received duration:', duration);
+
+      setFetchingDuration(prev => ({ ...prev, [index]: false }));
+
+      if (duration !== null && duration > 0) {
+        console.log('📝 Setting duration to:', duration);
+        // Auto-fill duration
+        updateLessonForm(index, 'duration', duration);
+      } else {
+        console.log('⚠️ Duration is null or 0');
+      }
+    } else {
+      console.log('❌ Could not extract video ID from URL');
+    }
+  };
+
   // View Course Detail
   if (selectedCourse) {
     return (
-      <CourseDetail 
-        course={selectedCourse} 
+      <CourseDetail
+        course={selectedCourse}
         onBack={() => {
           setSelectedCourse(null);
           fetchCourses();
-        }} 
+        }}
       />
     );
   }
@@ -242,9 +362,9 @@ const CourseManagement = () => {
       key: 'category',
       width: 120,
       render: (category) => {
-        const colors = { 
-          'Art': 'green', 
-          'Design': 'blue', 
+        const colors = {
+          'Art': 'green',
+          'Design': 'blue',
           'Digital Art': 'purple',
           'Photography': 'orange',
           'Icons': 'cyan'
@@ -285,15 +405,15 @@ const CourseManagement = () => {
       width: 180,
       render: (_, record) => (
         <Space size="small">
-          <Button 
-            type="link" 
+          <Button
+            type="link"
             icon={<EyeOutlined />}
             onClick={() => setSelectedCourse(record)}
           >
             View
           </Button>
-          <Button 
-            type="link" 
+          <Button
+            type="link"
             icon={<EditOutlined />}
             onClick={() => handleEditCourse(record)}
           >
@@ -307,8 +427,8 @@ const CourseManagement = () => {
             cancelText="Cancel"
             okButtonProps={{ danger: true }}
           >
-            <Button 
-              type="link" 
+            <Button
+              type="link"
               danger
               icon={<DeleteOutlined />}
             >
@@ -326,11 +446,11 @@ const CourseManagement = () => {
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <Title level={3} className="!m-0">
-            <BookOutlined /> Course Management
+            <BookOutlined /> 
           </Title>
-          <Button 
-            type="primary" 
-            icon={<PlusOutlined />} 
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
             onClick={() => setIsCreateModalVisible(true)}
             size="large"
           >
@@ -379,7 +499,7 @@ const CourseManagement = () => {
             pageSize: 10,
             showSizeChanger: true,
             showQuickJumper: true,
-            showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} courses`,
+            showTotal: (total, range) => `${range[0]} -${range[1]} of ${total} courses`,
           }}
         />
       </div>
@@ -434,10 +554,19 @@ const CourseManagement = () => {
 
             <Form.Item
               name="imageUrl"
-              label="Course image URL"
-              rules={[{ required: true, message: 'Please enter the image URL!' }]}
+              label="Course image"
+              rules={[{ required: true, message: 'Please upload a course image!' }]}
             >
-              <Input placeholder="https://example.com/image.jpg" />
+              <ImageUploader
+                multiple={false}
+                onImageUploaded={(images) => {
+                  if (images && images.length > 0) {
+                    const imageUrl = images[0].imageUrl;
+                    setUploadedImageUrl(imageUrl);
+                    courseForm.setFieldsValue({ imageUrl });
+                  }
+                }}
+              />
             </Form.Item>
 
             <Row gutter={16}>
@@ -462,11 +591,11 @@ const CourseManagement = () => {
                   label="Price (VND)"
                   rules={[{ required: true, message: 'Please enter the price!' }]}
                 >
-                  <InputNumber 
+                  <InputNumber
                     className="w-full"
-                    placeholder="Enter the price" 
+                    placeholder="Enter the price"
                     min={0}
-                    formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                    formatter={value => `${value} `.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                     parser={value => value.replace(/\$\s?|(,*)/g, '')}
                   />
                 </Form.Item>
@@ -490,12 +619,12 @@ const CourseManagement = () => {
               {lessonForms.map((form, index) => (
                 <Card
                   key={index}
-                  title={`Lesson ${form.orderIndex}`}
+                  title={`Lesson ${form.orderIndex} `}
                   extra={
                     lessonForms.length > 1 && (
-                      <Button 
-                        danger 
-                        size="small" 
+                      <Button
+                        danger
+                        size="small"
                         icon={<DeleteOutlined />}
                         onClick={() => removeLessonForm(index)}
                       >
@@ -562,18 +691,41 @@ const CourseManagement = () => {
                       <Input
                         placeholder="https://www.youtube.com/watch?v=..."
                         value={form.videoUrl}
-                        onChange={(e) => updateLessonForm(index, 'videoUrl', e.target.value)}
+                        onChange={async (e) => {
+                          const url = e.target.value;
+                          updateLessonForm(index, 'videoUrl', url);
+
+                          // Auto-fetch duration when URL is pasted/changed
+                          const videoId = extractYouTubeId(url);
+                          if (videoId) {
+                            setFetchingDuration(prev => ({ ...prev, [index]: true }));
+                            const duration = await fetchYouTubeDuration(videoId);
+                            setFetchingDuration(prev => ({ ...prev, [index]: false }));
+
+                            if (duration !== null && duration > 0) {
+                              updateLessonForm(index, 'duration', duration);
+                            }
+                          }
+                        }}
+                        suffix={
+                          fetchingDuration[index] && (
+                            <Spin size="small" />
+                          )
+                        }
                       />
+                      <Text type="secondary" className="text-xs mt-1 block">
+                        Paste YouTube URL to automatically fetch video duration.
+                      </Text>
                     </div>
                   </div>
                 </Card>
               ))}
             </div>
 
-            <Button 
-              type="dashed" 
-              block 
-              icon={<PlusOutlined />} 
+            <Button
+              type="dashed"
+              block
+              icon={<PlusOutlined />}
               onClick={addLessonForm}
               className="mb-4"
             >
@@ -636,10 +788,38 @@ const CourseManagement = () => {
 
           <Form.Item
             name="imageUrl"
-            label="Course image URL"
-            rules={[{ required: true, message: 'Please enter the image URL!' }]}
+            label="Course image"
+            rules={[{ required: true, message: 'Please upload a course image!' }]}
           >
-            <Input placeholder="https://example.com/image.jpg" />
+            <div className="mb-2">
+              {editingCourse?.imageUrl && (
+                <div className="mb-2">
+                  <Text type="secondary" className="text-xs">Current image:</Text>
+                  <Image
+                    src={editingCourse.imageUrl}
+                    alt="Current course image"
+                    width={120}
+                    height={80}
+                    style={{ objectFit: 'cover', borderRadius: 4 }}
+                    className="mt-1"
+                  />
+                </div>
+              )}
+              <ImageUploader
+                multiple={false}
+                onImageUploaded={(images) => {
+                  if (images && images.length > 0) {
+                    const imageUrl = images[0].imageUrl;
+                    setUploadedImageUrl(imageUrl);
+                    // Update form field value directly
+                    const form = Modal.useForm ? Modal.useForm()[0] : null;
+                    if (form) {
+                      form.setFieldsValue({ imageUrl });
+                    }
+                  }
+                }}
+              />
+            </div>
           </Form.Item>
 
           <Row gutter={16}>
@@ -664,11 +844,11 @@ const CourseManagement = () => {
                 label="Price (VND)"
                 rules={[{ required: true, message: 'Please enter the price!' }]}
               >
-                <InputNumber 
+                <InputNumber
                   className="w-full"
-                  placeholder="Enter the price" 
+                  placeholder="Enter the price"
                   min={0}
-                  formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                  formatter={value => `${value} `.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                   parser={value => value.replace(/\$\s?|(,*)/g, '')}
                 />
               </Form.Item>

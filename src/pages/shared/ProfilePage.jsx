@@ -3,6 +3,7 @@ import { Card, Avatar, Tag, Typography, Descriptions, Button, Spin, Empty } from
 import { message } from "antd";
 import { decodeUserFromToken } from "../../util/authUtil";
 import { userService } from "../../service/userService";
+import { authService } from "../../service/authService";
 
 const { Title, Text } = Typography;
 
@@ -30,7 +31,8 @@ const ProfilePage = ({ roleLabel }) => {
 
 
     // Gọi trực tiếp API fetchUserById với userId
-    const detailResponse = await userService.fetchUserById();
+    const detailResponse = await authService.getProfile();
+    console.log(detailResponse)
     const detail = detailResponse?.result || detailResponse?.data?.result || detailResponse;
 
     if (!detail) {

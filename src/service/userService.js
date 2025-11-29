@@ -11,9 +11,9 @@ export const userService = {
       throw new Error(message);
         }
     },  
-    fetchUserById: async () => {
+    fetchUserById: async (id) => {
         try {
-           const res = await userApiController.getUserById();
+           const res = await userApiController.getUserById(id);
             return res.data;
         } catch (error) {
             const message =

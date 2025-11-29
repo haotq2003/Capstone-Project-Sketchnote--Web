@@ -66,4 +66,14 @@ export const authService = {
       return false;
     }
   },
+  getProfile : async () => {
+    try {
+      const res = await authApiController.getProfile();
+      return res.data.result;
+    } catch (err) {
+      const message =
+        err.response?.data?.message || "Get profile failed. Please try again.";
+      throw new Error(message);
+    }
+  },
 };

@@ -1,16 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { 
-  Typography, 
-  Card, 
-  Button, 
-  Row, 
-  Col, 
-  List, 
-  Avatar, 
-  Modal, 
-  Input, 
-  Space, 
-  Tag, 
+import {
+  Typography,
+  Card,
+  Button,
+  Row,
+  Col,
+  List,
+  Avatar,
+  Modal,
+  Input,
+  Space,
+  Tag,
   Divider,
   Empty,
   InputNumber,
@@ -20,11 +20,11 @@ import {
   Spin,
   BackTop
 } from 'antd';
-import { 
-  PlusOutlined, 
-  EditOutlined, 
-  DeleteOutlined, 
-  VideoCameraOutlined, 
+import {
+  PlusOutlined,
+  EditOutlined,
+  DeleteOutlined,
+  VideoCameraOutlined,
   ClockCircleOutlined,
   ArrowLeftOutlined,
   PlayCircleOutlined
@@ -45,10 +45,11 @@ const CourseDetail = ({ course, onBack }) => {
   const [pageSize, setPageSize] = useState(5);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  
+
   const [lessonForms, setLessonForms] = useState([
     { title: '', description: '', content: '', videoUrl: '', duration: 0, orderIndex: 1 }
   ]);
+  const [fetchingDuration, setFetchingDuration] = useState({});
 
   const [courseForm, setCourseForm] = useState({
     title: course.title,
@@ -77,18 +78,18 @@ const CourseDetail = ({ course, onBack }) => {
   // Lọc và tìm kiếm lessons
   const getFilteredLessons = () => {
     if (!lessons) return [];
-    
+
     let filtered = lessons;
-    
+
     // Lọc theo tìm kiếm
     if (searchTerm) {
-      filtered = filtered.filter(lesson => 
+      filtered = filtered.filter(lesson =>
         lesson.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         lesson.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
         lesson.content.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
-    
+
     return filtered;
   };
 
@@ -109,29 +110,92 @@ const CourseDetail = ({ course, onBack }) => {
     setSearchTerm(value);
     setCurrentPage(1); // Reset về trang đầu khi tìm kiếm
   };
-const extractVideoId = (url) => {
-  if (!url) return null;
-  
-  const cleanUrl = url.trim();
-  
-  // Regex cải tiến hỗ trợ tất cả format YouTube
-  const patterns = [
-    /(?:youtube\.com\/watch\?v=)([a-zA-Z0-9_-]{11})/, // youtube.com/watch?v=
-    /(?:youtu\.be\/)([a-zA-Z0-9_-]{11})/, // youtu.be/ (có thể có ?si= sau)
-    /(?:youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/, // youtube.com/embed/
-    /(?:youtube\.com\/v\/)([a-zA-Z0-9_-]{11})/, // youtube.com/v/
-    /(?:youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/ // youtube.com/shorts/
-  ];
+  const extractVideoId = (url) => {
+    if (!url) return null;
 
-  for (const pattern of patterns) {
-    const match = cleanUrl.match(pattern);
-    if (match && match[1]) {
-      return match[1];
+    const cleanUrl = url.trim();
+
+    // Regex cải tiến hỗ trợ tất cả format YouTube
+    const patterns = [
+      /(?:youtube\.com\/watch\?v=)([a-zA-Z0-9_-]{11})/, // youtube.com/watch?v=
+      /(?:youtu\.be\/)([a-zA-Z0-9_-]{11})/, // youtu.be/ (có thể có ?si= sau)
+      /(?:youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/, // youtube.com/embed/
+      /(?:youtube\.com\/v\/)([a-zA-Z0-9_-]{11})/, // youtube.com/v/
+      /(?:youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/ // youtube.com/shorts/
+    ];
+
+    for (const pattern of patterns) {
+      const match = cleanUrl.match(pattern);
+      if (match && match[1]) {
+        return match[1];
+      }
     }
-  }
-  
-  return null;
-};
+
+    return null;
+  };
+
+  // Fetch YouTube video duration using YouTube Data API v3
+  const fetchYouTubeDuration = async (videoId) => {
+    try {
+      const apiKey = import.meta.env.VITE_YOUTUBE_API_KEY;
+
+      if (!apiKey || apiKey.includes('xZ9x')) {
+        message.warning('YouTube API key not configured.');
+        return null;
+      }
+
+      const url = `https://www.googleapis.com/youtube/v3/videos?id=${videoId}&part=contentDetails,snippet&key=${apiKey}`;
+      const response = await fetch(url);
+
+      if (!response.ok) {
+        throw new Error(`API returned ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (!data.items || data.items.length === 0) {
+        message.error('Video not found. Please check the URL.');
+        return null;
+      }
+
+      const video = data.items[0];
+      const duration = video.contentDetails.duration;
+      const title = video.snippet.title;
+
+      const durationInSeconds = parseDuration(duration);
+
+      message.success(`Video found: "${title}" (${formatDurationDisplay(durationInSeconds)})`);
+      return durationInSeconds;
+    } catch (error) {
+      console.error('YouTube API error:', error);
+      message.error(`Could not fetch video info: ${error.message}`);
+      return null;
+    }
+  };
+
+  // Parse ISO 8601 duration to seconds
+  const parseDuration = (duration) => {
+    const match = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+    if (!match) return 0;
+
+    const hours = parseInt(match[1] || 0);
+    const minutes = parseInt(match[2] || 0);
+    const seconds = parseInt(match[3] || 0);
+
+    return hours * 3600 + minutes * 60 + seconds;
+  };
+
+  // Format seconds to HH:MM:SS for display
+  const formatDurationDisplay = (seconds) => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+
+    if (hours > 0) {
+      return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+    return `${minutes}:${secs.toString().padStart(2, '0')}`;
+  };
 
 
 
@@ -140,7 +204,7 @@ const extractVideoId = (url) => {
   const showLessonModal = (mode = 'add', lesson = null) => {
     setModalMode(mode);
     setEditingLesson(lesson);
-    
+
     if (mode === 'edit' && lesson) {
       // Chế độ sửa - load dữ liệu bài học
       setLessonForms([{
@@ -153,10 +217,10 @@ const extractVideoId = (url) => {
       }]);
     } else {
       // Chế độ thêm mới - tính orderIndex tiếp theo
-      const nextOrderIndex = lessons.length > 0 
-        ? Math.max(...lessons.map(l => l.orderIndex)) + 1 
+      const nextOrderIndex = lessons.length > 0
+        ? Math.max(...lessons.map(l => l.orderIndex)) + 1
         : 1;
-      
+
       setLessonForms([{
         title: '',
         description: '',
@@ -166,7 +230,7 @@ const extractVideoId = (url) => {
         orderIndex: nextOrderIndex
       }]);
     }
-    
+
     setIsModalVisible(true);
   };
 
@@ -186,11 +250,11 @@ const extractVideoId = (url) => {
       if (modalMode === 'edit' && editingLesson) {
         // Cập nhật bài học
         const updatedLesson = await courseService.updateLesson(
-          editingLesson.lessonId, 
+          editingLesson.lessonId,
           lessonForms[0]
         );
-        
-        setLessons(lessons.map(l => 
+
+        setLessons(lessons.map(l =>
           l.lessonId === editingLesson.lessonId ? updatedLesson : l
         ));
         message.success('Lesson updated successfully!');
@@ -198,7 +262,7 @@ const extractVideoId = (url) => {
         // Thêm mới bài học
         const response = await courseService.createLesson(course.courseId, lessonForms);
         const newLessons = Array.isArray(response) ? response : (response.data || []);
-        
+
         if (newLessons.length > 0) {
           setLessons([...lessons, ...newLessons]);
           message.success(`Successfully added ${newLessons.length} lessons!`);
@@ -207,7 +271,7 @@ const extractVideoId = (url) => {
           message.success('Lesson added successfully!');
         }
       }
-      
+
       handleLessonCancel();
     } catch (error) {
       message.error(error.message || 'Error while saving lesson');
@@ -219,7 +283,7 @@ const extractVideoId = (url) => {
       ...lessonForms.map(f => f.orderIndex),
       lessons.length > 0 ? Math.max(...lessons.map(l => l.orderIndex)) : 0
     );
-    
+
     setLessonForms([
       ...lessonForms,
       {
@@ -236,9 +300,9 @@ const extractVideoId = (url) => {
   const removeLessonForm = (index) => {
     const updated = [...lessonForms];
     updated.splice(index, 1);
-    setLessonForms(updated.map((f, i) => ({ 
-      ...f, 
-      orderIndex: f.orderIndex 
+    setLessonForms(updated.map((f, i) => ({
+      ...f,
+      orderIndex: f.orderIndex
     })));
   };
 
@@ -284,9 +348,9 @@ const extractVideoId = (url) => {
   };
 
   const getCategoryTag = (category) => {
-    const colors = { 
-      'Art': 'green', 
-      'Design': 'blue', 
+    const colors = {
+      'Art': 'green',
+      'Design': 'blue',
       'Digital Art': 'purple',
       'Photography': 'orange',
       'Icons': 'cyan'
@@ -300,8 +364,8 @@ const extractVideoId = (url) => {
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <Space>
-            <Button 
-              icon={<ArrowLeftOutlined />} 
+            <Button
+              icon={<ArrowLeftOutlined />}
               onClick={onBack}
               size="large"
             >
@@ -309,9 +373,9 @@ const extractVideoId = (url) => {
             </Button>
             <Title level={3} className="!m-0">{course.title}</Title>
           </Space>
-          <Button 
-            type="primary" 
-            icon={<PlusOutlined />} 
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
             onClick={() => showLessonModal('add')}
             size="large"
           >
@@ -329,54 +393,54 @@ const extractVideoId = (url) => {
                   <Text type="secondary" className="block mb-1">Title:</Text>
                   <Title level={5} className="!m-0">{course.title}</Title>
                 </div>
-                
+
                 <div>
                   <Text type="secondary" className="block mb-1">Subtitle:</Text>
                   <Text strong>{course.subtitle}</Text>
                 </div>
-                
+
                 <div>
                   <Text type="secondary" className="block mb-1">Description:</Text>
                   <Paragraph className="!mb-0">{course.description}</Paragraph>
                 </div>
-                
+
                 <Divider className="!my-3" />
-                
+
                 <div className="flex justify-between items-center">
                   <Text type="secondary">Category:</Text>
                   {getCategoryTag(course.category)}
                 </div>
-                
+
                 <div className="flex justify-between items-center">
                   <Text type="secondary">Price:</Text>
                   <Text strong className="text-lg text-orange-500">
                     {course.price.toLocaleString()} VND
                   </Text>
                 </div>
-                
+
                 <div className="flex justify-between items-center">
                   <Text type="secondary">Students:</Text>
                   <Text strong>{course.studentCount || 0}</Text>
                 </div>
-                
+
                 <div className="flex justify-between items-center">
                   <Text type="secondary">Lessons:</Text>
                   <Tag color="blue">{lessons.length} lessons</Tag>
                 </div>
-                
+
                 <Divider className="!my-3" />
-                
+
                 <Space direction="vertical" className="w-full">
-                  <Button 
-                    icon={<EditOutlined />} 
-                    block 
+                  <Button
+                    icon={<EditOutlined />}
+                    block
                     onClick={() => setIsCourseModalVisible(true)}
                   >
                     Edit Course
                   </Button>
-                  <Button 
-                    icon={<DeleteOutlined />} 
-                    danger 
+                  <Button
+                    icon={<DeleteOutlined />}
+                    danger
                     block
                     onClick={handleDeleteCourse}
                   >
@@ -412,19 +476,19 @@ const extractVideoId = (url) => {
                     itemLayout="horizontal"
                     dataSource={getPaginatedLessons().sort((a, b) => a.orderIndex - b.orderIndex)}
                     renderItem={lesson => (
-                      <List.Item 
+                      <List.Item
                         className="hover:bg-gray-50 px-4 rounded transition-colors"
                         actions={[
-                          <Button 
-                            icon={<EditOutlined />} 
-                            size="small" 
+                          <Button
+                            icon={<EditOutlined />}
+                            size="small"
                             onClick={() => showLessonModal('edit', lesson)}
                           >
                             Edit
                           </Button>,
-                          <Button 
-                            icon={<DeleteOutlined />} 
-                            danger 
+                          <Button
+                            icon={<DeleteOutlined />}
+                            danger
                             size="small"
                             onClick={() => handleDeleteLesson(lesson.lessonId)}
                           >
@@ -454,18 +518,18 @@ const extractVideoId = (url) => {
                         />
                       </List.Item>
                     )}
-                />
+                  />
                 </Spin>
               ) : (
                 <Empty
-                  description={searchTerm ? "No lessons found" : "No lessons yet"} 
+                  description={searchTerm ? "No lessons found" : "No lessons yet"}
                   image={Empty.PRESENTED_IMAGE_SIMPLE}
                   className="py-12"
                 >
                   {!searchTerm && (
-                    <Button 
-                      type="primary" 
-                      icon={<PlusOutlined />} 
+                    <Button
+                      type="primary"
+                      icon={<PlusOutlined />}
                       onClick={() => showLessonModal('add')}
                       size="large"
                     >
@@ -486,7 +550,7 @@ const extractVideoId = (url) => {
                     onShowSizeChange={handlePageChange}
                     showSizeChanger
                     showQuickJumper
-                    showTotal={(total, range) => 
+                    showTotal={(total, range) =>
                       `${range[0]}-${range[1]} of ${total} lessons`
                     }
                     pageSizeOptions={['5', '10', '15', '20']}
@@ -523,9 +587,9 @@ const extractVideoId = (url) => {
                 <div className="flex items-center justify-between">
                   <span className="font-semibold">Lesson {form.orderIndex}</span>
                   {modalMode === 'add' && lessonForms.length > 1 && (
-                    <Button 
-                      danger 
-                      size="small" 
+                    <Button
+                      danger
+                      size="small"
                       icon={<DeleteOutlined />}
                       onClick={() => removeLessonForm(index)}
                     >
@@ -629,29 +693,52 @@ const extractVideoId = (url) => {
                     placeholder="https://www.youtube.com/watch?v=..."
                     size="large"
                     value={form.videoUrl}
-                    onChange={(e) => {
+                    onChange={async (e) => {
+                      const url = e.target.value;
                       const updated = [...lessonForms];
-                      updated[index].videoUrl = e.target.value;
+                      updated[index].videoUrl = url;
                       setLessonForms(updated);
+
+                      // Auto-fetch duration when URL is pasted/changed
+                      const videoId = extractVideoId(url);
+                      if (videoId) {
+                        setFetchingDuration(prev => ({ ...prev, [index]: true }));
+                        const duration = await fetchYouTubeDuration(videoId);
+                        setFetchingDuration(prev => ({ ...prev, [index]: false }));
+
+                        if (duration !== null && duration > 0) {
+                          const updatedWithDuration = [...lessonForms];
+                          updatedWithDuration[index].duration = duration;
+                          setLessonForms(updatedWithDuration);
+                        }
+                      }
                     }}
+                    suffix={
+                      fetchingDuration[index] && (
+                        <Spin size="small" />
+                      )
+                    }
                   />
-{form.videoUrl && (
-  <div className="mt-3">
-    <Text type="secondary" className="block mb-2">Preview:</Text>
-    <div className="relative inline-block">
-      <iframe
-        width="300"
-        height="170"
-        src={`https://www.youtube.com/embed/${extractVideoId(form.videoUrl)}`}
-        title="YouTube video preview"
-        frameBorder="0"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-        allowFullScreen
-        className="rounded"
-      ></iframe>
-    </div>
-  </div>
-)}
+                  <Text type="secondary" className="text-xs mt-1 block">
+                    Paste YouTube URL to automatically fetch video duration.
+                  </Text>
+                  {form.videoUrl && (
+                    <div className="mt-3">
+                      <Text type="secondary" className="block mb-2">Preview:</Text>
+                      <div className="relative inline-block">
+                        <iframe
+                          width="300"
+                          height="170"
+                          src={`https://www.youtube.com/embed/${extractVideoId(form.videoUrl)}`}
+                          title="YouTube video preview"
+                          frameBorder="0"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                          className="rounded"
+                        ></iframe>
+                      </div>
+                    </div>
+                  )}
 
 
                 </div>
@@ -660,11 +747,11 @@ const extractVideoId = (url) => {
           ))}
 
           {modalMode === 'add' && (
-            <Button 
-              type="dashed" 
-              block 
+            <Button
+              type="dashed"
+              block
               size="large"
-              icon={<PlusOutlined />} 
+              icon={<PlusOutlined />}
               onClick={addLessonForm}
             >
               Add Another Lesson
@@ -693,50 +780,50 @@ const extractVideoId = (url) => {
         <div className="space-y-4 py-4">
           <div>
             <label className="block mb-2 font-medium">Course title *</label>
-            <Input 
-              placeholder="Enter the course title" 
+            <Input
+              placeholder="Enter the course title"
               size="large"
               value={courseForm.title}
-              onChange={(e) => setCourseForm({...courseForm, title: e.target.value})}
+              onChange={(e) => setCourseForm({ ...courseForm, title: e.target.value })}
             />
           </div>
 
           <div>
             <label className="block mb-2 font-medium">Subtitle *</label>
-            <Input 
+            <Input
               placeholder="Enter the course subtitle"
               value={courseForm.subtitle}
-              onChange={(e) => setCourseForm({...courseForm, subtitle: e.target.value})}
+              onChange={(e) => setCourseForm({ ...courseForm, subtitle: e.target.value })}
             />
           </div>
 
           <div>
             <label className="block mb-2 font-medium">Description *</label>
-            <TextArea 
-              rows={4} 
+            <TextArea
+              rows={4}
               placeholder="Enter the detailed course description"
               value={courseForm.description}
-              onChange={(e) => setCourseForm({...courseForm, description: e.target.value})}
+              onChange={(e) => setCourseForm({ ...courseForm, description: e.target.value })}
             />
           </div>
 
           <Row gutter={16}>
             <Col span={12}>
               <label className="block mb-2 font-medium">Category *</label>
-              <Input 
-                placeholder="Enter category (Art, Design...)" 
+              <Input
+                placeholder="Enter category (Art, Design...)"
                 value={courseForm.category}
-                onChange={(e) => setCourseForm({...courseForm, category: e.target.value})}
+                onChange={(e) => setCourseForm({ ...courseForm, category: e.target.value })}
               />
             </Col>
             <Col span={12}>
               <label className="block mb-2 font-medium">Price (VND) *</label>
-              <InputNumber 
+              <InputNumber
                 className="w-full"
-                placeholder="Enter price" 
+                placeholder="Enter price"
                 min={0}
                 value={courseForm.price}
-                onChange={(value) => setCourseForm({...courseForm, price: value})}
+                onChange={(value) => setCourseForm({ ...courseForm, price: value })}
                 formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                 parser={value => value.replace(/\$\s?|(,*)/g, '')}
               />
@@ -745,7 +832,7 @@ const extractVideoId = (url) => {
         </div>
       </Modal>
 
-      
+
     </div>
   );
 };

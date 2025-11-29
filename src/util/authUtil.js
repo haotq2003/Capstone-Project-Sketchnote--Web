@@ -8,7 +8,8 @@ export function decodeUserFromToken(token) {
     const name = decoded?.name || `${decoded?.given_name || ""} ${decoded?.family_name || ""}`.trim();
     const roles = decoded?.realm_access?.roles || [];
 
-    return { email, name, roles };
+    const id = decoded?.sub;
+    return { id, email, name, roles };
   } catch (error) {
     console.error("Invalid token:", error);
     return null;

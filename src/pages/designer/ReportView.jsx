@@ -135,15 +135,15 @@ export default function DesignerReportView() {
   }, [series]);
 
   return (
-    <div style={{ padding: '24px', background: '#f0f2f5', minHeight: '100vh' }}>
+    <div style={{ padding: '24px', minHeight: '100vh' }}>
       {/* Header */}
-      <div style={{ marginBottom: '24px' }}>
+      {/* <div style={{ marginBottom: '24px' }}>
         <Title level={2} style={{ margin: 0, color: '#1f2937' }}>
           <LineChartOutlined style={{ marginRight: '12px', color: '#6366F1' }} />
           Sales Report
         </Title>
         <Text type="secondary">Detailed revenue analysis over time</Text>
-      </div>
+      </div> */}
 
       {/* Filters */}
       <Card

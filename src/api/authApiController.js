@@ -1,4 +1,4 @@
-import { publicApi } from "./axiosIntance";
+import { privateApi, publicApi } from "./axiosIntance";
 
 
 
@@ -33,4 +33,7 @@ logout: async () => {
       return false;
     }
   },
+  getProfile : async () => {
+    return await privateApi.get(`/api/users/me/profile`);
+  }
 }
