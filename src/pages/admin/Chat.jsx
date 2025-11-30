@@ -130,6 +130,7 @@ const Chat = () => {
         }
 
         console.log("✅ Adding new message to chat");
+
         return [...prevMessages, {
           id: message.id,
           senderId: message.senderId,
@@ -139,7 +140,7 @@ const Chat = () => {
           receiverName: message.receiverName,
           receiverAvatarUrl: message.receiverAvatarUrl,
           content: message.content,
-          createdAt: message.timestamp || message.createdAt,
+          createdAt: message.createdAt || message.timestamp,
           updatedAt: message.updatedAt
         }];
       });
@@ -235,6 +236,11 @@ const Chat = () => {
         updatedAt: response.updatedAt
       };
 
+      console.log("🕐 Backend createdAt:", response.createdAt);
+      console.log("🕐 Parsed as Date:", new Date(response.createdAt));
+      console.log("🕐 UTC Hours:", new Date(response.createdAt).getUTCHours());
+      console.log("🕐 Local Hours:", new Date(response.createdAt).getHours());
+
       setMessages((prevMessages) => [...prevMessages, newMessage]);
 
       // ✅ CẬP NHẬT DANH SÁCH CONVERSATIONS NGAY SAU KHI GỬI
@@ -247,13 +253,10 @@ const Chat = () => {
           senderName: response.senderName,
           senderAvatarUrl: response.senderAvatarUrl,
           receiverId: selectedChat.userId,
-          receiverName: selectedChat.userName,
-          receiverAvatarUrl: selectedChat.userAvatarUrl,
           content: messageContent,
-          timestamp: newMessage.createdAt,
-          id: response.id
+          timestamp: response.createdAt  // ✅ Backend cần "timestamp"
         };
-
+        console.log("Message sent via WebSocket:", wsMessage);
         webSocketService.send("/app/chat.private", wsMessage);
         console.log("Message sent via WebSocket:", wsMessage);
       }
@@ -277,18 +280,12 @@ const Chat = () => {
 
   const formatTime = (timeString) => {
     if (!timeString) return "";
-
-    // Parse the time string as UTC and convert to Vietnam time
-    const date = new Date(timeString);
-
-    // Add 'Z' if the string doesn't have timezone info to force UTC parsing
-    const utcDate = timeString.endsWith('Z') ? date : new Date(timeString + 'Z');
-
-    return utcDate.toLocaleTimeString("vi-VN", {
-      hour: "2-digit",
-      minute: "2-digit",
-      timeZone: "Asia/Ho_Chi_Minh",
-    });
+    // ✅ Ensure UTC parsing by adding 'Z' if missing
+    const utcString = timeString.endsWith('Z') ? timeString : timeString + 'Z';
+    const date = new Date(utcString);
+    const hours = date.getUTCHours().toString().padStart(2, '0');
+    const minutes = date.getUTCMinutes().toString().padStart(2, '0');
+    return `${hours}:${minutes}`;
   };
 
   return (
