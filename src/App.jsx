@@ -12,6 +12,7 @@ import ManageUsers from "./pages/admin/UserManagement";
 import AdminRevenueView from "./pages/admin/RevenueView";
 import AdminDashboard from "./pages/admin/Dashboard";
 import AdminProfile from "./pages/admin/Profile";
+import ManagerCredit from "./pages/admin/ManagerCredit";
 
 import NotFound from "./pages/NotFound";
 
@@ -24,6 +25,7 @@ import StaffProfile from "./pages/staff/Profile";
 import DesignerProfile from "./pages/designer/Profile";
 import Chat from "./pages/admin/Chat";
 import SketchNoteChat from "./pages/admin/chat2";
+import SubscriptionPackages from "./pages/admin/SubscriptionPackages";
 
 
 function App() {
@@ -59,6 +61,8 @@ function App() {
         <Route path="profile" element={<AdminProfile />} />
         <Route path="chat" element={<Chat />} />
         <Route path="chat2" element={<SketchNoteChat />} />
+        <Route path="credit" element={<ManagerCredit />} />
+        <Route path="subscriptions" element={<SubscriptionPackages />} />
       </Route>
 
       <Route path="*" element={<NotFound />} />
