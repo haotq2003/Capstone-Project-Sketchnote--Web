@@ -32,6 +32,8 @@ export function AdminHeader() {
     '/admin/chat': 'Chat Support',
     '/admin/profile': 'Profile',
     '/admin': 'Dashboard',
+    '/admin/credit': 'Credit Management',
+    '/admin/subscriptions': 'Subscription Packages',
   };
 
   // Get current page title
