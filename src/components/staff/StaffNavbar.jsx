@@ -1,5 +1,12 @@
 import { NavLink, useNavigate } from "react-router-dom";
-import { LayoutDashboard, DollarSign, Headphones, BookOpen, ScrollText, LogOut } from "lucide-react";
+import {
+  LayoutDashboard,
+  DollarSign,
+  Headphones,
+  BookOpen,
+  ScrollText,
+  LogOut,
+} from "lucide-react";
 import { authService } from "../../service/authService";
 
 export default function StaffNavbar() {
@@ -26,10 +33,14 @@ export default function StaffNavbar() {
           <img
             src="https://res.cloudinary.com/dturncvxv/image/upload/v1759910431/b5e15cec-6489-46e7-bd9e-596a24bd5225_wbpdjm.jpg"
             alt="logo"
-
           />
         </div>
-        <span className="text-2xl font-bold" style={{ fontFamily: 'Pacifico, cursive', color: '#084F8C' }}>SketchNote</span>
+        <span
+          className="text-2xl"
+          style={{ fontFamily: "Pacifico, cursive", color: "#084F8C" }}
+        >
+          SketchNote
+        </span>
       </div>
 
       {/* Navigation */}
@@ -45,9 +56,10 @@ export default function StaffNavbar() {
                 <NavLink
                   to={item.path}
                   className={({ isActive }) =>
-                    `w-full  flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${isActive
-                      ? "bg-indigo-50 text-indigo-600 font-medium"
-                      : "text-gray-700 hover:bg-gray-50"
+                    `w-full  flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
+                      isActive
+                        ? "bg-indigo-50 text-indigo-600 font-medium"
+                        : "text-gray-700 hover:bg-gray-50"
                     }`
                   }
                 >
@@ -55,9 +67,13 @@ export default function StaffNavbar() {
                     <>
                       <Icon
                         size={22}
-                        className={isActive ? "text-indigo-600" : "text-gray-500"}
+                        className={
+                          isActive ? "text-indigo-600" : "text-gray-500"
+                        }
                       />
-                      <span className="text-base font-medium">{item.label}</span>
+                      <span className="text-base font-medium">
+                        {item.label}
+                      </span>
                     </>
                   )}
                 </NavLink>
@@ -66,9 +82,7 @@ export default function StaffNavbar() {
           })}
         </ul>
       </nav>
-      <div className="mt-auto px-4 pb-6 pt-4 border-t border-gray-100">
-
-      </div>
+      <div className="mt-auto px-4 pb-6 pt-4 border-t border-gray-100"></div>
     </aside>
   );
 }
