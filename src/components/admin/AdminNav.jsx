@@ -15,8 +15,8 @@ import { authService } from "../../service/authService";
 const menuItems = [
   { title: "Dashboard", icon: LayoutDashboard, path: "/admin" },
   { title: "User Manager", icon: User, path: "/admin/users" },
-  // { title: "Accept Resources", icon: FileText, path: "/admin/resources" },
-  // { title: "Subscription Packages", icon: Box, path: "/admin/subscriptions" },
+  { title: "Credit Packages", icon: FileText, path: "/admin/credit" },
+  { title: "Subscription Packages", icon: Box, path: "/admin/subscriptions" },
   { title: "Revenue", icon: HandCoins, path: "/admin/revenue" },
   { title: "Chat", icon: BookA, path: "/admin/chat" },
 ];
