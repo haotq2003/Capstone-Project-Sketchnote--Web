@@ -26,7 +26,15 @@ import DesignerProfile from "./pages/designer/Profile";
 import Chat from "./pages/admin/Chat";
 import SketchNoteChat from "./pages/admin/chat2";
 import SubscriptionPackages from "./pages/admin/SubscriptionPackages";
+import WalletsManagement from "./pages/admin/WalletsManagement";
+import TransactionsManagement from "./pages/admin/TransactionsManagement";
+import UserTransactions from "./pages/admin/UserTransactions";
+import SubscriptionTransactions from "./pages/admin/SubscriptionTransactions";
+import CreditTransactions from "./pages/admin/CreditTransactions";
+import OrderTransactions from "./pages/admin/OrderTransactions";
 
+
+import AdminWithdrawalManagement from "./pages/admin/WithdrawalManagement";
 
 function App() {
   return (
@@ -63,6 +71,14 @@ function App() {
         <Route path="chat2" element={<SketchNoteChat />} />
         <Route path="credit" element={<ManagerCredit />} />
         <Route path="subscriptions" element={<SubscriptionPackages />} />
+        <Route path="wallets" element={<WalletsManagement />} />
+        <Route path="transactions" element={<TransactionsManagement />} />
+        <Route path="user-transactions" element={<UserTransactions />} />
+        <Route path="subscription-transactions" element={<SubscriptionTransactions />} />
+        <Route path="credit-transactions" element={<CreditTransactions />} />
+        <Route path="credit-transactions" element={<CreditTransactions />} />
+        <Route path="order-transactions" element={<OrderTransactions />} />
+        <Route path="withdrawals" element={<AdminWithdrawalManagement />} />
       </Route>
 
       <Route path="*" element={<NotFound />} />

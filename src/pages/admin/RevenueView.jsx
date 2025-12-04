@@ -262,122 +262,122 @@ export default function AdminRevenueView() {
 
             {/* Statistics Cards */}
             <Row gutter={[16, 16]} style={{ marginBottom: "24px" }}>
-  {/* Total Revenue */}
-  <Col xs={24} sm={12} lg={8}>
-    <Card
-      bordered={false}
-      hoverable
-      style={{
-        borderRadius: "12px",
-        background: "linear-gradient(135deg, #ff9966 0%, #ff5e62 100%)",
-        boxShadow: "0 4px 12px rgba(255, 94, 98, 0.35)",
-        transition: "all 0.3s ease",
-        cursor: "pointer",
-      }}
-      bodyStyle={{ padding: 24 }}
-      onMouseEnter={(e) =>
-        (e.currentTarget.style.transform = "translateY(-6px)")
-      }
-      onMouseLeave={(e) =>
-        (e.currentTarget.style.transform = "translateY(0)")
-      }
-    >
-      <Statistic
-        title={
-          <span style={{ color: "rgba(255,255,255,0.9)", fontSize: "14px" }}>
-            Total Revenue
-          </span>
-        }
-        value={totalRevenue}
-        precision={0}
-        valueStyle={{
-          color: "#fff",
-          fontSize: "30px",
-          fontWeight: "bold",
-        }}
-        prefix={<DollarOutlined style={{ color: "#fff" }} />}
-        suffix="đ"
-      />
-    </Card>
-  </Col>
+                {/* Total Revenue */}
+                <Col xs={24} sm={12} lg={8}>
+                    <Card
+                        bordered={false}
+                        hoverable
+                        style={{
+                            borderRadius: "12px",
+                            background: "linear-gradient(135deg, #ff9966 0%, #ff5e62 100%)",
+                            boxShadow: "0 4px 12px rgba(255, 94, 98, 0.35)",
+                            transition: "all 0.3s ease",
+                            cursor: "pointer",
+                        }}
+                        bodyStyle={{ padding: 24 }}
+                        onMouseEnter={(e) =>
+                            (e.currentTarget.style.transform = "translateY(-6px)")
+                        }
+                        onMouseLeave={(e) =>
+                            (e.currentTarget.style.transform = "translateY(0)")
+                        }
+                    >
+                        <Statistic
+                            title={
+                                <span style={{ color: "rgba(255,255,255,0.9)", fontSize: "14px" }}>
+                                    Total Revenue
+                                </span>
+                            }
+                            value={totalRevenue}
+                            precision={0}
+                            valueStyle={{
+                                color: "#fff",
+                                fontSize: "30px",
+                                fontWeight: "bold",
+                            }}
+                            prefix={<DollarOutlined style={{ color: "#fff" }} />}
+                            suffix="đ"
+                        />
+                    </Card>
+                </Col>
 
-  {/* Highest */}
-  <Col xs={24} sm={12} lg={8}>
-    <Card
-      bordered={false}
-      hoverable
-      style={{
-        borderRadius: "12px",
-        background: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
-        boxShadow: "0 4px 12px rgba(245, 87, 108, 0.35)",
-        transition: "all 0.3s ease",
-        cursor: "pointer",
-      }}
-      bodyStyle={{ padding: 24 }}
-      onMouseEnter={(e) =>
-        (e.currentTarget.style.transform = "translateY(-6px)")
-      }
-      onMouseLeave={(e) =>
-        (e.currentTarget.style.transform = "translateY(0)")
-      }
-    >
-      <Statistic
-        title={
-          <span style={{ color: "rgba(255,255,255,0.9)", fontSize: "14px" }}>
-            Highest
-          </span>
-        }
-        value={maxRevenue}
-        precision={0}
-        valueStyle={{
-          color: "#fff",
-          fontSize: "30px",
-          fontWeight: "bold",
-        }}
-        prefix={<TrophyOutlined style={{ color: "#fff" }} />}
-        suffix="đ"
-      />
-    </Card>
-  </Col>
+                {/* Highest */}
+                <Col xs={24} sm={12} lg={8}>
+                    <Card
+                        bordered={false}
+                        hoverable
+                        style={{
+                            borderRadius: "12px",
+                            background: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
+                            boxShadow: "0 4px 12px rgba(245, 87, 108, 0.35)",
+                            transition: "all 0.3s ease",
+                            cursor: "pointer",
+                        }}
+                        bodyStyle={{ padding: 24 }}
+                        onMouseEnter={(e) =>
+                            (e.currentTarget.style.transform = "translateY(-6px)")
+                        }
+                        onMouseLeave={(e) =>
+                            (e.currentTarget.style.transform = "translateY(0)")
+                        }
+                    >
+                        <Statistic
+                            title={
+                                <span style={{ color: "rgba(255,255,255,0.9)", fontSize: "14px" }}>
+                                    Highest
+                                </span>
+                            }
+                            value={maxRevenue}
+                            precision={0}
+                            valueStyle={{
+                                color: "#fff",
+                                fontSize: "30px",
+                                fontWeight: "bold",
+                            }}
+                            prefix={<TrophyOutlined style={{ color: "#fff" }} />}
+                            suffix="đ"
+                        />
+                    </Card>
+                </Col>
 
-  {/* Average */}
-  <Col xs={24} sm={12} lg={8}>
-    <Card
-      bordered={false}
-      hoverable
-      style={{
-        borderRadius: "12px",
-        background: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
-        boxShadow: "0 4px 12px rgba(79, 172, 254, 0.35)",
-        transition: "all 0.3s ease",
-        cursor: "pointer",
-      }}
-      bodyStyle={{ padding: 24 }}
-      onMouseEnter={(e) =>
-        (e.currentTarget.style.transform = "translateY(-6px)")
-      }
-      onMouseLeave={(e) =>
-        (e.currentTarget.style.transform = "translateY(0)")
-      }
-    >
-      <Statistic
-        title={
-          <span style={{ color: "rgba(255,255,255,0.9)", fontSize: "14px" }}>
-            Average
-          </span>
-        }
-        value={avgRevenue}
-        precision={0}
-        valueStyle={{
-          color: "#fff",
-          fontSize: "30px",
-          fontWeight: "bold",
-        }}
-        suffix="đ"
-      />
-    </Card>
-  </Col>
-</Row>
+                {/* Average */}
+                <Col xs={24} sm={12} lg={8}>
+                    <Card
+                        bordered={false}
+                        hoverable
+                        style={{
+                            borderRadius: "12px",
+                            background: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
+                            boxShadow: "0 4px 12px rgba(79, 172, 254, 0.35)",
+                            transition: "all 0.3s ease",
+                            cursor: "pointer",
+                        }}
+                        bodyStyle={{ padding: 24 }}
+                        onMouseEnter={(e) =>
+                            (e.currentTarget.style.transform = "translateY(-6px)")
+                        }
+                        onMouseLeave={(e) =>
+                            (e.currentTarget.style.transform = "translateY(0)")
+                        }
+                    >
+                        <Statistic
+                            title={
+                                <span style={{ color: "rgba(255,255,255,0.9)", fontSize: "14px" }}>
+                                    Average
+                                </span>
+                            }
+                            value={avgRevenue}
+                            precision={0}
+                            valueStyle={{
+                                color: "#fff",
+                                fontSize: "30px",
+                                fontWeight: "bold",
+                            }}
+                            suffix="đ"
+                        />
+                    </Card>
+                </Col>
+            </Row>
 
 
             {/* Main Charts */}
@@ -399,19 +399,19 @@ export default function AdminRevenueView() {
                             ) : (
                                 <ResponsiveContainer width="100%" height={400}>
                                     {revenueType === 'all' ? (
-                                        <ComposedChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                                        <BarChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                                             <defs>
-                                                <linearGradient id="courseGradient" x1="0" y1="0" x2="0" y2="1">
-                                                    <stop offset="5%" stopColor="#10B981" stopOpacity={0.8} />
-                                                    <stop offset="95%" stopColor="#10B981" stopOpacity={0.1} />
+                                                <linearGradient id="courseBarGradient" x1="0" y1="0" x2="0" y2="1">
+                                                    <stop offset="0%" stopColor="#10B981" stopOpacity={1} />
+                                                    <stop offset="100%" stopColor="#10B981" stopOpacity={0.7} />
                                                 </linearGradient>
-                                                <linearGradient id="subscriptionGradient" x1="0" y1="0" x2="0" y2="1">
-                                                    <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.8} />
-                                                    <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0.1} />
+                                                <linearGradient id="subscriptionBarGradient" x1="0" y1="0" x2="0" y2="1">
+                                                    <stop offset="0%" stopColor="#8B5CF6" stopOpacity={1} />
+                                                    <stop offset="100%" stopColor="#8B5CF6" stopOpacity={0.7} />
                                                 </linearGradient>
-                                                <linearGradient id="commissionGradient" x1="0" y1="0" x2="0" y2="1">
-                                                    <stop offset="5%" stopColor="#EC4899" stopOpacity={0.8} />
-                                                    <stop offset="95%" stopColor="#EC4899" stopOpacity={0.1} />
+                                                <linearGradient id="commissionBarGradient" x1="0" y1="0" x2="0" y2="1">
+                                                    <stop offset="0%" stopColor="#EC4899" stopOpacity={1} />
+                                                    <stop offset="100%" stopColor="#EC4899" stopOpacity={0.7} />
                                                 </linearGradient>
                                             </defs>
                                             <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
@@ -426,10 +426,10 @@ export default function AdminRevenueView() {
                                                 formatter={(value) => `${value.toLocaleString()} đ`}
                                             />
                                             <Legend />
-                                            <Area type="monotone" dataKey="course" stroke="#10B981" fill="url(#courseGradient)" name="Course" />
-                                            <Area type="monotone" dataKey="subscription" stroke="#8B5CF6" fill="url(#subscriptionGradient)" name="Subscription" />
-                                            <Area type="monotone" dataKey="commission" stroke="#EC4899" fill="url(#commissionGradient)" name="Commission" />
-                                        </ComposedChart>
+                                            <Bar dataKey="course" stackId="revenue" fill="url(#courseBarGradient)" name="Course" radius={[0, 0, 0, 0]} />
+                                            <Bar dataKey="subscription" stackId="revenue" fill="url(#subscriptionBarGradient)" name="Subscription" radius={[0, 0, 0, 0]} />
+                                            <Bar dataKey="commission" stackId="revenue" fill="url(#commissionBarGradient)" name="Commission" radius={[8, 8, 0, 0]} />
+                                        </BarChart>
                                     ) : (
                                         <BarChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                                             <defs>
