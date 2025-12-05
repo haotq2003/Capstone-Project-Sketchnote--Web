@@ -146,4 +146,45 @@ export const dashboardAminService = {
             throw new Error(message);
         }
     },
+
+    ////////////////////////////
+    ////////// revenue /////////
+    ////////////////////////////
+    getTopTokenPackages: async (limit) => {
+        try {
+            const response = await dashboardAdminApiController.getTopTokenPackages(limit);
+            return response.data.result;
+        } catch (error) {
+            const message = error.response?.data?.message || error.message || "Get top token packages failed.";
+            throw new Error(message);
+        }
+    },
+    getTopSubscriptions: async (limit) => {
+        try {
+            const response = await dashboardAdminApiController.getTopSubscriptions(limit);
+            return response.data.result;
+        } catch (error) {
+            const message = error.response?.data?.message || error.message || "Get top subscriptions failed.";
+            throw new Error(message);
+        }
+    },
+    getRevenueDashboard: async (start, end, groupBy, type) => {
+        try {
+            const response = await dashboardAdminApiController.getRevenueDashboard(start, end, groupBy, type);
+            return response.data.result;
+        } catch (error) {
+            const message = error.response?.data?.message || error.message || "Get revenue dashboard failed.";
+            throw new Error(message);
+        }
+    },
+    getDashboardOverview: async () => {
+        try {
+            const response = await dashboardAdminApiController.getDashboardOverview();
+            return response.data.result;
+        } catch (error) {
+            const message = error.response?.data?.message || error.message || "Get dashboard overview failed.";
+            throw new Error(message);
+        }
+    },
+
 };

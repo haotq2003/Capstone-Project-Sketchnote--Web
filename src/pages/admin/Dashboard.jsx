@@ -28,12 +28,19 @@ export default function AdminDashboard() {
   const [topResources, setTopResources] = useState([]);
   const [topDesigners, setTopDesigners] = useState([]);
   const [designerNames, setDesignerNames] = useState({});
+  const [walletOverview, setWalletOverview] = useState(null);
+  const [topTokenPackages, setTopTokenPackages] = useState([]);
+  const [topSubscriptions, setTopSubscriptions] = useState([]);
 
   useEffect(() => {
     dashboardAminService.fetchUser().then(setUserData);
     dashboardAminService.fetchTotalOrderAndEnrollments().then(setTotalOrderAndEnrollments);
     dashboardAminService.fetchTopCourses(5).then(setTopCourses);
+    dashboardAminService.fetchTopCourses(5).then(setTopCourses);
     dashboardAminService.fetchTopResources(5).then(setTopResources);
+    dashboardAminService.getDashboardOverview().then(setWalletOverview);
+    dashboardAminService.getTopTokenPackages(5).then(setTopTokenPackages);
+    dashboardAminService.getTopSubscriptions(5).then(setTopSubscriptions);
     dashboardAminService.fetchTopDesigners(5).then((designers) => {
       setTopDesigners(designers);
       // Fetch designer names
@@ -63,10 +70,10 @@ export default function AdminDashboard() {
             index === 0
               ? "gold"
               : index === 1
-              ? "silver"
-              : index === 2
-              ? "blue"
-              : "purple"
+                ? "silver"
+                : index === 2
+                  ? "blue"
+                  : "purple"
           }
           style={{ fontWeight: 600 }}
         >
@@ -100,101 +107,239 @@ export default function AdminDashboard() {
       <Title level={3}>Admin Dashboard</Title>
 
       {/* ==================== TOP STATISTICS ==================== */}
-      <Row gutter={16}>
-  <Col span={6}>
-    <Card
-      style={{
-        borderLeft: "4px solid #1677ff",
-        backgroundColor: "#e6f4ff",
-        transition: "all 0.3s",
-        cursor: "pointer",
-      }}
-      hoverable
-      bodyStyle={{ padding: 20 }}
-      onMouseEnter={(e) => (e.currentTarget.style.transform = "translateY(-5px)")}
-      onMouseLeave={(e) => (e.currentTarget.style.transform = "translateY(0)")}
-    >
-      <Statistic
-        title="Total Users"
-        value={userData?.totalUsers || 0}
-        prefix={<UserOutlined style={{ color: "#1677ff" }} />}
-      />
-    </Card>
-  </Col>
-
-  <Col span={6}>
-    <Card
-      style={{
-        borderLeft: "4px solid #52c41a",
-        backgroundColor: "#f6ffed",
-        transition: "all 0.3s",
-        cursor: "pointer",
-      }}
-      hoverable
-      bodyStyle={{ padding: 20 }}
-      onMouseEnter={(e) => (e.currentTarget.style.transform = "translateY(-5px)")}
-      onMouseLeave={(e) => (e.currentTarget.style.transform = "translateY(0)")}
-    >
-      <Statistic
-        title="Total Customers"
-        value={userData?.customers || 0}
-        prefix={<TeamOutlined style={{ color: "#52c41a" }} />}
-      />
-    </Card>
-  </Col>
-
-  <Col span={6}>
-    <Card
-      style={{
-        borderLeft: "4px solid #faad14",
-        backgroundColor: "#fff7e6",
-        transition: "all 0.3s",
-        cursor: "pointer",
-      }}
-      hoverable
-      bodyStyle={{ padding: 20 }}
-      onMouseEnter={(e) => (e.currentTarget.style.transform = "translateY(-5px)")}
-      onMouseLeave={(e) => (e.currentTarget.style.transform = "translateY(0)")}
-    >
-      <Statistic
-        title="Total Designers"
-        value={userData?.designers || 0}
-        prefix={<CrownOutlined style={{ color: "#faad14" }} />}
-      />
-    </Card>
-  </Col>
-
-  <Col span={6}>
-    <Card
-      style={{
-        borderLeft: "4px solid #ff4d4f",
-        backgroundColor: "#fff1f0",
-        transition: "all 0.3s",
-        cursor: "pointer",
-      }}
-      hoverable
-      bodyStyle={{ padding: 20 }}
-      onMouseEnter={(e) => (e.currentTarget.style.transform = "translateY(-5px)")}
-      onMouseLeave={(e) => (e.currentTarget.style.transform = "translateY(0)")}
-    >
-      <Statistic
-        title="Total Orders"
-        value={totalOrderAndEnrollments?.totalOrders || 0}
-        prefix={<ShoppingCartOutlined style={{ color: "#ff4d4f" }} />}
-      />
-    </Card>
-  </Col>
-</Row>
-
-
-      <Row gutter={16} style={{ marginTop: 16 }}>
+      {/* ==================== TOP STATISTICS ==================== */}
+      <Row gutter={[16, 16]}>
         <Col span={6}>
-          <Card style={{ borderLeft: "4px solid #722ed1" }}>
+          <Card
+            style={{
+              borderLeft: "4px solid #1677ff",
+              backgroundColor: "#e6f4ff",
+              transition: "all 0.3s",
+              cursor: "pointer",
+            }}
+            hoverable
+            bodyStyle={{ padding: 20 }}
+            onMouseEnter={(e) => (e.currentTarget.style.transform = "translateY(-5px)")}
+            onMouseLeave={(e) => (e.currentTarget.style.transform = "translateY(0)")}
+          >
+            <Statistic
+              title="Total Users"
+              value={userData?.totalUsers || 0}
+              prefix={<UserOutlined style={{ color: "#1677ff" }} />}
+            />
+          </Card>
+        </Col>
+
+        <Col span={6}>
+          <Card
+            style={{
+              borderLeft: "4px solid #52c41a",
+              backgroundColor: "#f6ffed",
+              transition: "all 0.3s",
+              cursor: "pointer",
+            }}
+            hoverable
+            bodyStyle={{ padding: 20 }}
+            onMouseEnter={(e) => (e.currentTarget.style.transform = "translateY(-5px)")}
+            onMouseLeave={(e) => (e.currentTarget.style.transform = "translateY(0)")}
+          >
+            <Statistic
+              title="Total Customers"
+              value={userData?.customers || 0}
+              prefix={<TeamOutlined style={{ color: "#52c41a" }} />}
+            />
+          </Card>
+        </Col>
+
+        <Col span={6}>
+          <Card
+            style={{
+              borderLeft: "4px solid #faad14",
+              backgroundColor: "#fff7e6",
+              transition: "all 0.3s",
+              cursor: "pointer",
+            }}
+            hoverable
+            bodyStyle={{ padding: 20 }}
+            onMouseEnter={(e) => (e.currentTarget.style.transform = "translateY(-5px)")}
+            onMouseLeave={(e) => (e.currentTarget.style.transform = "translateY(0)")}
+          >
+            <Statistic
+              title="Total Designers"
+              value={userData?.designers || 0}
+              prefix={<CrownOutlined style={{ color: "#faad14" }} />}
+            />
+          </Card>
+        </Col>
+
+        <Col span={6}>
+          <Card
+            style={{
+              borderLeft: "4px solid #722ed1",
+              backgroundColor: "#f9f0ff",
+              transition: "all 0.3s",
+              cursor: "pointer",
+            }}
+            hoverable
+            bodyStyle={{ padding: 20 }}
+            onMouseEnter={(e) => (e.currentTarget.style.transform = "translateY(-5px)")}
+            onMouseLeave={(e) => (e.currentTarget.style.transform = "translateY(0)")}
+          >
             <Statistic
               title="Total Enrollments"
               value={totalOrderAndEnrollments?.totalEnrollments || 0}
               prefix={<BookOutlined style={{ color: "#722ed1" }} />}
             />
+          </Card>
+        </Col>
+
+        {/* Wallet Overview Cards moved here */}
+        {walletOverview && (
+          <>
+            <Col span={6}>
+              <Card
+                style={{
+                  borderLeft: "4px solid #13c2c2",
+                  backgroundColor: "#e6fffb",
+                  transition: "all 0.3s",
+                  cursor: "pointer",
+                }}
+                hoverable
+                bodyStyle={{ padding: 20 }}
+                onMouseEnter={(e) => (e.currentTarget.style.transform = "translateY(-5px)")}
+                onMouseLeave={(e) => (e.currentTarget.style.transform = "translateY(0)")}
+              >
+                <Statistic
+                  title="Total Balance"
+                  value={walletOverview.totalBalance}
+                  precision={0}
+                  suffix="₫"
+                  valueStyle={{ color: '#13c2c2' }}
+                  prefix={<span style={{ fontSize: 20 }}>💰</span>}
+                />
+              </Card>
+            </Col>
+            <Col span={6}>
+              <Card
+                style={{
+                  borderLeft: "4px solid #ff4d4f",
+                  backgroundColor: "#fff1f0",
+                  transition: "all 0.3s",
+                  cursor: "pointer",
+                }}
+                hoverable
+                bodyStyle={{ padding: 20 }}
+                onMouseEnter={(e) => (e.currentTarget.style.transform = "translateY(-5px)")}
+                onMouseLeave={(e) => (e.currentTarget.style.transform = "translateY(0)")}
+              >
+                <Statistic
+                  title="Subscription Balance"
+                  value={walletOverview.subscriptionBalance}
+                  precision={0}
+                  suffix="₫"
+                  valueStyle={{ color: '#ff4d4f' }}
+                  prefix={<CrownOutlined style={{ color: "#ff4d4f" }} />}
+                />
+              </Card>
+            </Col>
+            <Col span={6}>
+              <Card
+                style={{
+                  borderLeft: "4px solid #2f54eb",
+                  backgroundColor: "#f0f5ff",
+                  transition: "all 0.3s",
+                  cursor: "pointer",
+                }}
+                hoverable
+                bodyStyle={{ padding: 20 }}
+                onMouseEnter={(e) => (e.currentTarget.style.transform = "translateY(-5px)")}
+                onMouseLeave={(e) => (e.currentTarget.style.transform = "translateY(0)")}
+              >
+                <Statistic
+                  title="Token Balance"
+                  value={walletOverview.tokenBalance}
+                  precision={0}
+                  suffix="₫"
+                  valueStyle={{ color: '#2f54eb' }}
+                  prefix={<BookOutlined style={{ color: "#2f54eb" }} />}
+                />
+              </Card>
+            </Col>
+            <Col span={6}>
+              <Card
+                style={{
+                  borderLeft: "4px solid #eb2f96",
+                  backgroundColor: "#fff0f6",
+                  transition: "all 0.3s",
+                  cursor: "pointer",
+                }}
+                hoverable
+                bodyStyle={{ padding: 20 }}
+                onMouseEnter={(e) => (e.currentTarget.style.transform = "translateY(-5px)")}
+                onMouseLeave={(e) => (e.currentTarget.style.transform = "translateY(0)")}
+              >
+                <Statistic
+                  title="User Wallet Balance"
+                  value={walletOverview.totalUserWalletBalance}
+                  precision={0}
+                  suffix="₫"
+                  valueStyle={{ color: '#eb2f96' }}
+                  prefix={<UserOutlined style={{ color: "#eb2f96" }} />}
+                />
+              </Card>
+            </Col>
+          </>
+        )}
+      </Row>
+
+      {/* ==================== TOP SUBSCRIPTIONS & TOKENS ==================== */}
+      <Row gutter={16} style={{ marginTop: 32 }}>
+        <Col span={12}>
+          <Card title="💎 Top Subscriptions">
+            {topSubscriptions?.map((item, index) => (
+              <Row
+                key={item.planId}
+                justify="space-between"
+                style={{
+                  padding: "14px 0",
+                  borderBottom: "1px solid #f0f0f0",
+                }}
+              >
+                <Text strong>
+                  <CrownOutlined style={{ color: "#faad14", marginRight: 8 }} />
+                  {index + 1}. {item.planName}
+                </Text>
+                <div>
+                  <Tag color="gold">Count: {item.purchaseCount}</Tag>
+                  <Tag color="green">{item.totalRevenue?.toLocaleString()} ₫</Tag>
+                </div>
+              </Row>
+            ))}
+          </Card>
+        </Col>
+
+        <Col span={12}>
+          <Card title="🪙 Top Token Packages">
+            {topTokenPackages?.length > 0 ? (
+              topTokenPackages.map((item, index) => (
+                <Row
+                  key={index}
+                  justify="space-between"
+                  style={{
+                    padding: "14px 0",
+                    borderBottom: "1px solid #f0f0f0",
+                  }}
+                >
+                  <Text strong>
+                    <BookOutlined style={{ color: "#13c2c2", marginRight: 8 }} />
+                    {index + 1}. {item.packageName || "Package"}
+                  </Text>
+                  <Tag color="cyan">Sold: {item.purchaseCount || 0}</Tag>
+                </Row>
+              ))
+            ) : (
+              <div style={{ padding: 20, textAlign: "center" }}>No data</div>
+            )}
           </Card>
         </Col>
       </Row>

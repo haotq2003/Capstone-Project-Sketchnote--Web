@@ -145,4 +145,35 @@ getAllUser: async (search, role, page, size, sortBy = "createAt", sortDir) => {
         }
     });
 },
+/////////////////////////////////////////////////////////////////////////
+
+getTopTokenPackages: async (limit) => {
+    return await privateApi.get(`/api/admin/revenue/top-token-packages`,{
+        params:{
+            limit
+        },
+    });
+},
+getTopSubscriptions: async (limit) => {
+    return await privateApi.get(`/api/admin/revenue/top-subscriptions`,{
+        params:{
+            limit
+        },
+    });
+},
+getDashboardOverview: async () => {
+    return await privateApi.get(`/api/admin/revenue/overview`);
+},
+
+
+getRevenueDashboard: async (start, end, groupBy, type) => {
+    return await privateApi.get(`/api/admin/revenue/dashboard`,{
+        params:{
+            start,
+            end,
+            groupBy,
+            type
+        },
+    });
+},
 }
