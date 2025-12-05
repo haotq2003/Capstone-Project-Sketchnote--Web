@@ -9,17 +9,37 @@ import {
   FileText,
   ChevronDown,
   LogOut,
+
+
+
+
+
+
+  Wallet,
+  ArrowRightLeft,
+  ShoppingCart,
+  Coins,
+  Repeat,
 } from "lucide-react";
 import { authService } from "../../service/authService";
 
 const menuItems = [
   { title: "Dashboard", icon: LayoutDashboard, path: "/admin" },
-  { title: "User Manager", icon: User, path: "/admin/users" },
-  { title: "Credit Packages", icon: FileText, path: "/admin/credit" },
-  { title: "Subscription Packages", icon: Box, path: "/admin/subscriptions" },
+  { title: "User Management", icon: User, path: "/admin/users" },
+  { title: "Credit  Management", icon: FileText, path: "/admin/credit" },
+  { title: "Subscription  Management", icon: Box, path: "/admin/subscriptions" },
   { title: "Revenue", icon: HandCoins, path: "/admin/revenue" },
   { title: "Chat", icon: BookA, path: "/admin/chat" },
+  { title: "Wallet Management", icon: Wallet, path: "/admin/wallets" },
+  { title: "Transaction Management", icon: ArrowRightLeft, path: "/admin/transactions" },
+  { title: "Order Transactions", icon: ShoppingCart, path: "/admin/order-transactions" },
+  { title: "Credit Transactions", icon: Coins, path: "/admin/credit-transactions" },
+  { title: "Subscription Transactions", icon: Repeat, path: "/admin/subscription-transactions" },
+  { title: "Withdrawal Management", icon: HandCoins, path: "/admin/withdrawals" },
+
 ];
+
+
 
 export default function AdminNav() {
   const [activeItem, setActiveItem] = useState(null);
@@ -65,16 +85,16 @@ export default function AdminNav() {
                 }}
                 className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-colors group ${
                   activeItem === index
-                    ? "bg-blue-50 text-blue-600 font-medium"
-                    : "text-gray-700 hover:bg-gray-50"
+                  ? "bg-blue-50 text-blue-600 font-medium"
+                  : "text-gray-700 hover:bg-gray-50"
                 }`}
               >
                 <div className="flex items-center gap-3">
                   <item.icon
                     className={`w-5 h-5 ${
                       activeItem === index
-                        ? "text-blue-600"
-                        : "text-gray-500 group-hover:text-blue-600"
+                      ? "text-blue-600"
+                      : "text-gray-500 group-hover:text-blue-600"
                     }`}
                   />
                   <span className="text-base font-medium">{item.title}</span>

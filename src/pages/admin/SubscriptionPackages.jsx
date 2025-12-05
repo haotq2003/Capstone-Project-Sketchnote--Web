@@ -110,7 +110,7 @@ const SubscriptionPackages = () => {
     {
       title: "Price",
       render: (_, r) => (
-        <b>{r.price.toLocaleString()} {r.currency}</b>
+        <b className=" text-orange-600">{r.price.toLocaleString()} {r.currency}</b>
       ),
     },
     {
@@ -126,11 +126,11 @@ const SubscriptionPackages = () => {
           <Button icon={<EyeOutlined />} onClick={() => openDetailModal(record)}>
             View
           </Button>
-
+   
           <Button icon={<EditOutlined />} onClick={() => handleEdit(record)}>
             Edit
           </Button>
-
+         
           <Popconfirm
             title="Delete this plan?"
             onConfirm={() => handleDelete(record.planId)}
@@ -143,25 +143,24 @@ const SubscriptionPackages = () => {
   ];
 
   return (
-    <div className="p-8 bg-gray-50 min-h-screen">
-      <div className="max-w-6xl mx-auto">
-        <Card className="shadow-md mb-6">
-          <div className="flex justify-between items-center mb-4">
-         
+    <div style={{ padding: 24 }}>
+    
+      <Card className="shadow-md mb-6">
+        <div className="flex justify-between items-center mb-4">
+          <h1 className="text-2xl font-semibold mb-6">Subscription Packages</h1>
+          <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
+            Add Subscription
+          </Button>
+        </div>
 
-            <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
-              Add Plan
-            </Button>
-          </div>
-
-          <Table
-            columns={columns}
-            dataSource={packages}
-            rowKey="planId"
-            pagination={{ pageSize: 10 }}
-          />
-        </Card>
-      </div>
+        <Table
+          columns={columns}
+          dataSource={packages}
+          rowKey="planId"
+          pagination={{ pageSize: 10 }}
+          scroll={{ x: "max-content" }}
+        />
+      </Card>
 
       {/* EDIT / CREATE FORM */}
       <Modal

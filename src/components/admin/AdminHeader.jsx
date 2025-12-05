@@ -32,8 +32,13 @@ export function AdminHeader() {
     '/admin/chat': 'Chat Support',
     '/admin/profile': 'Profile',
     '/admin': 'Dashboard',
-    '/admin/credit': 'Credit Management',
-    '/admin/subscriptions': 'Subscription Packages',
+    // '/admin/credit': 'Credit Management',
+    // '/admin/subscriptions': 'Subscription Packages',
+    '/admin/order-transactions': 'Order Transactions Management',
+    '/admin/wallets': 'Wallet Management',
+    '/admin/transactions': 'Transactions Management',
+    '/admin/credit-transactions': 'Credit Transactions Management',
+    '/admin/subscription-transactions': 'Subscription Transactions Management',
   };
 
   // Get current page title
