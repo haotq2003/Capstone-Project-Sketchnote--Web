@@ -22,17 +22,12 @@ const AdminWithdrawalManagement = () => {
         {
             title: "ID",
             dataIndex: "id",
-            width: 80,
-        },
-        {
-            title: "User ID",
-            dataIndex: "userId",
-            width: 100,
+            width: 60,
         },
         {
             title: "Amount",
             dataIndex: "amount",
-            width: 150,
+            width: 120,
             render: (amount) => (
                 <span style={{ fontWeight: "bold", color: "#ddaf17ff" }}>
                     {amount?.toLocaleString()} đ
@@ -40,24 +35,27 @@ const AdminWithdrawalManagement = () => {
             ),
         },
         {
-            title: "Bank Name",
+            title: "Bank",
             dataIndex: "bankName",
-            width: 150,
+            width: 100,
+            ellipsis: true,
         },
         {
-            title: "Account Number",
+            title: "Account No.",
             dataIndex: "bankAccountNumber",
-            width: 180,
+            width: 130,
+            ellipsis: true,
         },
         {
-            title: "Account Holder",
+            title: "Holder",
             dataIndex: "bankAccountHolder",
-            width: 180,
+            width: 120,
+            ellipsis: true,
         },
         {
             title: "Status",
             dataIndex: "status",
-            width: 120,
+            width: 100,
             render: (status) => {
                 let color = "default";
                 if (status === "APPROVED" || status === "SUCCESS") color = "success";
@@ -69,19 +67,17 @@ const AdminWithdrawalManagement = () => {
         {
             title: "Date",
             dataIndex: "createdAt",
-            width: 150,
+            width: 100,
             render: (date) => new Date(date).toLocaleDateString(),
         },
         {
             title: "Actions",
             key: "actions",
-            width: 250,
-            fixed: "right",
+            width: 220,
             render: (_, record) => (
                 <Space>
                     <Button
                         type="primary"
-                        size="small"
                         onClick={() => handleViewDetail(record)}
                     >
                         View
@@ -94,7 +90,7 @@ const AdminWithdrawalManagement = () => {
                                 okText="Yes"
                                 cancelText="No"
                             >
-                                <Button type="primary" size="small" style={{ backgroundColor: "#52c41a" }}>
+                                <Button type="primary" style={{ backgroundColor: "#52c41a" }}>
                                     Approve
                                 </Button>
                             </Popconfirm>
@@ -104,7 +100,7 @@ const AdminWithdrawalManagement = () => {
                                 okText="Yes"
                                 cancelText="No"
                             >
-                                <Button type="primary" danger size="small">
+                                <Button type="primary" danger>
                                     Reject
                                 </Button>
                             </Popconfirm>
@@ -170,8 +166,8 @@ const AdminWithdrawalManagement = () => {
     }, []);
 
     return (
-        <div style={{ padding: 24 }}>
-            <h1 className="text-2xl font-semibold mb-6">Withdrawal Management</h1>
+        <div style={{ padding: 24, maxWidth: "100%", overflowX: "hidden" }}>
+
             <Card style={{ marginBottom: 16 }}>
                 <Form form={form} layout="inline">
                     <Form.Item name="search" label="Search">
@@ -202,7 +198,7 @@ const AdminWithdrawalManagement = () => {
                     </Form.Item>
                 </Form>
             </Card>
-            <Card>
+            <Card style={{ overflow: "hidden" }}>
                 <Table
                     columns={columns}
                     dataSource={data}
@@ -216,7 +212,6 @@ const AdminWithdrawalManagement = () => {
                         showTotal: (total) => `Total ${total} items`,
                     }}
                     onChange={(pag) => fetchData(pag.current, pag.pageSize)}
-                    scroll={{ x: "max-content" }}
                 />
             </Card>
 
