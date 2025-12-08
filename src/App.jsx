@@ -35,6 +35,7 @@ import OrderTransactions from "./pages/admin/OrderTransactions";
 
 
 import AdminWithdrawalManagement from "./pages/admin/WithdrawalManagement";
+import AdminWallet from "./pages/admin/AdminWallet";
 
 function App() {
   return (
@@ -50,6 +51,8 @@ function App() {
         <Route path="withdrawals" element={<WithdrawalManagement />} />
         <Route path="resources" element={<ResourceReviewPage />} />
         <Route path="accept-blog" element={<AcceptBlog />} />
+        <Route path="credit" element={<ManagerCredit />} />
+        <Route path="subscriptions" element={<SubscriptionPackages />} />
         <Route path="profile" element={<StaffProfile />} />
       </Route>
 
@@ -69,8 +72,6 @@ function App() {
         <Route path="profile" element={<AdminProfile />} />
         <Route path="chat" element={<Chat />} />
         <Route path="chat2" element={<SketchNoteChat />} />
-        <Route path="credit" element={<ManagerCredit />} />
-        <Route path="subscriptions" element={<SubscriptionPackages />} />
         <Route path="wallets" element={<WalletsManagement />} />
         <Route path="transactions" element={<TransactionsManagement />} />
         <Route path="user-transactions" element={<UserTransactions />} />
@@ -79,6 +80,7 @@ function App() {
         <Route path="credit-transactions" element={<CreditTransactions />} />
         <Route path="order-transactions" element={<OrderTransactions />} />
         <Route path="withdrawals" element={<AdminWithdrawalManagement />} />
+        <Route path="my-wallet" element={<AdminWallet />} />
       </Route>
 
       <Route path="*" element={<NotFound />} />
