@@ -363,13 +363,14 @@ const CourseManagement = () => {
       width: 120,
       render: (category) => {
         const colors = {
-          'Art': 'green',
-          'Design': 'blue',
-          'Digital Art': 'purple',
-          'Photography': 'orange',
-          'Icons': 'cyan'
+          'Icons': 'cyan',
+          'Characters': 'blue',
+          'ShapesAndFrames': 'purple',
+          'Layouts': 'green',
+          'EverydayObjects': 'orange',
+          'LessonNote': 'magenta'
         };
-        return <Tag color={colors[category] || 'default'}>{category}</Tag>;
+        return <Tag color={colors[category] || 'default'}>{category === 'ShapesAndFrames' ? 'Shapes and Frames' : category === 'EverydayObjects' ? 'Everyday Objects' : category === 'LessonNote' ? 'Lesson Note' : category}</Tag>;
       },
     },
     {
@@ -446,7 +447,7 @@ const CourseManagement = () => {
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <Title level={3} className="!m-0">
-            <BookOutlined /> 
+            <BookOutlined />
           </Title>
           <Button
             type="primary"
@@ -477,11 +478,12 @@ const CourseManagement = () => {
               onChange={setSelectedCategory}
             >
               <Select.Option value="all">All categories</Select.Option>
-              <Select.Option value="Art">Art</Select.Option>
-              <Select.Option value="Design">Design</Select.Option>
-              <Select.Option value="Digital Art">Digital Art</Select.Option>
-              <Select.Option value="Photography">Photography</Select.Option>
               <Select.Option value="Icons">Icons</Select.Option>
+              <Select.Option value="Characters">Characters</Select.Option>
+              <Select.Option value="ShapesAndFrames">Shapes and Frames</Select.Option>
+              <Select.Option value="Layouts">Layouts</Select.Option>
+              <Select.Option value="EverydayObjects">Everyday Objects</Select.Option>
+              <Select.Option value="LessonNote">Lesson Note</Select.Option>
             </Select>
             <Text type="secondary">
               Total: {getFilteredCourses().length} courses
@@ -577,15 +579,19 @@ const CourseManagement = () => {
                   rules={[{ required: true, message: 'Please select a category!' }]}
                 >
                   <Select placeholder="Select category">
-                    <Select.Option value="Art">Art</Select.Option>
-                    <Select.Option value="Design">Design</Select.Option>
-                    <Select.Option value="Digital Art">Digital Art</Select.Option>
-                    <Select.Option value="Photography">Photography</Select.Option>
                     <Select.Option value="Icons">Icons</Select.Option>
+                    <Select.Option value="Characters">Characters</Select.Option>
+                    <Select.Option value="ShapesAndFrames">Shapes and Frames</Select.Option>
+                    <Select.Option value="Layouts">Layouts</Select.Option>
+                    <Select.Option value="EverydayObjects">Everyday Objects</Select.Option>
+                    <Select.Option value="LessonNote">Lesson Note</Select.Option>
                   </Select>
                 </Form.Item>
               </Col>
-              <Col span={12}>
+            </Row>
+
+            <Row gutter={16}>
+              <Col span={24}>
                 <Form.Item
                   name="price"
                   label="Price (VND)"
@@ -830,15 +836,19 @@ const CourseManagement = () => {
                 rules={[{ required: true, message: 'Please select a category!' }]}
               >
                 <Select placeholder="Select category">
-                  <Select.Option value="Art">Art</Select.Option>
-                  <Select.Option value="Design">Design</Select.Option>
-                  <Select.Option value="Digital Art">Digital Art</Select.Option>
-                  <Select.Option value="Photography">Photography</Select.Option>
                   <Select.Option value="Icons">Icons</Select.Option>
+                  <Select.Option value="Characters">Characters</Select.Option>
+                  <Select.Option value="ShapesAndFrames">Shapes and Frames</Select.Option>
+                  <Select.Option value="Layouts">Layouts</Select.Option>
+                  <Select.Option value="EverydayObjects">Everyday Objects</Select.Option>
+                  <Select.Option value="LessonNote">Lesson Note</Select.Option>
                 </Select>
               </Form.Item>
             </Col>
-            <Col span={12}>
+          </Row>
+
+          <Row gutter={16}>
+            <Col span={24}>
               <Form.Item
                 name="price"
                 label="Price (VND)"

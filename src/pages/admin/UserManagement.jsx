@@ -48,16 +48,16 @@ export default function ManageUsers() {
         return <Tag color={colorMap[role] || "default"}>{role}</Tag>;
       },
     },
-    {
-      title: "Status",
-      dataIndex: "status",
-      key: "status",
-      render: (status) => (
-        <Tag color={status === "Active" ? "green" : "red"}>
-          {status}
-        </Tag>
-      ),
-    },
+    // {
+    //   title: "Status",
+    //   dataIndex: "status",
+    //   key: "status",
+    //   render: (status) => (
+    //     <Tag color={status === "Active" ? "green" : "red"}>
+    //       {status}
+    //     </Tag>
+    //   ),
+    // },
     {
       title: "Actions",
       key: "actions",
@@ -216,14 +216,9 @@ export default function ManageUsers() {
                 ))}
             </Select>
           </Form.Item>
-          <Form.Item name="sortBy" label="Sort By">
-            <Input placeholder="createAt" />
-          </Form.Item>
-          <Form.Item name="sortDir" label="Sort Dir">
-            <Select style={{ width: 100 }} options={[{ value: "asc", label: "ASC" }, { value: "desc", label: "DESC" }]} />
-          </Form.Item>
+          
           <Form.Item>
-            <Button type="primary" onClick={() => fetchUser(1, pagination.pageSize)}>Search</Button>
+            <Button className="le" type="primary" onClick={() => fetchUser(1, pagination.pageSize)}>Search</Button>
           </Form.Item>
         </Form>
       </Card>

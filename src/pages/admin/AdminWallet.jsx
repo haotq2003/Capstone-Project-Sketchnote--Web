@@ -17,6 +17,7 @@ import {
     Typography,
     Tabs,
     Tooltip,
+    Select,
 } from "antd";
 import {
     WalletOutlined,
@@ -26,8 +27,10 @@ import {
     ArrowUpOutlined,
     ArrowDownOutlined,
     ReloadOutlined,
+    SettingOutlined,
 } from "@ant-design/icons";
 import { walletService } from "../../service/walletService";
+import BankAccountManagement from "./BankAccountManagement";
 
 const { Title, Text } = Typography;
 
@@ -46,6 +49,9 @@ const AdminWallet = () => {
     const [depositAmount, setDepositAmount] = useState("");
     const [activeTab, setActiveTab] = useState("transactions");
     const [withdrawForm] = Form.useForm();
+    const [bankAccounts, setBankAccounts] = useState([]);
+    const [selectedBankAccount, setSelectedBankAccount] = useState(null);
+    const [bankManagementVisible, setBankManagementVisible] = useState(false);
 
     const formatCurrency = (amount) => {
         if (!amount && amount !== 0) return "0 đ";
@@ -86,9 +92,19 @@ const AdminWallet = () => {
         setWithdrawLoading(false);
     };
 
+    const fetchBankAccounts = async () => {
+        try {
+            const res = await walletService.getBankAccountByUserId();
+            setBankAccounts(res.result || res || []);
+        } catch (error) {
+            console.error("Failed to load bank accounts:", error);
+        }
+    };
+
     useEffect(() => {
         fetchWallet();
         fetchWithdrawHistory();
+        fetchBankAccounts();
     }, []);
 
     const handleDeposit = async () => {
@@ -99,7 +115,7 @@ const AdminWallet = () => {
         }
         try {
             const res = await walletService.depositWallet(amount);
-          
+
 
             // Payment URL có thể ở res.message hoặc res.result
             const paymentUrl = res?.message || res?.result;
@@ -566,7 +582,11 @@ const AdminWallet = () => {
             <Modal
                 title={<><BankOutlined /> Request Withdrawal</>}
                 open={withdrawModalVisible}
-                onCancel={() => { setWithdrawModalVisible(false); withdrawForm.resetFields(); }}
+                onCancel={() => {
+                    setWithdrawModalVisible(false);
+                    withdrawForm.resetFields();
+                    setSelectedBankAccount(null);
+                }}
                 footer={null}
                 width={500}
             >
@@ -575,6 +595,96 @@ const AdminWallet = () => {
                     layout="vertical"
                     onFinish={handleWithdraw}
                 >
+                    {/* Saved Bank Accounts Selector */}
+                    {bankAccounts.length > 0 && (
+                        <>
+                            <Form.Item label="Select Saved Bank Account">
+                                <Select
+                                    size="large"
+                                    placeholder="Choose from saved accounts or enter manually"
+                                    allowClear
+                                    value={selectedBankAccount}
+                                    onChange={(value) => {
+                                        setSelectedBankAccount(value);
+                                        if (value) {
+                                            const account = bankAccounts.find(acc => acc.id === value);
+                                            if (account) {
+                                                withdrawForm.setFieldsValue({
+                                                    bankName: account.bankName,
+                                                    accountNumber: account.accountNumber,
+                                                    accountName: account.accountHolderName,
+                                                });
+                                            }
+                                        } else {
+                                            // Clear form when clearing selection
+                                            withdrawForm.setFieldsValue({
+                                                bankName: '',
+                                                accountNumber: '',
+                                                accountName: '',
+                                            });
+                                        }
+                                    }}
+                                    dropdownStyle={{
+                                        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                                    }}
+                                    optionLabelProp="label"
+                                >
+                                    {bankAccounts.map((acc, index) => (
+                                        <Select.Option
+                                            key={acc.id || `acc-${index}`}
+                                            value={acc.id}
+                                            label={`${acc.bankName} - ${acc.accountNumber}`}
+                                        >
+                                            <div style={{
+                                                padding: '4px 0',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: 8
+                                            }}>
+                                                <BankOutlined style={{ color: '#1890ff', fontSize: 16 }} />
+                                                <span style={{ flex: 1, fontWeight: 500 }}>
+                                                    {acc.bankName} - {acc.accountNumber}
+                                                </span>
+                                                {acc.isDefault && <Tag color="gold">Default</Tag>}
+                                            </div>
+                                        </Select.Option>
+                                    ))}
+                                </Select>
+                            </Form.Item>
+                            <div style={{ textAlign: "right", marginBottom: 16 }}>
+                                <Button
+                                    type="link"
+                                    size="small"
+                                    icon={<SettingOutlined />}
+                                    onClick={() => setBankManagementVisible(true)}
+                                >
+                                    Manage Bank Accounts
+                                </Button>
+                            </div>
+                            <Divider style={{ margin: "16px 0" }} />
+                        </>
+                    )}
+
+                    {bankAccounts.length === 0 && (
+                        <div style={{
+                            background: "#f0f5ff",
+                            padding: 12,
+                            borderRadius: 8,
+                            marginBottom: 16,
+                            textAlign: "center"
+                        }}>
+                            <Text type="secondary">
+                                💡 No saved bank accounts.
+                            </Text>
+                            <Button
+                                type="link"
+                                size="small"
+                                onClick={() => setBankManagementVisible(true)}
+                            >
+                                Add one now
+                            </Button>
+                        </div>
+                    )}
                     <Form.Item
                         name="amount"
                         label="Withdrawal Amount"
@@ -611,44 +721,7 @@ const AdminWallet = () => {
                         ))}
                     </div>
 
-                    <Divider>Bank Information</Divider>
-
-                    <Row gutter={16}>
-                        <Col span={12}>
-                            <Form.Item
-                                name="bankName"
-                                label="Bank Name"
-                                rules={[{ required: true, message: "Required" }]}
-                            >
-                                <Input placeholder="e.g. Vietcombank" />
-                            </Form.Item>
-                        </Col>
-                        <Col span={12}>
-                            <Form.Item
-                                name="accountNumber"
-                                label="Account Number"
-                                rules={[{ required: true, message: "Required" }]}
-                            >
-                                <Input placeholder="Enter account number" />
-                            </Form.Item>
-                        </Col>
-                    </Row>
-
-                    <Form.Item
-                        name="accountName"
-                        label="Account Holder Name"
-                        rules={[{ required: true, message: "Required" }]}
-                    >
-                        <Input placeholder="Enter account holder name" />
-                    </Form.Item>
-
-                    <div style={{ background: "#f6ffed", padding: 12, borderRadius: 8, marginBottom: 16 }}>
-                        <Text type="secondary">
-                            💡 Withdrawals are processed within 1-3 business days. Fee: 1.1% (min 5,000 VND)
-                        </Text>
-                    </div>
-
-                    <Form.Item style={{ marginBottom: 0, textAlign: "right" }}>
+                    <Form.Item style={{ marginBottom: 0, textAlign: "right", marginTop: 24 }}>
                         <Space>
                             <Button onClick={() => { setWithdrawModalVisible(false); withdrawForm.resetFields(); }}>
                                 Cancel
@@ -659,6 +732,18 @@ const AdminWallet = () => {
                         </Space>
                     </Form.Item>
                 </Form>
+            </Modal>
+
+            {/* Bank Account Management Modal */}
+            <Modal
+                title="Bank Account Management"
+                open={bankManagementVisible}
+                onCancel={() => setBankManagementVisible(false)}
+                footer={null}
+                width={1000}
+                destroyOnClose
+            >
+                <BankAccountManagement onAccountChange={fetchBankAccounts} />
             </Modal>
         </div>
     );
