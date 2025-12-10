@@ -59,7 +59,7 @@ const OrderTransactions = () => {
       title: "Amount",
       dataIndex: "totalAmount",
       key: "totalAmount",
-      render: (amount) => amount?.toLocaleString(),
+      render: (amount) => `${amount?.toLocaleString()} đ`,
     },
     // {
     //   title: "Payment Method",
@@ -84,12 +84,12 @@ const OrderTransactions = () => {
       fixed: "right",
       width: 100,
       render: (_, record) => (
-       <Button
-  style={{ background: "#a1f0ecff", color: "white" }}
-  onClick={() => handleViewDetail(record)}
->
-  View
-</Button>
+        <Button
+          style={{ background: "#a1f0ecff", color: "white" }}
+          onClick={() => handleViewDetail(record)}
+        >
+          View
+        </Button>
 
       ),
     },
@@ -104,7 +104,15 @@ const OrderTransactions = () => {
     setLoading(true);
     try {
       const values = form.getFieldsValue();
-      const res = await dashboardAminService.getAllOrderTransaction(values.search || "", values.orderStatus, values.paymentStatus, page - 1, pageSize, values.sortBy, values.sortDir);
+      const res = await dashboardAminService.getAllOrderTransaction(
+        values.search || "",
+        values.orderStatus,
+        values.paymentStatus,
+        page - 1,
+        pageSize,
+        "createdAt",
+        "DESC"
+      );
       const { items, total } = normalizeResult(res);
       setData(items);
       console.log(items)
@@ -116,7 +124,6 @@ const OrderTransactions = () => {
   };
 
   useEffect(() => {
-    form.setFieldsValue({ sortBy: "createdAt", sortDir: "DESC" });
     fetchData(1, 10);
   }, []);
 
@@ -128,19 +135,31 @@ const OrderTransactions = () => {
             <Input placeholder="Search..." style={{ width: 200 }} />
           </Form.Item>
           <Form.Item name="orderStatus" label="Order Status">
-            <Input placeholder="status" />
+            <Select
+              placeholder="All Status"
+              allowClear
+              style={{ width: 150 }}
+              options={[
+                { label: "Completed", value: "COMPLETED" },
+                { label: "Pending", value: "PENDING" },
+                { label: "Cancelled", value: "CANCELLED" },
+              ]}
+            />
           </Form.Item>
           <Form.Item name="paymentStatus" label="Payment Status">
-            <Input placeholder="payment" />
-          </Form.Item>
-          <Form.Item name="sortBy" label="Sort By">
-            <Input placeholder="createdAt" />
-          </Form.Item>
-          <Form.Item name="sortDir" label="Sort Dir">
-            <Select style={{ width: 120 }} options={[{ value: "ASC" }, { value: "DESC" }]} />
+            <Select
+              placeholder="All Status"
+              allowClear
+              style={{ width: 150 }}
+              options={[
+                { label: "Paid", value: "PAID" },
+                { label: "Pending", value: "PENDING" },
+                { label: "Failed", value: "FAILED" },
+              ]}
+            />
           </Form.Item>
           <Form.Item>
-            <Button type="primary" onClick={() => fetchData(pagination.current, pagination.pageSize)}>Search</Button>
+            <Button type="primary" onClick={() => fetchData(1, pagination.pageSize)}>Search</Button>
           </Form.Item>
         </Form>
       </Card>
@@ -186,9 +205,9 @@ const OrderTransactions = () => {
                       columns={[
                         { title: "Item Name", dataIndex: "templateName", key: "templateName" },
                         { title: "Type", dataIndex: "templateType", key: "templateType" },
-                        { title: "Price", dataIndex: "unitPrice", key: "unitPrice", render: (v) => v?.toLocaleString() },
-                        { title: "Discount", dataIndex: "discount", key: "discount", render: (v) => v?.toLocaleString() },
-                        { title: "Subtotal", dataIndex: "subtotalAmount", key: "subtotalAmount", render: (v) => v?.toLocaleString() },
+                        { title: "Price", dataIndex: "unitPrice", key: "unitPrice", render: (v) => `${v?.toLocaleString()} đ` },
+                        { title: "Discount", dataIndex: "discount", key: "discount", render: (v) => `${v?.toLocaleString()} đ` },
+                        { title: "Subtotal", dataIndex: "subtotalAmount", key: "subtotalAmount", render: (v) => `${v?.toLocaleString()} đ` },
                         { title: "Date", dataIndex: "createdAt", key: "createdAt", render: (v) => v ? new Date(v).toLocaleDateString() : "" },
                       ]}
                     />

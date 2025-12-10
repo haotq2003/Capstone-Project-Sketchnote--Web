@@ -5,7 +5,7 @@ import CourseManagement from "./pages/staff/CourseManagement";
 import CustomerSupport from "./pages/staff/CustomerSupport";
 import WithdrawalManagement from "./pages/staff/WithdrawalManagement";
 import Login from "./pages/auth/login";
-import '@ant-design/v5-patch-for-react-19';
+import "@ant-design/v5-patch-for-react-19";
 import { AdminLayout } from "./components/admin/AdminLayout";
 import UserManagement from "./pages/admin/UserManagement";
 import ManageUsers from "./pages/admin/UserManagement";
@@ -34,13 +34,12 @@ import SubscriptionTransactions from "./pages/admin/SubscriptionTransactions";
 import CreditTransactions from "./pages/admin/CreditTransactions";
 import OrderTransactions from "./pages/admin/OrderTransactions";
 
-
 import AdminWithdrawalManagement from "./pages/admin/WithdrawalManagement";
+import AdminWallet from "./pages/admin/AdminWallet";
 
 function App() {
   return (
     <Routes>
-
       <Route path="/" element={<Navigate to="/login" replace />} />
       <Route path="/login" element={<Login />} />
 
@@ -51,6 +50,8 @@ function App() {
         <Route path="withdrawals" element={<WithdrawalManagement />} />
         <Route path="resources" element={<ResourceReviewPage />} />
         <Route path="accept-blog" element={<AcceptBlog />} />
+        <Route path="credit" element={<ManagerCredit />} />
+        <Route path="subscriptions" element={<SubscriptionPackages />} />
         <Route path="resource-template" element={<ResourceTemplate />} />
         <Route path="profile" element={<StaffProfile />} />
       </Route>
@@ -62,8 +63,6 @@ function App() {
         <Route path="profile" element={<DesignerProfile />} />
       </Route>
 
-
-
       <Route path="/admin" element={<AdminLayout />}>
         <Route index element={<AdminDashboard />} />
         <Route path="users" element={<ManageUsers />} />
@@ -71,16 +70,18 @@ function App() {
         <Route path="profile" element={<AdminProfile />} />
         <Route path="chat" element={<Chat />} />
         <Route path="chat2" element={<SketchNoteChat />} />
-        <Route path="credit" element={<ManagerCredit />} />
-        <Route path="subscriptions" element={<SubscriptionPackages />} />
         <Route path="wallets" element={<WalletsManagement />} />
         <Route path="transactions" element={<TransactionsManagement />} />
         <Route path="user-transactions" element={<UserTransactions />} />
-        <Route path="subscription-transactions" element={<SubscriptionTransactions />} />
+        <Route
+          path="subscription-transactions"
+          element={<SubscriptionTransactions />}
+        />
         <Route path="credit-transactions" element={<CreditTransactions />} />
         <Route path="credit-transactions" element={<CreditTransactions />} />
         <Route path="order-transactions" element={<OrderTransactions />} />
         <Route path="withdrawals" element={<AdminWithdrawalManagement />} />
+        <Route path="my-wallet" element={<AdminWallet />} />
       </Route>
 
       <Route path="*" element={<NotFound />} />

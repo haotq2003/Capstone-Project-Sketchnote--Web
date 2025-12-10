@@ -101,12 +101,12 @@ const WalletsManagement = () => {
           <Form.Item name="search" label="Search">
             <Input placeholder="Search..." style={{ width: 200 }} />
           </Form.Item>
-          <Form.Item name="sortBy" label="Sort By">
+          {/* <Form.Item name="sortBy" label="Sort By">
             <Input placeholder="createdAt" />
           </Form.Item>
           <Form.Item name="sortDir" label="Sort Dir">
             <Select style={{ width: 120 }} options={[{ value: "ASC" }, { value: "DESC" }]} />
-          </Form.Item>
+          </Form.Item> */}
           <Form.Item>
             <Row gutter={8}>
               <Col>

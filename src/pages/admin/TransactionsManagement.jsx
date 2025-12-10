@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Card, Table, Form, Input, Select, Button, message, Modal, Descriptions, Tag } from "antd";
+import { ArrowUpOutlined, ArrowDownOutlined } from "@ant-design/icons";
 import { dashboardAminService } from "../../service/dashboardAdminService";
 
 const TransactionsManagement = () => {
@@ -12,10 +13,30 @@ const TransactionsManagement = () => {
 
   const normalizeResult = (result) => {
     if (!result) return { items: [], total: 0 };
-    if (Array.isArray(result)) return { items: result, total: result.length };
-    if (result.content) return { items: result.content, total: result.totalElements || result.total || result.content.length };
-    if (result.items) return { items: result.items, total: result.total || result.items.length };
-    return { items: Array.isArray(result) ? result : [result], total: Array.isArray(result) ? result.length : 1 };
+
+    // Handle Spring Pageable response
+    if (result.content && Array.isArray(result.content)) {
+      return {
+        items: result.content,
+        total: result.totalElements || result.content.length
+      };
+    }
+
+    // Handle array response
+    if (Array.isArray(result)) {
+      return { items: result, total: result.length };
+    }
+
+    // Handle custom response with items
+    if (result.items) {
+      return { items: result.items, total: result.total || result.items.length };
+    }
+
+    // Fallback
+    return {
+      items: Array.isArray(result) ? result : [result],
+      total: Array.isArray(result) ? result.length : 1
+    };
   };
 
   const columns = [
@@ -35,7 +56,36 @@ const TransactionsManagement = () => {
       title: "Type",
       dataIndex: "type",
       key: "type",
-      render: (type) => <Tag color="blue">{type}</Tag>,
+      render: (type) => {
+        // Determine if transaction is incoming (+) or outgoing (-)
+        const isIncoming = type === "DEPOSIT";
+        const isOutgoing = [
+          "PAYMENT",
+          "WITHDRAW",
+          "COURSE_FEE",
+          "SUBSCRIPTION",
+          "PURCHASE_RESOURCE",
+          "PURCHASE_AI_CREDITS",
+          "PURCHASE_SUBSCRIPTION"
+        ].includes(type);
+
+        let color = "blue";
+        let icon = null;
+
+        if (isIncoming) {
+          color = "green";
+          icon = <ArrowDownOutlined style={{ marginRight: 4 }} />;
+        } else if (isOutgoing) {
+          color = "red";
+          icon = <ArrowUpOutlined style={{ marginRight: 4 }} />;
+        }
+
+        return (
+          <Tag color={color} icon={icon}>
+            {type}
+          </Tag>
+        );
+      },
     },
     {
       title: "Amount",
@@ -43,7 +93,7 @@ const TransactionsManagement = () => {
       key: "amount",
       render: (amount) => (
         <span style={{ color: amount > 0 ? "#52c41a" : "#f5222d", fontWeight: "bold" }}>
-          {amount?.toLocaleString()}
+          {amount?.toLocaleString()} đ
         </span>
       ),
     },
@@ -51,7 +101,7 @@ const TransactionsManagement = () => {
       title: "Balance After",
       dataIndex: "balanceAfter",
       key: "balanceAfter",
-      render: (balance) => balance?.toLocaleString(),
+      render: (balance) => `${balance?.toLocaleString()} đ`,
     },
     {
       title: "Status",
@@ -84,11 +134,11 @@ const TransactionsManagement = () => {
       width: 100,
       render: (_, record) => (
         <Button
-  style={{ background: "#da2789ff", color: "white" }}
-  onClick={() => handleViewDetail(record)}
->
-  View
-</Button>
+         
+          onClick={() => handleViewDetail(record)}
+        >
+          View
+        </Button>
 
       ),
     },
@@ -103,7 +153,14 @@ const TransactionsManagement = () => {
     setLoading(true);
     try {
       const values = form.getFieldsValue();
-      const res = await dashboardAminService.getAllTransactions(values.search || "", values.type, page - 1, pageSize, values.sortBy, values.sortDir);
+      const res = await dashboardAminService.getAllTransactions(
+        values.search || "",
+        values.type,
+        page - 1, // Backend uses 0-based index
+        pageSize,
+        "createdAt", // Fixed sort by createdAt
+        "DESC" // Fixed sort direction DESC
+      );
       console.log(res)
       const { items, total } = normalizeResult(res);
       setData(items);
@@ -115,7 +172,6 @@ const TransactionsManagement = () => {
   };
 
   useEffect(() => {
-    form.setFieldsValue({ sortBy: "createdAt", sortDir: "DESC" });
     fetchData(1, 10);
   }, []);
 
@@ -127,16 +183,24 @@ const TransactionsManagement = () => {
             <Input placeholder="Search..." style={{ width: 200 }} />
           </Form.Item>
           <Form.Item name="type" label="Type">
-            <Input placeholder="type" />
-          </Form.Item>
-          <Form.Item name="sortBy" label="Sort By">
-            <Input placeholder="createdAt" />
-          </Form.Item>
-          <Form.Item name="sortDir" label="Sort Dir">
-            <Select style={{ width: 120 }} options={[{ value: "ASC" }, { value: "DESC" }]} />
+            <Select
+              placeholder="All Types"
+              allowClear
+              style={{ width: 200 }}
+              options={[
+                { label: "Deposit", value: "DEPOSIT" },
+                { label: "Payment", value: "PAYMENT" },
+                { label: "Withdraw", value: "WITHDRAW" },
+                { label: "Course Fee", value: "COURSE_FEE" },
+                { label: "Subscription", value: "SUBSCRIPTION" },
+                { label: "Purchase Resource", value: "PURCHASE_RESOURCE" },
+                { label: "Purchase AI Credits", value: "PURCHASE_AI_CREDITS" },
+                { label: "Purchase Subscription", value: "PURCHASE_SUBSCRIPTION" },
+              ]}
+            />
           </Form.Item>
           <Form.Item>
-            <Button type="primary" onClick={() => fetchData(pagination.current, pagination.pageSize)}>Search</Button>
+            <Button type="primary" onClick={() => fetchData(1, pagination.pageSize)}>Search</Button>
           </Form.Item>
         </Form>
       </Card>

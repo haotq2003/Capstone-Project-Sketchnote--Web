@@ -39,6 +39,7 @@ export function AdminHeader() {
     '/admin/transactions': 'Transactions Management',
     '/admin/credit-transactions': 'Credit Transactions Management',
     '/admin/subscription-transactions': 'Subscription Transactions Management',
+    '/admin/withdrawals': 'Withdrawals Management',
   };
 
   // Get current page title
@@ -54,6 +55,30 @@ export function AdminHeader() {
 
         {/* Right: Actions */}
         <div className="flex items-center gap-4">
+          {/* My Wallet Button */}
+          <button
+            onClick={() => navigate('/admin/my-wallet')}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-50 hover:bg-blue-100 transition-colors"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="text-blue-600"
+            >
+              <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4" />
+              <path d="M3 5v14a2 2 0 0 0 2 2h16v-5" />
+              <path d="M18 12a2 2 0 0 0 0 4h4v-4Z" />
+            </svg>
+            <span className="text-sm font-medium text-blue-600">My Wallet</span>
+          </button>
+
           <div className="relative">
             <button
               onClick={() => setMenuOpen(!menuOpen)}

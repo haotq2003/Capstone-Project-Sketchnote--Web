@@ -7,7 +7,21 @@ import {
   Table,
   Typography,
   Tag,
+  Spin,
 } from "antd";
+import {
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
 import {
   ShoppingCartOutlined,
   UserOutlined,
@@ -31,6 +45,8 @@ export default function AdminDashboard() {
   const [walletOverview, setWalletOverview] = useState(null);
   const [topTokenPackages, setTopTokenPackages] = useState([]);
   const [topSubscriptions, setTopSubscriptions] = useState([]);
+  const [revenueStats, setRevenueStats] = useState(null);
+  const [loadingRevenue, setLoadingRevenue] = useState(false);
 
   useEffect(() => {
     dashboardAminService.fetchUser().then(setUserData);
@@ -57,6 +73,15 @@ export default function AdminDashboard() {
           });
       });
     });
+
+    // Fetch revenue data for charts
+    setLoadingRevenue(true);
+    dashboardAminService.getRevenueDashboard()
+      .then(data => {
+        setRevenueStats(data?.revenueStats);
+      })
+      .catch(err => console.error('Failed to fetch revenue:', err))
+      .finally(() => setLoadingRevenue(false));
   }, []);
 
   // ================= DESIGNER TABLE COLUMNS =================
@@ -101,6 +126,10 @@ export default function AdminDashboard() {
       ),
     },
   ];
+
+  // Process chart data
+  const chartData = React.useMemo(() => processChartData(revenueStats), [revenueStats]);
+  const pieData = React.useMemo(() => processPieData(revenueStats), [revenueStats]);
 
   return (
     <>
@@ -404,6 +433,84 @@ export default function AdminDashboard() {
           </Card>
         </Col>
       </Row>
+
+      {/* ==================== REVENUE CHARTS ==================== */}
+      <Row gutter={[16, 16]} style={{ marginTop: 32 }}>
+        <Col xs={24} lg={16}>
+          <Card title="📊 Revenue Over Time" bordered={false} style={{ borderRadius: '12px' }}>
+            <Spin spinning={loadingRevenue}>
+              <ResponsiveContainer width="100%" height={400}>
+                <BarChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="date" />
+                  <YAxis />
+                  <Tooltip formatter={(value) => `${value.toLocaleString()} đ`} />
+                  <Legend />
+                  <Bar dataKey="subscription" name="Subscription" fill="#8B5CF6" stackId="a" />
+                  <Bar dataKey="token" name="Token" fill="#10B981" stackId="a" />
+                </BarChart>
+              </ResponsiveContainer>
+            </Spin>
+          </Card>
+        </Col>
+        <Col xs={24} lg={8}>
+          <Card title="📈 Revenue Breakdown" bordered={false} style={{ borderRadius: '12px' }}>
+            <Spin spinning={loadingRevenue}>
+              <ResponsiveContainer width="100%" height={400}>
+                <PieChart>
+                  <Pie
+                    data={pieData}
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={100}
+                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(1)}%`}
+                    dataKey="value"
+                  >
+                    {pieData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.fill} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(value) => `${value.toLocaleString()} đ`} />
+                </PieChart>
+              </ResponsiveContainer>
+            </Spin>
+          </Card>
+        </Col>
+      </Row>
     </>
   );
+}
+
+// Helper functions for chart data processing
+function processChartData(revenueStats) {
+  if (!revenueStats) return [];
+
+  const dataMap = new Map();
+
+  const addToMap = (series, key) => {
+    series?.forEach(item => {
+      const date = item.date || item.period;
+      const amount = item.amount || item.revenue || 0;
+
+      if (!dataMap.has(date)) {
+        dataMap.set(date, { date, subscription: 0, token: 0, total: 0 });
+      }
+      const entry = dataMap.get(date);
+      entry[key] = amount;
+    });
+  };
+
+  addToMap(revenueStats.subscriptionRevenueTimeSeries, 'subscription');
+  addToMap(revenueStats.tokenRevenueTimeSeries, 'token');
+  addToMap(revenueStats.totalRevenueTimeSeries, 'total');
+
+  return Array.from(dataMap.values()).sort((a, b) => new Date(a.date) - new Date(b.date));
+}
+
+function processPieData(revenueStats) {
+  if (!revenueStats) return [];
+  return [
+    { name: 'Subscription', value: revenueStats.totalSubscriptionRevenue, fill: '#8B5CF6' },
+    { name: 'Token', value: revenueStats.totalTokenRevenue, fill: '#10B981' }
+  ].filter(item => item.value > 0);
 }
