@@ -33,6 +33,7 @@ export default function StaffHeader() {
     '/staff/accept-blog': 'Accept Blog',
     '/staff/profile': 'Profile',
     '/staff/withdrawals': 'Withdrawals',
+    '/staff/resource-template': 'Resource Template',
   };
 
   // Get current page title

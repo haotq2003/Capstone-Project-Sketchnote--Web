@@ -13,6 +13,7 @@ import AdminRevenueView from "./pages/admin/RevenueView";
 import AdminDashboard from "./pages/admin/Dashboard";
 import AdminProfile from "./pages/admin/Profile";
 import ManagerCredit from "./pages/admin/ManagerCredit";
+import ResourceTemplate from "./pages/staff/ResourceTemplate";
 
 import NotFound from "./pages/NotFound";
 
@@ -50,6 +51,7 @@ function App() {
         <Route path="withdrawals" element={<WithdrawalManagement />} />
         <Route path="resources" element={<ResourceReviewPage />} />
         <Route path="accept-blog" element={<AcceptBlog />} />
+        <Route path="resource-template" element={<ResourceTemplate />} />
         <Route path="profile" element={<StaffProfile />} />
       </Route>
 

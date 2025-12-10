@@ -5,6 +5,7 @@ import {
   Headphones,
   BookOpen,
   ScrollText,
+  FileText,
   LogOut,
 } from "lucide-react";
 import { authService } from "../../service/authService";
@@ -18,6 +19,11 @@ export default function StaffNavbar() {
     { path: "/staff/withdrawals", icon: DollarSign, label: "Withdrawals" },
     { path: "/staff/resources", icon: ScrollText, label: "Resources" },
     { path: "/staff/accept-blog", icon: ScrollText, label: "Accept Blog" },
+    {
+      path: "/staff/resource-template",
+      icon: FileText,
+      label: "Resource Template",
+    },
   ];
 
   const handleLogout = async () => {
@@ -56,10 +62,9 @@ export default function StaffNavbar() {
                 <NavLink
                   to={item.path}
                   className={({ isActive }) =>
-                    `w-full  flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
-                      isActive
-                        ? "bg-indigo-50 text-indigo-600 font-medium"
-                        : "text-gray-700 hover:bg-gray-50"
+                    `w-full  flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${isActive
+                      ? "bg-indigo-50 text-indigo-600 font-medium"
+                      : "text-gray-700 hover:bg-gray-50"
                     }`
                   }
                 >
