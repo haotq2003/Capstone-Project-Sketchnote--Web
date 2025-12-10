@@ -5,6 +5,7 @@ import {
   Headphones,
   BookOpen,
   ScrollText,
+  FileText,
   LogOut,
   Coins,
   Box,
@@ -17,11 +18,16 @@ export default function StaffNavbar() {
     // { path: "/staff/dashboard", icon: LayoutDashboard, label: "Dashboard" },
     { path: "/staff/courses", icon: BookOpen, label: "Courses" },
     // { path: "/staff/support", icon: Headphones, label: "Support" },
-   
+
     { path: "/staff/resources", icon: ScrollText, label: "Resources" },
     { path: "/staff/accept-blog", icon: ScrollText, label: "Accept Blog" },
     { path: "/staff/credit", icon: Coins, label: "Credit Packages" },
     { path: "/staff/subscriptions", icon: Box, label: "Subscription Packages" },
+    {
+      path: "/staff/resource-template",
+      icon: FileText,
+      label: "Resource Template",
+    },
   ];
 
   const handleLogout = async () => {
@@ -75,8 +81,8 @@ export default function StaffNavbar() {
                       )}
                       <Icon
                         className={`w-5 h-5 flex-shrink-0 transition-all duration-200 ${
-                          isActive 
-                            ? "text-blue-600 scale-110" 
+                          isActive
+                            ? "text-blue-600 scale-110"
                             : "text-gray-400 group-hover:text-blue-600 group-hover:scale-110"
                         }`}
                       />
