@@ -185,12 +185,12 @@ const AdminWithdrawalManagement = () => {
                             ]}
                         />
                     </Form.Item>
-                    <Form.Item name="sortBy" label="Sort By">
+                    {/* <Form.Item name="sortBy" label="Sort By">
                         <Input placeholder="createdAt" />
                     </Form.Item>
                     <Form.Item name="sortDir" label="Sort Dir">
                         <Select style={{ width: 100 }} options={[{ value: "ASC" }, { value: "DESC" }]} />
-                    </Form.Item>
+                    </Form.Item> */}
                     <Form.Item>
                         <Button type="primary" onClick={() => fetchData(1, pagination.pageSize)}>
                             Search

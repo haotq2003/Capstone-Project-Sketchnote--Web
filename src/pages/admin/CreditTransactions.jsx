@@ -105,7 +105,14 @@ const CreditTransactions = () => {
     setLoading(true);
     try {
       const values = form.getFieldsValue();
-      const res = await dashboardAminService.getAllCreditTransactions(values.search || "", values.type, page - 1, pageSize, values.sortBy, values.sortDir);
+      const res = await dashboardAminService.getAllCreditTransactions(
+        values.search || "",
+        values.type,
+        page - 1,
+        pageSize,
+        "createdAt",
+        "DESC"
+      );
       const { items, total } = normalizeResult(res);
       console.log(items)
       setData(items);
@@ -117,7 +124,6 @@ const CreditTransactions = () => {
   };
 
   useEffect(() => {
-    form.setFieldsValue({ sortBy: "createdAt", sortDir: "DESC" });
     fetchData(1, 10);
   }, []);
 
@@ -129,16 +135,19 @@ const CreditTransactions = () => {
             <Input placeholder="Search..." style={{ width: 200 }} />
           </Form.Item>
           <Form.Item name="type" label="Type">
-            <Input placeholder="type" />
-          </Form.Item>
-          <Form.Item name="sortBy" label="Sort By">
-            <Input placeholder="createdAt" />
-          </Form.Item>
-          <Form.Item name="sortDir" label="Sort Dir">
-            <Select style={{ width: 120 }} options={[{ value: "ASC" }, { value: "DESC" }]} />
+            <Select
+              placeholder="All Types"
+              allowClear
+              style={{ width: 200 }}
+              options={[
+                { label: "Purchase", value: "PURCHASE" },
+                { label: "Refund", value: "REFUND" },
+                { label: "Bonus", value: "BONUS" },
+              ]}
+            />
           </Form.Item>
           <Form.Item>
-            <Button type="primary" onClick={() => fetchData(pagination.current, pagination.pageSize)}>Search</Button>
+            <Button type="primary" onClick={() => fetchData(1, pagination.pageSize)}>Search</Button>
           </Form.Item>
         </Form>
       </Card>

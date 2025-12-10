@@ -19,9 +19,17 @@ export const ResourceApiController = {
     return await privateApi.post(`/api/orders/template/${resourceId}/reject`);
   },
 
-  getResourceByStatus: async (status, page, size) => {
+  getResourceByStatus: async (status, page, size, sortBy, sortDir) => {
     return await privateApi.get(
-      `/api/orders/template/review-status/${status}?page=${page}&size=${size}`
+      `/api/orders/template/review-status/${status}?page=${page}&size=${size}&sortBy=${sortBy}&sortDir=${sortDir}`
     );
+  },
+  getResourceVersion: async(page, size) => {
+    return await privateApi.get(
+      `/api/orders/template/review/versions?page=${page}&size=${size}`
+    );
+  },
+  ReviewResourceVersion: async (resourceId,data) => {
+    return await privateApi.post(`/api/orders/template/versions/${resourceId}/review`,data);
   },
 };

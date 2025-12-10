@@ -43,7 +43,7 @@ const SubscriptionTransactions = () => {
       key: "price",
       render: (amount) => (
         <span style={{ fontWeight: "bold", color: "orange" }}>
-          {amount?.toLocaleString()}
+          {amount?.toLocaleString()} đ
         </span>
       ),
     },
@@ -102,7 +102,14 @@ const SubscriptionTransactions = () => {
     setLoading(true);
     try {
       const values = form.getFieldsValue();
-      const res = await dashboardAminService.getAllSubscriptionsTransaction(values.search || "", values.status, page - 1, pageSize, values.sortBy, values.sortDir);
+      const res = await dashboardAminService.getAllSubscriptionsTransaction(
+        values.search || "",
+        values.status,
+        page - 1,
+        pageSize,
+        "createdAt",
+        "DESC"
+      );
       const { items, total } = normalizeResult(res);
       console.log(items)
       setData(items);
@@ -114,7 +121,6 @@ const SubscriptionTransactions = () => {
   };
 
   useEffect(() => {
-    form.setFieldsValue({ sortBy: "createdAt", sortDir: "DESC" });
     fetchData(1, 10);
   }, []);
 
@@ -126,16 +132,19 @@ const SubscriptionTransactions = () => {
             <Input placeholder="Search..." style={{ width: 200 }} />
           </Form.Item>
           <Form.Item name="status" label="Status">
-            <Input placeholder="status" />
-          </Form.Item>
-          <Form.Item name="sortBy" label="Sort By">
-            <Input placeholder="createdAt" />
-          </Form.Item>
-          <Form.Item name="sortDir" label="Sort Dir">
-            <Select style={{ width: 120 }} options={[{ value: "ASC" }, { value: "DESC" }]} />
+            <Select
+              placeholder="All Status"
+              allowClear
+              style={{ width: 150 }}
+              options={[
+                { label: "Active", value: "ACTIVE" },
+                { label: "Expired", value: "EXPIRED" },
+                { label: "Pending", value: "PENDING" },
+              ]}
+            />
           </Form.Item>
           <Form.Item>
-            <Button type="primary" onClick={() => fetchData(pagination.current, pagination.pageSize)}>Search</Button>
+            <Button type="primary" onClick={() => fetchData(1, pagination.pageSize)}>Search</Button>
           </Form.Item>
         </Form>
       </Card>

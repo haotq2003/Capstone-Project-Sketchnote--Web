@@ -39,6 +39,8 @@ const CourseDetail = ({ course, onBack }) => {
   const [lessons, setLessons] = useState([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isCourseModalVisible, setIsCourseModalVisible] = useState(false);
+  const [isViewLessonModalVisible, setIsViewLessonModalVisible] = useState(false);
+  const [viewingLesson, setViewingLesson] = useState(null);
   const [modalMode, setModalMode] = useState('add');
   const [editingLesson, setEditingLesson] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -349,13 +351,19 @@ const CourseDetail = ({ course, onBack }) => {
 
   const getCategoryTag = (category) => {
     const colors = {
-      'Art': 'green',
-      'Design': 'blue',
-      'Digital Art': 'purple',
-      'Photography': 'orange',
-      'Icons': 'cyan'
+      'Icons': 'cyan',
+      'Characters': 'blue',
+      'ShapesAndFrames': 'purple',
+      'Layouts': 'green',
+      'EverydayObjects': 'orange',
+      'LessonNote': 'magenta'
     };
-    return <Tag color={colors[category] || 'default'}>{category}</Tag>;
+    const displayNames = {
+      'ShapesAndFrames': 'Shapes and Frames',
+      'EverydayObjects': 'Everyday Objects',
+      'LessonNote': 'Lesson Note'
+    };
+    return <Tag color={colors[category] || 'default'}>{displayNames[category] || category}</Tag>;
   };
 
   return (
@@ -363,7 +371,7 @@ const CourseDetail = ({ course, onBack }) => {
       <div className="bg-white p-6 rounded-lg shadow-md">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <Space>
+          <Space size="large">
             <Button
               icon={<ArrowLeftOutlined />}
               onClick={onBack}
@@ -371,7 +379,14 @@ const CourseDetail = ({ course, onBack }) => {
             >
               Back
             </Button>
-            <Title level={3} className="!m-0">{course.title}</Title>
+            <div>
+              <Title level={3} className="!m-0">
+                {course.title}
+              </Title>
+              <Text type="secondary">
+                {course.subtitle}
+              </Text>
+            </div>
           </Space>
           <Button
             type="primary"
@@ -387,66 +402,119 @@ const CourseDetail = ({ course, onBack }) => {
         <Row gutter={24} align="stretch">
           {/* Left Column - Course Info */}
           <Col xs={24} lg={8}>
-            <Card title="Course Information" style={{ height: '100%' }}>
+            <Card
+              className="shadow-lg"
+              style={{
+                height: '100%',
+                borderRadius: '12px',
+                overflow: 'hidden'
+              }}
+            >
+              {/* Course Image */}
+              {course.imageUrl && course.imageUrl !== 'string' && course.imageUrl.length > 10 && (
+                <div style={{ marginBottom: '20px' }}>
+                  <Image
+                    src={course.imageUrl}
+                    alt={course.title}
+                    width="100%"
+                    style={{
+                      borderRadius: '8px',
+                      objectFit: 'cover',
+                      maxHeight: '200px'
+                    }}
+                  />
+                </div>
+              )}
+
               <div className="space-y-4">
-                <div>
-                  <Text type="secondary" className="block mb-1">Title:</Text>
-                  <Title level={5} className="!m-0">{course.title}</Title>
-                </div>
-
-                <div>
-                  <Text type="secondary" className="block mb-1">Subtitle:</Text>
-                  <Text strong>{course.subtitle}</Text>
-                </div>
-
-                <div>
-                  <Text type="secondary" className="block mb-1">Description:</Text>
-                  <Paragraph className="!mb-0">{course.description}</Paragraph>
-                </div>
-
-                <Divider className="!my-3" />
-
-                <div className="flex justify-between items-center">
-                  <Text type="secondary">Category:</Text>
-                  {getCategoryTag(course.category)}
-                </div>
-
-                <div className="flex justify-between items-center">
-                  <Text type="secondary">Price:</Text>
-                  <Text strong className="text-lg text-orange-500">
-                    {course.price.toLocaleString()} VND
+                <div style={{
+                  padding: '16px',
+                  background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
+                  borderRadius: '8px'
+                }}>
+                  <Text type="secondary" className="block mb-2" style={{ fontSize: '12px', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                    Course Title
                   </Text>
+                  <Title level={4} className="!m-0" style={{ color: '#1a1a1a' }}>
+                    {course.title}
+                  </Title>
                 </div>
 
-                <div className="flex justify-between items-center">
-                  <Text type="secondary">Students:</Text>
-                  <Text strong>{course.studentCount || 0}</Text>
+                <div style={{
+                  padding: '16px',
+                  background: '#f8f9fa',
+                  borderRadius: '8px'
+                }}>
+                  <Text type="secondary" className="block mb-2" style={{ fontSize: '12px', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                    Description
+                  </Text>
+                  <Paragraph className="!mb-0" style={{ color: '#4a5568' }}>
+                    {course.description}
+                  </Paragraph>
                 </div>
 
-                <div className="flex justify-between items-center">
-                  <Text type="secondary">Lessons:</Text>
-                  <Tag color="blue">{lessons.length} lessons</Tag>
+                <Divider className="!my-4" />
+
+                {/* Stats Grid */}
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  gap: '12px'
+                }}>
+                  <div style={{
+                    padding: '16px',
+                    background: 'linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%)',
+                    borderRadius: '8px',
+                    textAlign: 'center'
+                  }}>
+                    <Text type="secondary" className="block mb-1" style={{ fontSize: '11px', textTransform: 'uppercase' }}>
+                      Category
+                    </Text>
+                    {getCategoryTag(course.category)}
+                  </div>
+
+                  <div style={{
+                    padding: '16px',
+                    background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
+                    borderRadius: '8px',
+                    textAlign: 'center'
+                  }}>
+                    <Text type="secondary" className="block mb-1" style={{ fontSize: '11px', textTransform: 'uppercase' }}>
+                      Price
+                    </Text>
+                    <Text strong style={{ fontSize: '16px', color: '#d97706' }}>
+                      {course.price.toLocaleString()} VND
+                    </Text>
+                  </div>
+
+                  <div style={{
+                    padding: '16px',
+                    background: 'linear-gradient(135deg, #ddd6fe 0%, #c4b5fd 100%)',
+                    borderRadius: '8px',
+                    textAlign: 'center'
+                  }}>
+                    <Text type="secondary" className="block mb-1" style={{ fontSize: '11px', textTransform: 'uppercase' }}>
+                      Students
+                    </Text>
+                    <Text strong style={{ fontSize: '18px', color: '#7c3aed' }}>
+                      {course.studentCount || 0}
+                    </Text>
+                  </div>
+
+                  <div style={{
+                    padding: '16px',
+                    background: 'linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)',
+                    borderRadius: '8px',
+                    textAlign: 'center'
+                  }}>
+                    <Text type="secondary" className="block mb-1" style={{ fontSize: '11px', textTransform: 'uppercase' }}>
+                      Lessons
+                    </Text>
+                    <Tag color="green" style={{ fontSize: '14px', padding: '4px 12px' }}>
+                      {lessons.length}
+                    </Tag>
+                  </div>
                 </div>
-
-                <Divider className="!my-3" />
-
-                <Space direction="vertical" className="w-full">
-                  <Button
-                    icon={<EditOutlined />}
-                    block
-                    onClick={() => setIsCourseModalVisible(true)}
-                  >
-                    Edit Course
-                  </Button>
-                  <Button
-                    icon={<DeleteOutlined />}
-                    danger
-                    block
-                    onClick={handleDeleteCourse}
-                  >
-                    Delete Course
-                  </Button>
-                </Space>
               </div>
             </Card>
           </Col>
@@ -454,16 +522,37 @@ const CourseDetail = ({ course, onBack }) => {
           {/* Right Column - Lessons List */}
           <Col xs={24} lg={16}>
             <Card
+              className="shadow-lg"
+              style={{
+                borderRadius: '12px',
+                overflow: 'hidden'
+              }}
               title={
                 <div className="flex items-center justify-between">
-                  <span>Lesson List</span>
-                  <Tag color="blue">{getFilteredLessons().length} lessons</Tag>
+                  <Space>
+                    <VideoCameraOutlined style={{ fontSize: '20px', color: '#667eea' }} />
+                    <span style={{ fontSize: '18px', fontWeight: '600' }}>Lesson List</span>
+                  </Space>
+                  <Tag
+                    color="blue"
+                    style={{
+                      fontSize: '14px',
+                      padding: '4px 16px',
+                      borderRadius: '20px'
+                    }}
+                  >
+                    {getFilteredLessons().length} lessons
+                  </Tag>
                 </div>
               }
               extra={
                 <Input.Search
                   placeholder="Search lessons..."
-                  style={{ width: 300 }}
+                  style={{
+                    width: 300,
+                    borderRadius: '8px'
+                  }}
+                  size="large"
                   onSearch={handleSearch}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   allowClear
@@ -475,43 +564,62 @@ const CourseDetail = ({ course, onBack }) => {
                   <List
                     itemLayout="horizontal"
                     dataSource={getPaginatedLessons().sort((a, b) => a.orderIndex - b.orderIndex)}
-                    renderItem={lesson => (
+                    renderItem={(lesson) => (
                       <List.Item
-                        className="hover:bg-gray-50 px-4 rounded transition-colors"
-                        actions={[
-                          <Button
-                            icon={<EditOutlined />}
-                            size="small"
-                            onClick={() => showLessonModal('edit', lesson)}
-                          >
-                            Edit
-                          </Button>,
-                          <Button
-                            icon={<DeleteOutlined />}
-                            danger
-                            size="small"
-                            onClick={() => handleDeleteLesson(lesson.lessonId)}
-                          >
-                            Delete
-                          </Button>
-                        ]}
+                        style={{
+                          padding: '16px',
+                          marginBottom: '8px',
+                          background: '#fff',
+                          borderRadius: '8px',
+                          border: '1px solid #e5e7eb',
+                          cursor: 'pointer'
+                        }}
+                        onClick={() => {
+                          setViewingLesson(lesson);
+                          setIsViewLessonModalVisible(true);
+                        }}
+                        className="hover:shadow-md transition-shadow"
                       >
                         <List.Item.Meta
+                          avatar={
+                            <div style={{
+                              width: '50px',
+                              height: '50px',
+                              borderRadius: '8px',
+                              background: '#1890ff',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              color: 'white',
+                              fontSize: '18px',
+                              fontWeight: 'bold'
+                            }}>
+                              {lesson.orderIndex}
+                            </div>
+                          }
                           title={
-                            <Space>
-                              <Tag color="blue">Lesson {lesson.orderIndex}</Tag>
-                              <Text strong className="text-base">{lesson.title}</Text>
-                            </Space>
+                            <Text strong style={{ fontSize: '16px' }}>
+                              {lesson.title}
+                            </Text>
                           }
                           description={
                             <div className="space-y-2 mt-2">
-                              <Paragraph ellipsis={{ rows: 2 }} className="!mb-0 text-gray-600">
+                              <Paragraph
+                                ellipsis={{ rows: 2 }}
+                                className="!mb-2"
+                                style={{ color: '#6b7280' }}
+                              >
                                 {lesson.description}
                               </Paragraph>
-                              <Space size="large" className="text-xs">
-                                <Text type="secondary">
-                                  <ClockCircleOutlined /> {formatDuration(lesson.duration)}
-                                </Text>
+                              <Space size="middle">
+                                <Tag icon={<ClockCircleOutlined />} color="blue">
+                                  {formatDuration(lesson.duration)}
+                                </Tag>
+                                {lesson.videoUrl && (
+                                  <Tag icon={<PlayCircleOutlined />} color="green">
+                                    Video
+                                  </Tag>
+                                )}
                               </Space>
                             </div>
                           }
@@ -832,6 +940,99 @@ const CourseDetail = ({ course, onBack }) => {
         </div>
       </Modal>
 
+      {/* View Lesson Detail Modal */}
+      <Modal
+        title={
+          <Space>
+            <VideoCameraOutlined style={{ color: '#1890ff' }} />
+            <span>Lesson Detail</span>
+          </Space>
+        }
+        open={isViewLessonModalVisible}
+        onCancel={() => {
+          setIsViewLessonModalVisible(false);
+          setViewingLesson(null);
+        }}
+        footer={[
+          <Button key="close" onClick={() => {
+            setIsViewLessonModalVisible(false);
+            setViewingLesson(null);
+          }}>
+            Close
+          </Button>
+        ]}
+        width={800}
+      >
+        {viewingLesson && (
+          <div className="space-y-4">
+            <div>
+              <Text type="secondary" className="block mb-2">Lesson Order</Text>
+              <Tag color="blue" style={{ fontSize: '16px', padding: '6px 16px' }}>
+                Lesson {viewingLesson.orderIndex}
+              </Tag>
+            </div>
+
+            <div>
+              <Text type="secondary" className="block mb-2">Title</Text>
+              <Title level={4} className="!m-0">{viewingLesson.title}</Title>
+            </div>
+
+            <div>
+              <Text type="secondary" className="block mb-2">Description</Text>
+              <Paragraph>{viewingLesson.description}</Paragraph>
+            </div>
+
+            {viewingLesson.content && (
+              <div>
+                <Text type="secondary" className="block mb-2">Content</Text>
+                <Paragraph style={{
+                  background: '#f5f5f5',
+                  padding: '12px',
+                  borderRadius: '6px',
+                  whiteSpace: 'pre-wrap'
+                }}>
+                  {viewingLesson.content}
+                </Paragraph>
+              </div>
+            )}
+
+            <div>
+              <Text type="secondary" className="block mb-2">Duration</Text>
+              <Tag icon={<ClockCircleOutlined />} color="blue" style={{ fontSize: '14px', padding: '4px 12px' }}>
+                {formatDuration(viewingLesson.duration)}
+              </Tag>
+            </div>
+
+            {viewingLesson.videoUrl && (
+              <div>
+                <Text type="secondary" className="block mb-2">Video</Text>
+                <div style={{
+                  position: 'relative',
+                  paddingBottom: '56.25%',
+                  height: 0,
+                  borderRadius: '8px',
+                  overflow: 'hidden'
+                }}>
+                  <iframe
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      height: '100%'
+                    }}
+                    src={`https://www.youtube.com/embed/${extractVideoId(viewingLesson.videoUrl)}`}
+                    title={viewingLesson.title}
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  ></iframe>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </Modal>
 
     </div>
   );
