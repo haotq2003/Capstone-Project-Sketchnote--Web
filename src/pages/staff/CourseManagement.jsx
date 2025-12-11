@@ -19,7 +19,9 @@ import {
   Card,
   Form,
   Divider,
-  Spin
+  Spin,
+  Upload,
+  Progress
 } from 'antd';
 import {
   PlusOutlined,
@@ -27,9 +29,11 @@ import {
   DeleteOutlined,
   EyeOutlined,
   BookOutlined,
-  VideoCameraOutlined
+  VideoCameraOutlined,
+  InboxOutlined
 } from '@ant-design/icons';
 import { courseService } from '../../service/courseService';
+import { uploadService } from '../../service/uploadService';
 import ImageUploader from '../../common/ImageUploader';
 
 const { Title, Text } = Typography;
@@ -59,7 +63,8 @@ const CourseManagement = () => {
     { title: '', description: '', content: '', videoUrl: '', duration: 0, orderIndex: 1 }
   ]);
   const [uploadedImageUrl, setUploadedImageUrl] = useState('');
-  const [fetchingDuration, setFetchingDuration] = useState({});
+  const [uploadingVideo, setUploadingVideo] = useState({});
+  const [uploadProgress, setUploadProgress] = useState({});
 
   useEffect(() => {
     fetchCourses();
@@ -192,7 +197,13 @@ const CourseManagement = () => {
     setLessonForms(updated);
   };
 
-  // Extract YouTube video ID from URL
+  // Check if URL is YouTube URL
+  const isYouTubeUrl = (url) => {
+    if (!url) return false;
+    return url.includes('youtube.com') || url.includes('youtu.be');
+  };
+
+  // Extract YouTube video ID for backward compatibility
   const extractYouTubeId = (url) => {
     if (!url) return null;
     const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*$/;
@@ -200,112 +211,44 @@ const CourseManagement = () => {
     return (match && match[7].length === 11) ? match[7] : null;
   };
 
-  // Fetch YouTube video duration using YouTube Data API v3
-  const fetchYouTubeDuration = async (videoId) => {
+  // Handle video file upload
+  const handleVideoUpload = async (file, index) => {
+    // Validate file type
+    const isVideo = file.type.startsWith('video/');
+    if (!isVideo) {
+      message.error('You can only upload video files!');
+      return false;
+    }
+
+    // Validate file size (max 100MB)
+    const isLt100M = file.size / 1024 / 1024 < 100;
+    if (!isLt100M) {
+      message.error('Video must be smaller than 100MB!');
+      return false;
+    }
+
+    setUploadingVideo(prev => ({ ...prev, [index]: true }));
+    setUploadProgress(prev => ({ ...prev, [index]: 0 }));
+
     try {
-      const apiKey = import.meta.env.VITE_YOUTUBE_API_KEY;
-      console.log('🔑 API Key exists:', !!apiKey);
-      console.log('🔑 API Key preview:', apiKey ? apiKey.substring(0, 10) + '...' : 'none');
-
-      if (!apiKey || apiKey.includes('xZ9x')) {
-        message.warning('YouTube API key not configured. Please add a valid API key to .env file.');
-        return null;
-      }
-
-      const url = `https://www.googleapis.com/youtube/v3/videos?id=${videoId}&part=contentDetails,snippet&key=${apiKey}`;
-      console.log('🌐 Fetching from YouTube API...');
-
-      const response = await fetch(url);
-      console.log('📡 Response status:', response.status);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('❌ API Error response:', errorText);
-        throw new Error(`API returned ${response.status}: ${errorText}`);
-      }
-
-      const data = await response.json();
-      console.log('📦 API Response data:', data);
-
-      if (!data.items || data.items.length === 0) {
-        message.error('Video not found. Please check the URL.');
-        return null;
-      }
-
-      const video = data.items[0];
-      const duration = video.contentDetails.duration; // Format: PT1H2M10S
-      const title = video.snippet.title;
-
-      console.log('⏱️ Raw duration:', duration);
-
-      // Parse ISO 8601 duration to seconds
-      const durationInSeconds = parseDuration(duration);
-      console.log('⏱️ Parsed duration (seconds):', durationInSeconds);
-
-      message.success(`Video found: "${title}" (${formatDuration(durationInSeconds)})`);
-      return durationInSeconds;
-    } catch (error) {
-      console.error('❌ YouTube API error:', error);
-      console.error('❌ Error details:', {
-        message: error.message,
-        stack: error.stack
+      const result = await uploadService.uploadVideo(file, (percent) => {
+        setUploadProgress(prev => ({ ...prev, [index]: percent }));
       });
-      message.error(`Could not fetch video info: ${error.message}`);
-      return null;
+
+      const updated = [...lessonForms];
+      updated[index].videoUrl = result.url;
+      updated[index].duration = Math.round(result.duration);
+      setLessonForms(updated);
+
+      message.success('Video uploaded successfully!');
+    } catch (error) {
+      message.error('Failed to upload video: ' + error.message);
+    } finally {
+      setUploadingVideo(prev => ({ ...prev, [index]: false }));
+      setUploadProgress(prev => ({ ...prev, [index]: 0 }));
     }
-  };
 
-  // Parse ISO 8601 duration (PT1H2M10S) to seconds
-  const parseDuration = (duration) => {
-    const match = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
-    if (!match) return 0;
-
-    const hours = parseInt(match[1] || 0);
-    const minutes = parseInt(match[2] || 0);
-    const seconds = parseInt(match[3] || 0);
-
-    return hours * 3600 + minutes * 60 + seconds;
-  };
-
-  // Format seconds to readable duration (HH:MM:SS)
-  const formatDuration = (seconds) => {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
-
-    if (hours > 0) {
-      return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-    }
-    return `${minutes}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  // Handle YouTube URL change
-  const handleYouTubeUrlChange = async (index, url) => {
-    console.log('🎬 YouTube URL changed:', { index, url });
-    updateLessonForm(index, 'videoUrl', url);
-
-    const videoId = extractYouTubeId(url);
-    console.log('📹 Extracted video ID:', videoId);
-
-    if (videoId) {
-      setFetchingDuration(prev => ({ ...prev, [index]: true }));
-      console.log('⏳ Fetching duration for video ID:', videoId);
-
-      const duration = await fetchYouTubeDuration(videoId);
-      console.log('✅ Received duration:', duration);
-
-      setFetchingDuration(prev => ({ ...prev, [index]: false }));
-
-      if (duration !== null && duration > 0) {
-        console.log('📝 Setting duration to:', duration);
-        // Auto-fill duration
-        updateLessonForm(index, 'duration', duration);
-      } else {
-        console.log('⚠️ Duration is null or 0');
-      }
-    } else {
-      console.log('❌ Could not extract video ID from URL');
-    }
+    return false; // Prevent default upload behavior
   };
 
   // View Course Detail
@@ -693,35 +636,74 @@ const CourseManagement = () => {
                     </Row>
 
                     <div>
-                      <label className="block mb-1 font-medium">YouTube video URL</label>
-                      <Input
-                        placeholder="https://www.youtube.com/watch?v=..."
-                        value={form.videoUrl}
-                        onChange={async (e) => {
-                          const url = e.target.value;
-                          updateLessonForm(index, 'videoUrl', url);
+                      <label className="block mb-1 font-medium">Video Lesson</label>
+                      <Upload.Dragger
+                        accept="video/*"
+                        beforeUpload={(file) => handleVideoUpload(file, index)}
+                        showUploadList={false}
+                        disabled={uploadingVideo[index]}
+                      >
+                        <p className="ant-upload-drag-icon">
+                          <InboxOutlined />
+                        </p>
+                        <p className="ant-upload-text">
+                          Click or drag video file to upload
+                        </p>
+                        <p className="ant-upload-hint">
+                          Support for MP4, MOV, AVI, and other video formats. Max size: 100MB
+                        </p>
+                      </Upload.Dragger>
 
-                          // Auto-fetch duration when URL is pasted/changed
-                          const videoId = extractYouTubeId(url);
-                          if (videoId) {
-                            setFetchingDuration(prev => ({ ...prev, [index]: true }));
-                            const duration = await fetchYouTubeDuration(videoId);
-                            setFetchingDuration(prev => ({ ...prev, [index]: false }));
+                      {uploadingVideo[index] && (
+                        <div className="mt-3">
+                          <Progress percent={uploadProgress[index]} status="active" />
+                          <Text type="secondary" className="text-xs mt-1 block">
+                            Uploading video... Please wait.
+                          </Text>
+                        </div>
+                      )}
 
-                            if (duration !== null && duration > 0) {
-                              updateLessonForm(index, 'duration', duration);
-                            }
-                          }
-                        }}
-                        suffix={
-                          fetchingDuration[index] && (
-                            <Spin size="small" />
-                          )
-                        }
-                      />
-                      <Text type="secondary" className="text-xs mt-1 block">
-                        Paste YouTube URL to automatically fetch video duration.
-                      </Text>
+                      {form.videoUrl && !uploadingVideo[index] && (
+                        <div className="mt-3">
+                          <Text type="secondary" className="block mb-2">Preview:</Text>
+                          {isYouTubeUrl(form.videoUrl) ? (
+                            <div className="relative inline-block">
+                              <iframe
+                                width="300"
+                                height="170"
+                                src={`https://www.youtube.com/embed/${extractYouTubeId(form.videoUrl)}`}
+                                title="YouTube video preview"
+                                frameBorder="0"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                allowFullScreen
+                                className="rounded"
+                              ></iframe>
+                            </div>
+                          ) : (
+                            <video
+                              width="300"
+                              height="170"
+                              controls
+                              className="rounded"
+                              src={form.videoUrl}
+                            >
+                              Your browser does not support the video tag.
+                            </video>
+                          )}
+                          <div className="mt-2">
+                            <Button
+                              size="small"
+                              danger
+                              onClick={() => {
+                                updateLessonForm(index, 'videoUrl', '');
+                                updateLessonForm(index, 'duration', 0);
+                              }}
+                            >
+                              Remove Video
+                            </Button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </Card>

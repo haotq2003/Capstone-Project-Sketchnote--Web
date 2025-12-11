@@ -155,20 +155,18 @@ const AdminCreditPackages = () => {
       title: "ID",
       dataIndex: "id",
       key: "id",
-      width: 60,
-      fixed: "left",
+      width: 50,
     },
     {
       title: "Package Name",
       dataIndex: "name",
       key: "name",
-      width: 150,
-      fixed: "left",
+      width: 130,
       render: (text, record) => (
         <div>
           <div style={{ fontWeight: 600, marginBottom: 4 }}>{text}</div>
           {record.isPopular && (
-            <Tag color="gold" style={{ fontSize: 11 }}>
+            <Tag color="gold" style={{ fontSize: 10 }}>
               ⭐ POPULAR
             </Tag>
           )}
@@ -179,14 +177,14 @@ const AdminCreditPackages = () => {
       title: "Description",
       dataIndex: "description",
       key: "description",
-      width: 150,
+      width: 120,
       ellipsis: true,
     },
     {
       title: "Credit Amount",
       dataIndex: "creditAmount",
       key: "creditAmount",
-      width: 120,
+      width: 100,
       align: "right",
       render: (value) => (
         <span style={{ fontWeight: 600, color: "#1677ff" }}>
@@ -198,7 +196,7 @@ const AdminCreditPackages = () => {
       title: "Original Price",
       dataIndex: "originalPrice",
       key: "originalPrice",
-      width: 130,
+      width: 110,
       align: "right",
       render: (value) => (
         <span style={{ color: "#e72828ff" }}>
@@ -210,7 +208,7 @@ const AdminCreditPackages = () => {
       title: "Discount %",
       dataIndex: "discountPercent",
       key: "discountPercent",
-      width: 100,
+      width: 90,
       align: "center",
       render: (value) => <Tag color="blue">{value}%</Tag>,
     },
@@ -218,7 +216,7 @@ const AdminCreditPackages = () => {
       title: "Status",
       dataIndex: "isActive",
       key: "isActive",
-      width: 100,
+      width: 90,
       align: "center",
       render: (isActive) => (
         <Tag color={isActive ? "green" : "red"} icon={isActive ? <CheckCircleOutlined /> : <StopOutlined />}>
@@ -229,8 +227,7 @@ const AdminCreditPackages = () => {
     {
       title: "Actions",
       key: "actions",
-      width: 200,
-      fixed: "right",
+      width: 180,
       align: "center",
       render: (_, record) => (
         <Space size="small">
@@ -322,7 +319,6 @@ const AdminCreditPackages = () => {
               Add Package
             </Button>
           }
-          style={{ overflowX: "auto" }}
         >
           <Table
             columns={columns}
@@ -330,8 +326,8 @@ const AdminCreditPackages = () => {
             rowKey="id"
             loading={loading}
             pagination={{ pageSize: 10, showSizeChanger: true, showTotal: (total) => `Total ${total} packages` }}
-            scroll={{ x: "max-content" }}
-            size="middle"
+            scroll={{ x: 900 }}
+            size="small"
           />
         </Card>
 
@@ -378,7 +374,7 @@ const AdminCreditPackages = () => {
                 </Col>
                 <Col span={12}>
                   <strong>Original Price:</strong>{" "}
-                  <span style={{ textDecoration: "line-through" }}>
+                  <span >
                     {selectedPackage.originalPrice?.toLocaleString()} đ
                   </span>
                 </Col>

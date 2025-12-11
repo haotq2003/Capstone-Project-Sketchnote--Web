@@ -14,7 +14,7 @@ export const courseApiController = {
   },
 
   getLessonsByCourseId: async (id) => {
-    return await privateApi.get(`/api/learning/lessons/${id}`);
+    return await privateApi.get(`/api/learning/lessons/course/${id}`);
   },
 
   createLesson: async (id, lessonData) => {

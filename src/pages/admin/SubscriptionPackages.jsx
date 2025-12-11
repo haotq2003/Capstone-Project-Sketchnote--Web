@@ -11,7 +11,10 @@ import {
   Popconfirm,
   Card,
   message,
-  Checkbox
+  Checkbox,
+  Row,
+  Col,
+  Divider,
 } from "antd";
 import {
   PlusOutlined,
@@ -91,6 +94,7 @@ const SubscriptionPackages = () => {
     {
       title: "Plan",
       dataIndex: "planName",
+      width: 150,
       render: (text, r) => (
         <div className="font-semibold">
           {text}
@@ -101,6 +105,7 @@ const SubscriptionPackages = () => {
     {
       title: "Type",
       dataIndex: "planType",
+      width: 100,
       render: (text) => (
         <Tag color={text === "DESIGNER" ? "purple" : "gold"}>
           {text}
@@ -109,6 +114,7 @@ const SubscriptionPackages = () => {
     },
     {
       title: "Price",
+      width: 120,
       render: (_, r) => (
         <b className=" text-orange-600">{r.price.toLocaleString()} {r.currency}</b>
       ),
@@ -116,26 +122,27 @@ const SubscriptionPackages = () => {
     {
       title: "Duration",
       dataIndex: "durationDays",
+      width: 90,
       render: (d) => `${d} days`,
     },
     {
       title: "Actions",
-      width: 200,
+      width: 180,
       render: (_, record) => (
         <Space>
-          <Button icon={<EyeOutlined />} onClick={() => openDetailModal(record)}>
+          <Button size="small" icon={<EyeOutlined />} onClick={() => openDetailModal(record)}>
             View
           </Button>
-   
-          <Button icon={<EditOutlined />} onClick={() => handleEdit(record)}>
+
+          <Button size="small" icon={<EditOutlined />} onClick={() => handleEdit(record)}>
             Edit
           </Button>
-         
+
           <Popconfirm
             title="Delete this plan?"
             onConfirm={() => handleDelete(record.planId)}
           >
-            <Button danger icon={<DeleteOutlined />} />
+            <Button danger size="small" icon={<DeleteOutlined />} />
           </Popconfirm>
         </Space>
       ),
@@ -144,7 +151,7 @@ const SubscriptionPackages = () => {
 
   return (
     <div style={{ padding: 24 }}>
-    
+
       <Card className="shadow-md mb-6">
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-2xl font-semibold mb-6">Subscription Packages</h1>
@@ -158,7 +165,8 @@ const SubscriptionPackages = () => {
           dataSource={packages}
           rowKey="planId"
           pagination={{ pageSize: 10 }}
-          scroll={{ x: "max-content" }}
+          scroll={{ x: 700 }}
+          size="small"
         />
       </Card>
 
@@ -212,51 +220,60 @@ const SubscriptionPackages = () => {
 
       {/* DETAIL MODAL */}
       <Modal
-        title="Subscription Plan Details"
+        title={<span style={{ fontSize: 18, fontWeight: 600 }}>Subscription Plan Details</span>}
         open={isDetailModal}
-        footer={null}
+        footer={[
+          <Button key="close" onClick={() => setIsDetailModal(false)}>
+            Close
+          </Button>
+        ]}
         onCancel={() => setIsDetailModal(false)}
+        width={600}
       >
         {detailData && (
-          <div className="space-y-3 text-[15px]">
-            <div>
-              <p className="text-gray-500">Plan Name</p>
-              <p className="font-semibold">{detailData.planName}</p>
-            </div>
+          <div style={{ lineHeight: 2 }}>
+            <Row gutter={[16, 16]}>
+              <Col span={24}>
+                <strong>Plan Name:</strong> {detailData.planName}
+              </Col>
 
-            <div>
-              <p className="text-gray-500">Plan Type</p>
-              <Tag color={detailData.planType === "DESIGNER" ? "purple" : "gold"}>
-                {detailData.planType}
-              </Tag>
-            </div>
+              <Col span={12}>
+                <strong>Plan Type:</strong>{" "}
+                <Tag color={detailData.planType === "DESIGNER" ? "purple" : "gold"}>
+                  {detailData.planType}
+                </Tag>
+              </Col>
 
-            <div>
-              <p className="text-gray-500">Price</p>
-              <p className="font-semibold">
-                {detailData.price.toLocaleString()} {detailData.currency}
-              </p>
-            </div>
+              <Col span={12}>
+                <strong>Duration:</strong> {detailData.durationDays} days
+              </Col>
 
-            <div>
-              <p className="text-gray-500">Duration</p>
-              <p>{detailData.durationDays} days</p>
-            </div>
+              <Col span={12}>
+                <strong>Price:</strong>{" "}
+                <span style={{ color: "#52c41a", fontWeight: 600, fontSize: 16 }}>
+                  {detailData.price.toLocaleString()} {detailData.currency}
+                </span>
+              </Col>
 
-            <div>
-              <p className="text-gray-500">Description</p>
-              <p>{detailData.description || "No description"}</p>
-            </div>
+              <Col span={12}>
+                <strong>Currency:</strong> {detailData.currency}
+              </Col>
 
-            <div>
-              <p className="text-gray-500">Created At</p>
-              <p>{new Date(detailData.createdAt).toLocaleString()}</p>
-            </div>
+              <Col span={24}>
+                <strong>Description:</strong> {detailData.description || "No description"}
+              </Col>
+            </Row>
 
-            <div>
-              <p className="text-gray-500">Updated At</p>
-              <p>{new Date(detailData.updatedAt).toLocaleString()}</p>
-            </div>
+            <Divider />
+
+            <Row gutter={[16, 8]}>
+              <Col span={24}>
+                <strong>Created At:</strong> {new Date(detailData.createdAt).toLocaleString("vi-VN")}
+              </Col>
+              <Col span={24}>
+                <strong>Updated At:</strong> {new Date(detailData.updatedAt).toLocaleString("vi-VN")}
+              </Col>
+            </Row>
           </div>
         )}
       </Modal>
