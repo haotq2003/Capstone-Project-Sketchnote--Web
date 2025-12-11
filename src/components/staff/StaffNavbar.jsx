@@ -9,6 +9,7 @@ import {
   LogOut,
   Coins,
   Box,
+  FileCheck,
 } from "lucide-react";
 import { authService } from "../../service/authService";
 
@@ -20,7 +21,7 @@ export default function StaffNavbar() {
     // { path: "/staff/support", icon: Headphones, label: "Support" },
 
     { path: "/staff/resources", icon: ScrollText, label: "Resources" },
-    { path: "/staff/accept-blog", icon: ScrollText, label: "Accept Blog" },
+    { path: "/staff/accept-blog", icon: FileCheck, label: "Accept Blog" },
     { path: "/staff/credit", icon: Coins, label: "Credit Packages" },
     { path: "/staff/subscriptions", icon: Box, label: "Subscription Packages" },
     {
@@ -36,7 +37,18 @@ export default function StaffNavbar() {
   };
 
   return (
-    <aside className="w-72 bg-gradient-to-b from-white to-gray-50/30 h-screen border-r border-gray-200 flex flex-col sticky top-0 overflow-y-auto shadow-sm">
+    <aside 
+      className="w-72 shrink-0 bg-gradient-to-b from-white to-gray-50/30 h-screen border-r border-gray-200 flex flex-col sticky top-0 overflow-y-auto shadow-sm" 
+      style={{ 
+        scrollbarWidth: 'none',
+        msOverflowStyle: 'none'
+      }}
+    >
+      <style jsx>{`
+        aside::-webkit-scrollbar {
+          display: none;
+        }
+      `}</style>
       {/* Logo */}
       <div className="flex items-center gap-2.5 px-5 py-5 border-b border-gray-200 bg-white">
         <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center flex-shrink-0 shadow-md">
@@ -67,10 +79,9 @@ export default function StaffNavbar() {
                 <NavLink
                   to={item.path}
                   className={({ isActive }) =>
-                    `w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-sm group relative overflow-hidden ${
-                      isActive
-                        ? "bg-gradient-to-r from-blue-50 to-blue-100/50 text-blue-700 font-semibold shadow-sm"
-                        : "text-gray-700 hover:bg-white hover:shadow-md"
+                    `w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-sm group relative overflow-hidden ${isActive
+                      ? "bg-gradient-to-r from-blue-50 to-blue-100/50 text-blue-700 font-semibold shadow-sm"
+                      : "text-gray-700 hover:bg-white hover:shadow-md"
                     }`
                   }
                 >
@@ -80,11 +91,10 @@ export default function StaffNavbar() {
                         <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-500 to-blue-600 rounded-r-full" />
                       )}
                       <Icon
-                        className={`w-5 h-5 flex-shrink-0 transition-all duration-200 ${
-                          isActive
-                            ? "text-blue-600 scale-110"
-                            : "text-gray-400 group-hover:text-blue-600 group-hover:scale-110"
-                        }`}
+                        className={`w-5 h-5 flex-shrink-0 transition-all duration-200 ${isActive
+                          ? "text-blue-600 scale-110"
+                          : "text-gray-400 group-hover:text-blue-600 group-hover:scale-110"
+                          }`}
                       />
                       <span className="transition-all duration-200">
                         {item.label}

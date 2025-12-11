@@ -181,7 +181,7 @@ const SketchnoteLogin = () => {
         if (roles.includes("ADMIN")) {
           navigate("/admin");
         } else if (roles.includes("STAFF")) {
-          navigate("/staff");
+          navigate("/staff/courses");
         } else if (roles.includes("DESIGNER")) {
           navigate("/designer");
         }
@@ -503,11 +503,10 @@ const SketchnoteLogin = () => {
                       onChange={(e) => setEmail(e.target.value)}
                       onFocus={() => setFocusedInput("email")}
                       onBlur={() => setFocusedInput(null)}
-                      className={`w-full pl-12 pr-4 py-3.5 border-2 rounded-xl transition-all duration-300 ${
-                        focusedInput === "email"
-                          ? "border-blue-500 shadow-lg shadow-blue-500/20"
-                          : "border-gray-200 hover:border-gray-300"
-                      } focus:outline-none bg-gray-50 focus:bg-white`}
+                      className={`w-full pl-12 pr-4 py-3.5 border-2 rounded-xl transition-all duration-300 ${focusedInput === "email"
+                        ? "border-blue-500 shadow-lg shadow-blue-500/20"
+                        : "border-gray-200 hover:border-gray-300"
+                        } focus:outline-none bg-gray-50 focus:bg-white`}
                       placeholder="you@example.com"
                       required
                     />
@@ -530,11 +529,10 @@ const SketchnoteLogin = () => {
                       onChange={(e) => setPassword(e.target.value)}
                       onFocus={() => setFocusedInput("password")}
                       onBlur={() => setFocusedInput(null)}
-                      className={`w-full pl-12 pr-4 py-3.5 border-2 rounded-xl transition-all duration-300 ${
-                        focusedInput === "password"
-                          ? "border-blue-500 shadow-lg shadow-blue-500/20"
-                          : "border-gray-200 hover:border-gray-300"
-                      } focus:outline-none bg-gray-50 focus:bg-white`}
+                      className={`w-full pl-12 pr-4 py-3.5 border-2 rounded-xl transition-all duration-300 ${focusedInput === "password"
+                        ? "border-blue-500 shadow-lg shadow-blue-500/20"
+                        : "border-gray-200 hover:border-gray-300"
+                        } focus:outline-none bg-gray-50 focus:bg-white`}
                       placeholder="••••••••"
                       required
                     />
@@ -547,9 +545,8 @@ const SketchnoteLogin = () => {
                   disabled={loading}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  className={`w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white py-4 rounded-xl font-semibold transition-all duration-300 shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40 flex items-center justify-center gap-2 ${
-                    loading ? "opacity-70 cursor-not-allowed" : ""
-                  }`}
+                  className={`w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white py-4 rounded-xl font-semibold transition-all duration-300 shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40 flex items-center justify-center gap-2 ${loading ? "opacity-70 cursor-not-allowed" : ""
+                    }`}
                 >
                   {loading ? (
                     <div className="flex items-center gap-2">
