@@ -5,7 +5,7 @@ import CourseManagement from "./pages/staff/CourseManagement";
 import CustomerSupport from "./pages/staff/CustomerSupport";
 import WithdrawalManagement from "./pages/staff/WithdrawalManagement";
 import Login from "./pages/auth/login";
-import '@ant-design/v5-patch-for-react-19';
+import "@ant-design/v5-patch-for-react-19";
 import { AdminLayout } from "./components/admin/AdminLayout";
 import UserManagement from "./pages/admin/UserManagement";
 import ManageUsers from "./pages/admin/UserManagement";
@@ -13,6 +13,7 @@ import AdminRevenueView from "./pages/admin/RevenueView";
 import AdminDashboard from "./pages/admin/Dashboard";
 import AdminProfile from "./pages/admin/Profile";
 import ManagerCredit from "./pages/admin/ManagerCredit";
+import ResourceTemplate from "./pages/staff/ResourceTemplate";
 
 import NotFound from "./pages/NotFound";
 
@@ -33,14 +34,12 @@ import SubscriptionTransactions from "./pages/admin/SubscriptionTransactions";
 import CreditTransactions from "./pages/admin/CreditTransactions";
 import OrderTransactions from "./pages/admin/OrderTransactions";
 
-
 import AdminWithdrawalManagement from "./pages/admin/WithdrawalManagement";
 import AdminWallet from "./pages/admin/AdminWallet";
 
 function App() {
   return (
     <Routes>
-
       <Route path="/" element={<Navigate to="/login" replace />} />
       <Route path="/login" element={<Login />} />
 
@@ -53,6 +52,7 @@ function App() {
         <Route path="accept-blog" element={<AcceptBlog />} />
         <Route path="credit" element={<ManagerCredit />} />
         <Route path="subscriptions" element={<SubscriptionPackages />} />
+        <Route path="resource-template" element={<ResourceTemplate />} />
         <Route path="profile" element={<StaffProfile />} />
       </Route>
 
@@ -62,8 +62,6 @@ function App() {
         <Route path="reports" element={<DesignerReportView />} />
         <Route path="profile" element={<DesignerProfile />} />
       </Route>
-
-
 
       <Route path="/admin" element={<AdminLayout />}>
         <Route index element={<AdminDashboard />} />
@@ -75,7 +73,10 @@ function App() {
         <Route path="wallets" element={<WalletsManagement />} />
         <Route path="transactions" element={<TransactionsManagement />} />
         <Route path="user-transactions" element={<UserTransactions />} />
-        <Route path="subscription-transactions" element={<SubscriptionTransactions />} />
+        <Route
+          path="subscription-transactions"
+          element={<SubscriptionTransactions />}
+        />
         <Route path="credit-transactions" element={<CreditTransactions />} />
         <Route path="credit-transactions" element={<CreditTransactions />} />
         <Route path="order-transactions" element={<OrderTransactions />} />

@@ -5,6 +5,7 @@ import {
   Headphones,
   BookOpen,
   ScrollText,
+  FileText,
   LogOut,
   Coins,
   Box,
@@ -23,6 +24,11 @@ export default function StaffNavbar() {
     { path: "/staff/accept-blog", icon: FileCheck, label: "Accept Blog" },
     { path: "/staff/credit", icon: Coins, label: "Credit Packages" },
     { path: "/staff/subscriptions", icon: Box, label: "Subscription Packages" },
+    {
+      path: "/staff/resource-template",
+      icon: FileText,
+      label: "Resource Template",
+    },
   ];
 
   const handleLogout = async () => {
