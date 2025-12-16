@@ -34,6 +34,7 @@ const BankAccountManagement = ({ onAccountChange }) => {
     const [bankListLoading, setBankListLoading] = useState(false);
     const [modalVisible, setModalVisible] = useState(false);
     const [editingAccount, setEditingAccount] = useState(null);
+    const [selectedBank, setSelectedBank] = useState(null);
     const [form] = Form.useForm();
 
     // Fetch bank accounts
@@ -72,6 +73,7 @@ const BankAccountManagement = ({ onAccountChange }) => {
     // Open modal for add/edit
     const openModal = (account = null) => {
         setEditingAccount(account);
+        setSelectedBank(null); // Reset selected bank
         if (account) {
             form.setFieldsValue({
                 bankName: account.bankName,
@@ -90,19 +92,29 @@ const BankAccountManagement = ({ onAccountChange }) => {
     const handleSubmit = async (values) => {
         try {
             if (editingAccount) {
-                // Update existing account
-                await walletService.updateBankAccount({
+                // Update existing account - include logoUrl if bank was changed
+                const updateData = {
                     id: editingAccount.id,
                     ...values,
-                });
+                };
+                // If user changed the bank, update logoUrl
+                if (selectedBank) {
+                    updateData.logoUrl = selectedBank.logo;
+                }
+                await walletService.updateBankAccount(updateData);
                 message.success("Bank account updated successfully");
             } else {
-                // Create new account
-                await walletService.createBankAccount(values);
+                // Create new account - add logoUrl from selected bank
+                const accountData = {
+                    ...values,
+                    logoUrl: selectedBank?.logo || "",
+                };
+                await walletService.createBankAccount(accountData);
                 message.success("Bank account added successfully");
             }
             setModalVisible(false);
             form.resetFields();
+            setSelectedBank(null);
             fetchBankAccounts();
             onAccountChange?.(); // Notify parent component
         } catch (error) {
@@ -290,6 +302,7 @@ const BankAccountManagement = ({ onAccountChange }) => {
                 onCancel={() => {
                     setModalVisible(false);
                     form.resetFields();
+                    setSelectedBank(null);
                 }}
                 footer={null}
                 width={600}
@@ -309,9 +322,13 @@ const BankAccountManagement = ({ onAccountChange }) => {
                             showSearch
                             placeholder="Select or type bank name"
                             loading={bankListLoading}
-                            optionFilterProp="children"
+                            onChange={(value) => {
+                                // Find and store the selected bank object
+                                const bank = bankList.find(b => b.shortName === value);
+                                setSelectedBank(bank);
+                            }}
                             filterOption={(input, option) =>
-                                (option?.label ?? "").toLowerCase().includes(input.toLowerCase())
+                                (option?.searchLabel ?? "").toLowerCase().includes(input.toLowerCase())
                             }
                             notFoundContent={bankListLoading ? <Spin size="small" /> : "No banks found"}
                             options={bankList.map((bank) => ({

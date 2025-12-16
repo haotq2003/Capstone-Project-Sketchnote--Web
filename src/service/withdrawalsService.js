@@ -1,7 +1,7 @@
 import { withdrawalsApiController } from "../api/withdrawApiController";
 
 export const withdrawalsService = {
-    getWithdrawals: async (search,status, page, size, sortBy = "createAt", sortDir = "desc") => {
+    getWithdrawals: async (search,status, page, size, sortBy = "createdAt", sortDir = "desc") => {
        try {
           const res = await withdrawalsApiController.getWithdrawals(search,status, page, size, sortBy, sortDir);
           return res.data.result;

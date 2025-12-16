@@ -41,10 +41,14 @@ const TransactionsManagement = () => {
 
   const columns = [
     {
-      title: "ID",
-      dataIndex: "transactionId",
-      key: "transactionId",
-      width: 80,
+      title: "No.",
+      key: "index",
+      width: 60,
+      render: (_, __, index) => {
+        // Calculate sequential number based on current page
+        const { current, pageSize } = pagination;
+        return (current - 1) * pageSize + index + 1;
+      },
     },
     {
       title: "User Email",
@@ -91,11 +95,38 @@ const TransactionsManagement = () => {
       title: "Amount",
       dataIndex: "amount",
       key: "amount",
-      render: (amount) => (
-        <span style={{ color: amount > 0 ? "#52c41a" : "#f5222d", fontWeight: "bold" }}>
-          {amount?.toLocaleString()} đ
-        </span>
-      ),
+      render: (amount, record) => {
+        const { type, status } = record;
+
+        // If PENDING, show amount without sign
+        if (status === "PENDING") {
+          return (
+            <span style={{ color: "#faad14", fontWeight: "bold" }}>
+              {amount?.toLocaleString()} đ
+            </span>
+          );
+        }
+
+        // If SUCCESS, show with +/- based on type
+        if (status === "SUCCESS") {
+          const isIncoming = type === "DEPOSIT";
+          const sign = isIncoming ? "+" : "-";
+          const color = isIncoming ? "#52c41a" : "#f5222d";
+
+          return (
+            <span style={{ color, fontWeight: "bold" }}>
+              {sign}{Math.abs(amount)?.toLocaleString()} đ
+            </span>
+          );
+        }
+
+        // For FAILED or other statuses, show without sign
+        return (
+          <span style={{ color: "#d9d9d9", fontWeight: "bold" }}>
+            {amount?.toLocaleString()} đ
+          </span>
+        );
+      },
     },
     {
       title: "Balance After",
@@ -134,7 +165,7 @@ const TransactionsManagement = () => {
       width: 100,
       render: (_, record) => (
         <Button
-         
+
           onClick={() => handleViewDetail(record)}
         >
           View
@@ -234,32 +265,42 @@ const TransactionsManagement = () => {
       >
         {selectedRecord && (
           <Descriptions bordered column={1}>
-            {Object.entries(selectedRecord).map(([key, value]) => {
-              let displayValue = value;
-              if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}T/.test(value)) {
-                displayValue = new Date(value).toLocaleString();
-              } else if (typeof value === "object" && value !== null) {
-                displayValue = JSON.stringify(value, null, 2);
-              } else {
-                displayValue = String(value);
-              }
-              if (key === "status") {
-                let color = "default";
-                if (value === "SUCCESS") color = "success";
-                else if (value === "PENDING") color = "warning";
-                else if (value === "FAILED") color = "error";
+            {Object.entries(selectedRecord)
+              .filter(([key, value]) => {
+                // Hide null, undefined, or empty string values
+                return value !== null && value !== undefined && value !== "";
+              })
+              .map(([key, value]) => {
+                let displayValue = value;
+
+                // Format currency fields
+                if ((key === "amount" || key === "balance" || key === "balanceAfter" || key === "balanceBefore") && typeof value === "number") {
+                  displayValue = `${value.toLocaleString()} đ`;
+                } else if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}T/.test(value)) {
+                  displayValue = new Date(value).toLocaleString();
+                } else if (typeof value === "object" && value !== null) {
+                  displayValue = JSON.stringify(value, null, 2);
+                } else {
+                  displayValue = String(value);
+                }
+
+                if (key === "status") {
+                  let color = "default";
+                  if (value === "SUCCESS") color = "success";
+                  else if (value === "PENDING") color = "warning";
+                  else if (value === "FAILED") color = "error";
+                  return (
+                    <Descriptions.Item key={key} label={key}>
+                      <Tag color={color}>{value}</Tag>
+                    </Descriptions.Item>
+                  );
+                }
                 return (
                   <Descriptions.Item key={key} label={key}>
-                    <Tag color={color}>{value}</Tag>
+                    {displayValue}
                   </Descriptions.Item>
                 );
-              }
-              return (
-                <Descriptions.Item key={key} label={key}>
-                  {displayValue}
-                </Descriptions.Item>
-              );
-            })}
+              })}
           </Descriptions>
         )}
       </Modal>

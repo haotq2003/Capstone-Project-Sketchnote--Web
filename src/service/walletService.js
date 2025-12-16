@@ -11,9 +11,9 @@ export const walletService = {
       throw new Error(message);
      }
     },
-    depositWallet: async (amount) => {
+    depositWallet: async (amount, returnUrl) => {
         try {
-            const res = await walletApiController.depositWallet(amount);
+            const res = await walletApiController.depositWallet(amount, returnUrl);
             return res.data;
         } catch (error) {
             const message =

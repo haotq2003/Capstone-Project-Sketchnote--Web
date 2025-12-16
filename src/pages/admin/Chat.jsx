@@ -315,12 +315,12 @@ const Chat = () => {
             {wsConnected ? (
               <span className="text-xs text-green-600 flex items-center">
                 <span className="w-2 h-2 bg-green-600 rounded-full mr-1 animate-pulse"></span>
-                Đã kết nối
+                Connected
               </span>
             ) : (
               <span className="text-xs text-red-600 flex items-center">
                 <span className="w-2 h-2 bg-red-600 rounded-full mr-1"></span>
-                Chưa kết nối
+                Not Connected
               </span>
             )}
           </div>

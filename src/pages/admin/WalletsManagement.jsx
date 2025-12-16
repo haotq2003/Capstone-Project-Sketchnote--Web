@@ -20,9 +20,13 @@ const WalletsManagement = () => {
 
   const columns = [
     {
-      title: "Wallet ID",
-      dataIndex: "walletId",
-      width: 120,
+      title: "No.",
+      key: "index",
+      width: 60,
+      render: (_, __, index) => {
+        const { current, pageSize } = pagination;
+        return (current - 1) * pageSize + index + 1;
+      },
     },
     {
       title: "User Email",
@@ -146,13 +150,31 @@ const WalletsManagement = () => {
       >
         {selectedRecord && (
           <Descriptions bordered column={1}>
-            {Object.entries(selectedRecord).map(([key, value]) => (
-              <Descriptions.Item key={key} label={key}>
-                {typeof value === "object" && value !== null
-                  ? JSON.stringify(value, null, 2)
-                  : String(value)}
-              </Descriptions.Item>
-            ))}
+            {Object.entries(selectedRecord)
+              .filter(([key, value]) => {
+                // Hide null, undefined, or empty values
+                return value !== null && value !== undefined && value !== "";
+              })
+              .map(([key, value]) => {
+                let displayValue = value;
+
+                // Format currency fields
+                if ((key === "balance" || key === "amount") && typeof value === "number") {
+                  displayValue = `${value.toLocaleString()} đ`;
+                } else if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}T/.test(value)) {
+                  displayValue = new Date(value).toLocaleString();
+                } else if (typeof value === "object" && value !== null) {
+                  displayValue = JSON.stringify(value, null, 2);
+                } else {
+                  displayValue = String(value);
+                }
+
+                return (
+                  <Descriptions.Item key={key} label={key}>
+                    {displayValue}
+                  </Descriptions.Item>
+                );
+              })}
           </Descriptions>
         )}
       </Modal>

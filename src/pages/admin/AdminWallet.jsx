@@ -28,6 +28,7 @@ import {
     ArrowDownOutlined,
     ReloadOutlined,
     SettingOutlined,
+    PlusOutlined,
 } from "@ant-design/icons";
 import { walletService } from "../../service/walletService";
 import BankAccountManagement from "./BankAccountManagement";
@@ -114,15 +115,22 @@ const AdminWallet = () => {
             return;
         }
         try {
-            const res = await walletService.depositWallet(amount);
+            // Generate return URL to payment callback interceptor
+            // Backend will redirect to: {baseUrl}/payment-callback?status=SUCCESS&orderCode=...
+            // PaymentCallback will then route to /wallet-success or /wallet-fail
+            const baseUrl = window.location.origin; // e.g., http://localhost:8888
+            const returnUrl = `${baseUrl}/payment-callback`;
+
+            const res = await walletService.depositWallet(amount, returnUrl);
 
 
             // Payment URL có thể ở res.message hoặc res.result
             const paymentUrl = res?.message || res?.result;
 
             if (paymentUrl && typeof paymentUrl === 'string' && paymentUrl.startsWith('http')) {
-                window.open(paymentUrl, "_blank");
-                message.success("Payment page opened in new tab");
+                // Navigate to payment page in same tab
+                // After payment, backend will redirect to /wallet-success or /wallet-fail
+                window.location.href = paymentUrl;
             } else {
                 console.error("Invalid payment URL:", paymentUrl);
                 message.error("Invalid payment URL received");
@@ -595,14 +603,43 @@ const AdminWallet = () => {
                     layout="vertical"
                     onFinish={handleWithdraw}
                 >
-                    {/* Saved Bank Accounts Selector */}
-                    {bankAccounts.length > 0 && (
+                    {/* Bank Account Required Notice */}
+                    {bankAccounts.length === 0 ? (
+                        <div style={{
+                            background: "linear-gradient(135deg, #f0f5ff 0%, #e6f7ff 100%)",
+                            padding: 24,
+                            borderRadius: 12,
+                            marginBottom: 16,
+                            textAlign: "center",
+                            border: "1px solid #91d5ff"
+                        }}>
+                            <BankOutlined style={{ fontSize: 48, color: "#1890ff", marginBottom: 16 }} />
+                            <Title level={5} style={{ marginBottom: 8 }}>No Bank Account Found</Title>
+                            <Text type="secondary" style={{ display: "block", marginBottom: 16 }}>
+                                You need to add a bank account before making a withdrawal request.
+                            </Text>
+                            <Button
+                                type="primary"
+                                icon={<PlusOutlined />}
+                                onClick={() => {
+                                    setWithdrawModalVisible(false);
+                                    setBankManagementVisible(true);
+                                }}
+                            >
+                                Add Bank Account
+                            </Button>
+                        </div>
+                    ) : (
                         <>
-                            <Form.Item label="Select Saved Bank Account">
+                            {/* Bank Account Selector */}
+                            <Form.Item
+                                label={<Text strong>Select Bank Account</Text>}
+                                required
+                                style={{ marginBottom: 16 }}
+                            >
                                 <Select
                                     size="large"
-                                    placeholder="Choose from saved accounts or enter manually"
-                                    allowClear
+                                    placeholder="Choose a bank account for withdrawal"
                                     value={selectedBankAccount}
                                     onChange={(value) => {
                                         setSelectedBankAccount(value);
@@ -615,13 +652,6 @@ const AdminWallet = () => {
                                                     accountName: account.accountHolderName,
                                                 });
                                             }
-                                        } else {
-                                            // Clear form when clearing selection
-                                            withdrawForm.setFieldsValue({
-                                                bankName: '',
-                                                accountNumber: '',
-                                                accountName: '',
-                                            });
                                         }
                                     }}
                                     dropdownStyle={{
@@ -636,107 +666,146 @@ const AdminWallet = () => {
                                             label={`${acc.bankName} - ${acc.accountNumber}`}
                                         >
                                             <div style={{
-                                                padding: '4px 0',
+                                                padding: '8px 4px',
                                                 display: 'flex',
                                                 alignItems: 'center',
-                                                gap: 8
+                                                gap: 12
                                             }}>
-                                                <BankOutlined style={{ color: '#1890ff', fontSize: 16 }} />
-                                                <span style={{ flex: 1, fontWeight: 500 }}>
-                                                    {acc.bankName} - {acc.accountNumber}
-                                                </span>
+                                                <div style={{
+                                                    width: 40,
+                                                    height: 40,
+                                                    borderRadius: 8,
+                                                    background: 'linear-gradient(135deg, #1890ff15 0%, #1890ff25 100%)',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center'
+                                                }}>
+                                                    <BankOutlined style={{ color: '#1890ff', fontSize: 18 }} />
+                                                </div>
+                                                <div style={{ flex: 1 }}>
+                                                    <div style={{ fontWeight: 600, marginBottom: 2 }}>
+                                                        {acc.bankName}
+                                                    </div>
+                                                    <Text type="secondary" style={{ fontSize: 12 }}>
+                                                        {acc.accountNumber} • {acc.accountHolderName}
+                                                    </Text>
+                                                </div>
                                                 {acc.isDefault && <Tag color="gold">Default</Tag>}
                                             </div>
                                         </Select.Option>
                                     ))}
                                 </Select>
                             </Form.Item>
+
+                            {/* Selected Account Display */}
+                            {selectedBankAccount && (() => {
+                                const account = bankAccounts.find(acc => acc.id === selectedBankAccount);
+                                return account ? (
+                                    <Card
+                                        size="small"
+                                        style={{
+                                            marginBottom: 16,
+                                            background: 'linear-gradient(135deg, #f6ffed 0%, #f0f5ff 100%)',
+                                            border: '1px solid #b7eb8f'
+                                        }}
+                                    >
+                                        <Space direction="vertical" size={4} style={{ width: '100%' }}>
+                                            <Text type="secondary" style={{ fontSize: 12 }}>Withdrawal will be sent to:</Text>
+                                            <Text strong style={{ fontSize: 14 }}>{account.bankName}</Text>
+                                            <Text code>{account.accountNumber}</Text>
+                                            <Text>{account.accountHolderName}</Text>
+                                        </Space>
+                                    </Card>
+                                ) : null;
+                            })()}
+
                             <div style={{ textAlign: "right", marginBottom: 16 }}>
                                 <Button
                                     type="link"
                                     size="small"
                                     icon={<SettingOutlined />}
-                                    onClick={() => setBankManagementVisible(true)}
+                                    onClick={() => {
+                                        setWithdrawModalVisible(false);
+                                        setBankManagementVisible(true);
+                                    }}
                                 >
                                     Manage Bank Accounts
                                 </Button>
                             </div>
+
                             <Divider style={{ margin: "16px 0" }} />
+
+                            {/* Amount Input */}
+                            <Form.Item
+                                name="amount"
+                                label={<Text strong>Withdrawal Amount</Text>}
+                                rules={[
+                                    { required: true, message: "Please enter amount" },
+                                    { type: "number", min: 100000, message: "Minimum 100,000 VND" },
+                                ]}
+                            >
+                                <InputNumber
+                                    style={{ width: "100%" }}
+                                    size="large"
+                                    min={100000}
+                                    max={walletData.balance}
+                                    step={10000}
+                                    formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+                                    parser={(value) => value.replace(/\,/g, "")}
+                                    addonAfter="VND"
+                                    placeholder="Enter amount"
+                                />
+                            </Form.Item>
+
+                            <Text type="secondary" style={{ display: "block", marginBottom: 16 }}>
+                                Available Balance: <Text strong style={{ color: '#52c41a' }}>{formatCurrency(walletData.balance)}</Text>
+                            </Text>
+
+                            {/* Quick Amount Buttons */}
+                            <div style={{ marginBottom: 24 }}>
+
+                                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                                    {quickAmounts.filter(a => a <= walletData.balance).map((amt) => (
+                                        <Button
+                                            key={amt}
+                                            size="small"
+                                            onClick={() => withdrawForm.setFieldValue("amount", amt)}
+                                            style={{ borderRadius: 6 }}
+                                        >
+                                            {new Intl.NumberFormat("vi-VN").format(amt)}
+                                        </Button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Form Actions */}
+                            <Form.Item style={{ marginBottom: 0, textAlign: "right", marginTop: 24 }}>
+                                <Space>
+                                    <Button onClick={() => {
+                                        setWithdrawModalVisible(false);
+                                        withdrawForm.resetFields();
+                                        setSelectedBankAccount(null);
+                                    }}>
+                                        Cancel
+                                    </Button>
+                                    <Button
+                                        type="primary"
+                                        htmlType="submit"
+                                        danger
+                                        disabled={!selectedBankAccount}
+                                    >
+                                        Submit Request
+                                    </Button>
+                                </Space>
+                            </Form.Item>
                         </>
                     )}
-
-                    {bankAccounts.length === 0 && (
-                        <div style={{
-                            background: "#f0f5ff",
-                            padding: 12,
-                            borderRadius: 8,
-                            marginBottom: 16,
-                            textAlign: "center"
-                        }}>
-                            <Text type="secondary">
-                                💡 No saved bank accounts.
-                            </Text>
-                            <Button
-                                type="link"
-                                size="small"
-                                onClick={() => setBankManagementVisible(true)}
-                            >
-                                Add one now
-                            </Button>
-                        </div>
-                    )}
-                    <Form.Item
-                        name="amount"
-                        label="Withdrawal Amount"
-                        rules={[
-                            { required: true, message: "Please enter amount" },
-                            { type: "number", min: 100000, message: "Minimum 100,000 VND" },
-                        ]}
-                    >
-                        <InputNumber
-                            style={{ width: "100%" }}
-                            size="large"
-                            min={100000}
-                            max={walletData.balance}
-                            step={10000}
-                            formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
-                            parser={(value) => value.replace(/\,/g, "")}
-                            addonAfter="VND"
-                        />
-                    </Form.Item>
-
-                    <Text type="secondary" style={{ display: "block", marginBottom: 16 }}>
-                        Available: {formatCurrency(walletData.balance)}
-                    </Text>
-
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 24 }}>
-                        {quickAmounts.filter(a => a <= walletData.balance).map((amt) => (
-                            <Button
-                                key={amt}
-                                size="small"
-                                onClick={() => withdrawForm.setFieldValue("amount", amt)}
-                            >
-                                {new Intl.NumberFormat("vi-VN").format(amt)}
-                            </Button>
-                        ))}
-                    </div>
-
-                    <Form.Item style={{ marginBottom: 0, textAlign: "right", marginTop: 24 }}>
-                        <Space>
-                            <Button onClick={() => { setWithdrawModalVisible(false); withdrawForm.resetFields(); }}>
-                                Cancel
-                            </Button>
-                            <Button type="primary" htmlType="submit" danger>
-                                Submit Request
-                            </Button>
-                        </Space>
-                    </Form.Item>
                 </Form>
             </Modal>
 
             {/* Bank Account Management Modal */}
             <Modal
-                title="Bank Account Management"
+                // title="Bank Account Management"
                 open={bankManagementVisible}
                 onCancel={() => setBankManagementVisible(false)}
                 footer={null}
