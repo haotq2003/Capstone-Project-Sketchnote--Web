@@ -45,7 +45,12 @@ const Chat = () => {
     // Build WebSocket URL from API base URL
     const apiUrl = import.meta.env.VITE_API_URL; // e.g. https://sketchnote.litecsys.com/
     const wsUrl = apiUrl.replace(/^http/, "ws") + "ws"; // -> wss://sketchnote.litecsys.com/ws
-    console.log("[Chat] Connecting WebSocket to:", wsUrl, "for user:", currentUserId);
+    console.log(
+      "[Chat] Connecting WebSocket to:",
+      wsUrl,
+      "for user:",
+      currentUserId
+    );
 
     webSocketService.connect(
       wsUrl,
@@ -91,20 +96,20 @@ const Chat = () => {
       selectedChatUserId: currentSelected?.userId,
       selectedChatUserName: currentSelected?.userName,
       messageSenderId: message.senderId,
-      messageReceiverId: message.receiverId
+      messageReceiverId: message.receiverId,
     });
 
-    // ⚠️ BỎ QUA tin nhắn từ chính mình (đã được thêm vào state trong handleSendMessage)
     if (message.senderId === currentUser) {
-      console.log("⚠️ Skipping message from myself (already added optimistically)");
+      console.log(
+        "⚠️ Skipping message from myself (already added optimistically)"
+      );
       // Vẫn update conversations list
       fetchAllConversations();
       return;
     }
 
-    // Kiểm tra tin nhắn có thuộc conversation hiện tại không
-    // Chỉ nhận tin nhắn từ người khác gửi cho mình
-    const isForCurrentConversation = currentSelected &&
+    const isForCurrentConversation =
+      currentSelected &&
       message.senderId === currentSelected.userId &&
       message.receiverId === currentUser;
 
@@ -120,7 +125,10 @@ const Chat = () => {
           return (
             msg.content === message.content &&
             msg.senderId === message.senderId &&
-            Math.abs(new Date(msg.createdAt) - new Date(message.timestamp || message.createdAt)) < 1000
+            Math.abs(
+              new Date(msg.createdAt) -
+                new Date(message.timestamp || message.createdAt)
+            ) < 1000
           );
         });
 
@@ -131,18 +139,21 @@ const Chat = () => {
 
         console.log("✅ Adding new message to chat");
 
-        return [...prevMessages, {
-          id: message.id,
-          senderId: message.senderId,
-          senderName: message.senderName,
-          senderAvatarUrl: message.senderAvatarUrl,
-          receiverId: message.receiverId,
-          receiverName: message.receiverName,
-          receiverAvatarUrl: message.receiverAvatarUrl,
-          content: message.content,
-          createdAt: message.createdAt || message.timestamp,
-          updatedAt: message.updatedAt
-        }];
+        return [
+          ...prevMessages,
+          {
+            id: message.id,
+            senderId: message.senderId,
+            senderName: message.senderName,
+            senderAvatarUrl: message.senderAvatarUrl,
+            receiverId: message.receiverId,
+            receiverName: message.receiverName,
+            receiverAvatarUrl: message.receiverAvatarUrl,
+            content: message.content,
+            createdAt: message.createdAt || message.timestamp,
+            updatedAt: message.updatedAt,
+          },
+        ];
       });
     } else {
       console.log("❌ Message is NOT for current conversation");
@@ -169,7 +180,11 @@ const Chat = () => {
   const getConversationById = async (userId) => {
     try {
       // Load page 0 first to get totalPages
-      const initialResponse = await chatService.getMessagesByUserId(userId, 0, 20);
+      const initialResponse = await chatService.getMessagesByUserId(
+        userId,
+        0,
+        20
+      );
       const totalPages = initialResponse.totalPages || 0;
 
       console.log(`📄 Total pages: ${totalPages}`);
@@ -179,12 +194,15 @@ const Chat = () => {
         const lastPage = totalPages - 1;
         console.log(`🔄 Loading last page (${lastPage}) for newest messages`);
 
-        const response = await chatService.getMessagesByUserId(userId, lastPage, 20);
+        const response = await chatService.getMessagesByUserId(
+          userId,
+          lastPage,
+          20
+        );
         console.log("Messages:", response.content);
 
-        // Sắp xếp theo thời gian tăng dần (tin nhắn cũ nhất ở trên, mới nhất ở dưới)
-        const sortedMessages = [...response.content].sort((a, b) =>
-          new Date(a.createdAt) - new Date(b.createdAt)
+        const sortedMessages = [...response.content].sort(
+          (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
         );
         setMessages(sortedMessages);
       } else {
@@ -222,7 +240,6 @@ const Chat = () => {
       const response = await chatService.sendMessage(data);
       console.log("Message saved to database:", response);
 
-      // Thêm tin nhắn vào state ngay
       const newMessage = {
         id: response.id,
         senderId: currentUserId,
@@ -233,7 +250,7 @@ const Chat = () => {
         receiverAvatarUrl: selectedChat.userAvatarUrl,
         content: messageContent,
         createdAt: response.createdAt || new Date().toISOString(),
-        updatedAt: response.updatedAt
+        updatedAt: response.updatedAt,
       };
 
       console.log("🕐 Backend createdAt:", response.createdAt);
@@ -254,7 +271,7 @@ const Chat = () => {
           senderAvatarUrl: response.senderAvatarUrl,
           receiverId: selectedChat.userId,
           content: messageContent,
-          timestamp: response.createdAt  // ✅ Backend cần "timestamp"
+          timestamp: response.createdAt, // ✅ Backend cần "timestamp"
         };
         console.log("Message sent via WebSocket:", wsMessage);
         webSocketService.send("/app/chat.private", wsMessage);
@@ -273,7 +290,6 @@ const Chat = () => {
     }
   };
 
-  // Hàm để xác định tin nhắn là của mình hay người khác
   const isMyMessage = (message) => {
     return message.senderId === currentUserId;
   };
@@ -281,10 +297,10 @@ const Chat = () => {
   const formatTime = (timeString) => {
     if (!timeString) return "";
     // ✅ Ensure UTC parsing by adding 'Z' if missing
-    const utcString = timeString.endsWith('Z') ? timeString : timeString + 'Z';
+    const utcString = timeString.endsWith("Z") ? timeString : timeString + "Z";
     const date = new Date(utcString);
-    const hours = date.getUTCHours().toString().padStart(2, '0');
-    const minutes = date.getUTCMinutes().toString().padStart(2, '0');
+    const hours = date.getUTCHours().toString().padStart(2, "0");
+    const minutes = date.getUTCMinutes().toString().padStart(2, "0");
     return `${hours}:${minutes}`;
   };
 
@@ -295,7 +311,7 @@ const Chat = () => {
         {/* Sidebar Header */}
         <div className="px-4 py-5 border-b border-gray-200">
           <div className="flex justify-between items-center mb-4">
-            <h1 className="text-2xl font-bold text-gray-800">Tin nhắn</h1>
+            <h1 className="text-2xl font-bold text-gray-800">Messages</h1>
             {wsConnected ? (
               <span className="text-xs text-green-600 flex items-center">
                 <span className="w-2 h-2 bg-green-600 rounded-full mr-1 animate-pulse"></span>
@@ -334,8 +350,9 @@ const Chat = () => {
               <div
                 key={conv.userId}
                 onClick={() => handleSelectChat(conv)}
-                className={`px-4 py-3 flex items-center space-x-3 hover:bg-gray-50 cursor-pointer transition-colors ${selectedChat?.userId === conv.userId ? "bg-blue-50" : ""
-                  }`}
+                className={`px-4 py-3 flex items-center space-x-3 hover:bg-gray-50 cursor-pointer transition-colors ${
+                  selectedChat?.userId === conv.userId ? "bg-blue-50" : ""
+                }`}
               >
                 {/* Avatar */}
                 <div className="relative">
@@ -424,12 +441,14 @@ const Chat = () => {
                 return (
                   <div
                     key={message.id || `msg-${index}`}
-                    className={`flex ${isMine ? "justify-end" : "justify-start"
-                      }`}
+                    className={`flex ${
+                      isMine ? "justify-end" : "justify-start"
+                    }`}
                   >
                     <div
-                      className={`flex items-start space-x-2 max-w-md ${isMine ? "flex-row-reverse space-x-reverse" : ""
-                        }`}
+                      className={`flex items-start space-x-2 max-w-md ${
+                        isMine ? "flex-row-reverse space-x-reverse" : ""
+                      }`}
                     >
                       {!isMine && (
                         <div className="w-8 h-8 rounded-full flex-shrink-0">
@@ -449,16 +468,18 @@ const Chat = () => {
                       )}
                       <div>
                         <div
-                          className={`px-4 py-2 rounded-2xl ${isMine
-                            ? "bg-blue-500 text-white rounded-br-none"
-                            : "bg-white text-gray-800 rounded-bl-none shadow-sm"
-                            }`}
+                          className={`px-4 py-2 rounded-2xl ${
+                            isMine
+                              ? "bg-blue-500 text-white rounded-br-none"
+                              : "bg-white text-gray-800 rounded-bl-none shadow-sm"
+                          }`}
                         >
                           <p className="text-sm">{message.content}</p>
                         </div>
                         <p
-                          className={`text-xs text-gray-500 mt-1 ${isMine ? "text-right" : "text-left"
-                            }`}
+                          className={`text-xs text-gray-500 mt-1 ${
+                            isMine ? "text-right" : "text-left"
+                          }`}
                         >
                           {messageTime || "N/A"}
                         </p>
@@ -482,7 +503,7 @@ const Chat = () => {
                     value={inputText}
                     onChange={(e) => setInputText(e.target.value)}
                     onKeyPress={handleKeyPress}
-                    placeholder="Nhập tin nhắn..."
+                    placeholder="Enter message..."
                     className="flex-1 bg-transparent outline-none text-sm text-gray-800 placeholder-gray-500"
                     disabled={!wsConnected}
                   />
@@ -493,10 +514,11 @@ const Chat = () => {
                 <button
                   onClick={handleSendMessage}
                   disabled={!wsConnected || !inputText.trim()}
-                  className={`p-3 rounded-full transition-colors shadow-md ${wsConnected && inputText.trim()
-                    ? "bg-blue-500 text-white hover:bg-blue-600"
-                    : "bg-gray-300 text-gray-500 cursor-not-allowed"
-                    }`}
+                  className={`p-3 rounded-full transition-colors shadow-md ${
+                    wsConnected && inputText.trim()
+                      ? "bg-blue-500 text-white hover:bg-blue-600"
+                      : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                  }`}
                 >
                   <Send size={18} />
                 </button>
@@ -510,10 +532,10 @@ const Chat = () => {
                 <Send size={40} className="text-blue-500" />
               </div>
               <h2 className="text-2xl font-semibold text-gray-800 mb-2">
-                Tin nhắn của bạn
+                Your messages
               </h2>
               <p className="text-gray-600">
-                Chọn một cuộc trò chuyện để bắt đầu nhắn tin
+                Choose a conversation from the left to start chatting.
               </p>
             </div>
           </div>

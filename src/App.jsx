@@ -33,7 +33,8 @@ import UserTransactions from "./pages/admin/UserTransactions";
 import SubscriptionTransactions from "./pages/admin/SubscriptionTransactions";
 import CreditTransactions from "./pages/admin/CreditTransactions";
 import OrderTransactions from "./pages/admin/OrderTransactions";
-
+import VerifyEmailSuccess from "./pages/VerifyEmailSuccess";
+import VerifyEmailFailed from "./pages/VerifyEmailFailed";
 import AdminWithdrawalManagement from "./pages/admin/WithdrawalManagement";
 import AdminWallet from "./pages/admin/AdminWallet";
 
@@ -42,7 +43,8 @@ function App() {
     <Routes>
       <Route path="/" element={<Navigate to="/login" replace />} />
       <Route path="/login" element={<Login />} />
-
+      <Route path="verify-email-success" element={<VerifyEmailSuccess />} />
+      <Route path="verify-email-failed" element={<VerifyEmailFailed />} />
       {/* Staff routes */}
       <Route path="/staff" element={<StaffLayout />}>
         <Route path="courses" element={<CourseManagement />} />
