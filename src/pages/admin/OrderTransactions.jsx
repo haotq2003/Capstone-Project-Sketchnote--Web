@@ -20,10 +20,13 @@ const OrderTransactions = () => {
 
   const columns = [
     {
-      title: "Order ID",
-      dataIndex: "orderId",
-      key: "orderId",
-      width: 80,
+      title: "No.",
+      key: "index",
+      width: 60,
+      render: (_, __, index) => {
+        const { current, pageSize } = pagination;
+        return (current - 1) * pageSize + index + 1;
+      },
     },
     {
       title: "InvoiceNumber",
@@ -193,55 +196,64 @@ const OrderTransactions = () => {
       >
         {selectedRecord && (
           <Descriptions bordered column={1}>
-            {Object.entries(selectedRecord).map(([key, value]) => {
-              if (key === "items" && Array.isArray(value)) {
-                return (
-                  <Descriptions.Item key={key} label={key} span={1}>
-                    <Table
-                      dataSource={value}
-                      rowKey="orderDetailId"
-                      pagination={false}
-                      size="small"
-                      columns={[
-                        { title: "Item Name", dataIndex: "templateName", key: "templateName" },
-                        { title: "Type", dataIndex: "templateType", key: "templateType" },
-                        { title: "Price", dataIndex: "unitPrice", key: "unitPrice", render: (v) => `${v?.toLocaleString()} đ` },
-                        { title: "Discount", dataIndex: "discount", key: "discount", render: (v) => `${v?.toLocaleString()} đ` },
-                        { title: "Subtotal", dataIndex: "subtotalAmount", key: "subtotalAmount", render: (v) => `${v?.toLocaleString()} đ` },
-                        { title: "Date", dataIndex: "createdAt", key: "createdAt", render: (v) => v ? new Date(v).toLocaleDateString() : "" },
-                      ]}
-                    />
-                  </Descriptions.Item>
-                );
-              }
+            {Object.entries(selectedRecord)
+              .filter(([key, value]) => {
+                // Hide null, undefined, or empty values
+                return value !== null && value !== undefined && value !== "";
+              })
+              .map(([key, value]) => {
+                if (key === "items" && Array.isArray(value)) {
+                  return (
+                    <Descriptions.Item key={key} label={key} span={1}>
+                      <Table
+                        dataSource={value}
+                        rowKey="orderDetailId"
+                        pagination={false}
+                        size="small"
+                        columns={[
+                          { title: "Item Name", dataIndex: "templateName", key: "templateName" },
+                          { title: "Type", dataIndex: "templateType", key: "templateType" },
+                          { title: "Price", dataIndex: "unitPrice", key: "unitPrice", render: (v) => `${v?.toLocaleString()} đ` },
+                          { title: "Discount", dataIndex: "discount", key: "discount", render: (v) => `${v?.toLocaleString()} đ` },
+                          { title: "Subtotal", dataIndex: "subtotalAmount", key: "subtotalAmount", render: (v) => `${v?.toLocaleString()} đ` },
+                          { title: "Date", dataIndex: "createdAt", key: "createdAt", render: (v) => v ? new Date(v).toLocaleDateString() : "" },
+                        ]}
+                      />
+                    </Descriptions.Item>
+                  );
+                }
 
-              let displayValue = value;
-              if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}T/.test(value)) {
-                displayValue = new Date(value).toLocaleString();
-              } else if (typeof value === "object" && value !== null) {
-                displayValue = JSON.stringify(value, null, 2);
-              } else {
-                displayValue = String(value);
-              }
+                let displayValue = value;
 
-              if (key === "orderStatus" || key === "paymentStatus") {
-                let color = "default";
-                if (value === "COMPLETED" || value === "PAID") color = "success";
-                else if (value === "PENDING") color = "warning";
-                else if (value === "CANCELLED" || value === "FAILED") color = "error";
+                // Format currency fields
+                if ((key === "totalAmount" || key === "amount" || key === "subtotalAmount" || key === "unitPrice" || key === "discount") && typeof value === "number") {
+                  displayValue = `${value.toLocaleString()} đ`;
+                } else if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}T/.test(value)) {
+                  displayValue = new Date(value).toLocaleString();
+                } else if (typeof value === "object" && value !== null) {
+                  displayValue = JSON.stringify(value, null, 2);
+                } else {
+                  displayValue = String(value);
+                }
+
+                if (key === "orderStatus" || key === "paymentStatus") {
+                  let color = "default";
+                  if (value === "COMPLETED" || value === "PAID") color = "success";
+                  else if (value === "PENDING") color = "warning";
+                  else if (value === "CANCELLED" || value === "FAILED") color = "error";
+                  return (
+                    <Descriptions.Item key={key} label={key}>
+                      <Tag color={color}>{value}</Tag>
+                    </Descriptions.Item>
+                  );
+                }
+
                 return (
                   <Descriptions.Item key={key} label={key}>
-                    <Tag color={color}>{value}</Tag>
+                    {displayValue}
                   </Descriptions.Item>
                 );
-              }
-
-              return (
-                <Descriptions.Item key={key} label={key}>
-                  {displayValue}
-                </Descriptions.Item>
-              );
-            })}
+              })}
           </Descriptions>
         )}
       </Modal>

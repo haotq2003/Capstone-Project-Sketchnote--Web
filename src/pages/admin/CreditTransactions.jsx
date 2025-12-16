@@ -20,10 +20,13 @@ const CreditTransactions = () => {
 
   const columns = [
     {
-      title: "ID",
-      dataIndex: "id",
-      key: "id",
-      width: 80,
+      title: "No.",
+      key: "index",
+      width: 60,
+      render: (_, __, index) => {
+        const { current, pageSize } = pagination;
+        return (current - 1) * pageSize + index + 1;
+      },
     },
     {
       title: "User Email",
@@ -181,32 +184,45 @@ const CreditTransactions = () => {
       >
         {selectedRecord && (
           <Descriptions bordered column={1}>
-            {Object.entries(selectedRecord).map(([key, value]) => {
-              let displayValue = value;
-              if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}T/.test(value)) {
-                displayValue = new Date(value).toLocaleString();
-              } else if (typeof value === "object" && value !== null) {
-                displayValue = JSON.stringify(value, null, 2);
-              } else {
-                displayValue = String(value);
-              }
-              if (key === "status") {
-                let color = "default";
-                if (value === "SUCCESS") color = "success";
-                else if (value === "PENDING") color = "warning";
-                else if (value === "FAILED") color = "error";
+            {Object.entries(selectedRecord)
+              .filter(([key, value]) => {
+                // Hide null, undefined, or empty values
+                return value !== null && value !== undefined && value !== "";
+              })
+              .map(([key, value]) => {
+                let displayValue = value;
+
+                // Format currency fields
+                if ((key === "amount" || key === "balance" || key === "balanceAfter" || key === "balanceBefore") && typeof value === "number") {
+                  displayValue = `${value.toLocaleString()} đ`;
+                } else if (key === "description" && typeof value === "string") {
+                  // Replace 'null' with 'đ' in description
+                  displayValue = value.replace(/null/g, "đ");
+                } else if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}T/.test(value)) {
+                  displayValue = new Date(value).toLocaleString();
+                } else if (typeof value === "object" && value !== null) {
+                  displayValue = JSON.stringify(value, null, 2);
+                } else {
+                  displayValue = String(value);
+                }
+
+                if (key === "status") {
+                  let color = "default";
+                  if (value === "SUCCESS") color = "success";
+                  else if (value === "PENDING") color = "warning";
+                  else if (value === "FAILED") color = "error";
+                  return (
+                    <Descriptions.Item key={key} label={key}>
+                      <Tag color={color}>{value}</Tag>
+                    </Descriptions.Item>
+                  );
+                }
                 return (
                   <Descriptions.Item key={key} label={key}>
-                    <Tag color={color}>{value}</Tag>
+                    {displayValue}
                   </Descriptions.Item>
                 );
-              }
-              return (
-                <Descriptions.Item key={key} label={key}>
-                  {displayValue}
-                </Descriptions.Item>
-              );
-            })}
+              })}
           </Descriptions>
         )}
       </Modal>

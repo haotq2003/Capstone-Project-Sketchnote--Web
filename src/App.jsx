@@ -37,11 +37,21 @@ import OrderTransactions from "./pages/admin/OrderTransactions";
 import AdminWithdrawalManagement from "./pages/admin/WithdrawalManagement";
 import AdminWallet from "./pages/admin/AdminWallet";
 
+// Payment callback pages
+import PaymentSuccess from "./pages/shared/PaymentSuccess";
+import PaymentFailed from "./pages/shared/PaymentFailed";
+import PaymentCallback from "./pages/shared/PaymentCallback";
+
 function App() {
   return (
     <Routes>
       <Route path="/" element={<Navigate to="/login" replace />} />
       <Route path="/login" element={<Login />} />
+
+      {/* Payment callback routes (public) */}
+      <Route path="/payment-callback" element={<PaymentCallback />} />
+      <Route path="/wallet-success" element={<PaymentSuccess />} />
+      <Route path="/wallet-fail" element={<PaymentFailed />} />
 
       {/* Staff routes */}
       <Route path="/staff" element={<StaffLayout />}>

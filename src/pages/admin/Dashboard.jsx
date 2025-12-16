@@ -8,6 +8,9 @@ import {
   Typography,
   Tag,
   Spin,
+  DatePicker,
+  Space,
+  Button,
 } from "antd";
 import {
   BarChart,
@@ -29,11 +32,22 @@ import {
   CrownOutlined,
   BookOutlined,
   FileImageOutlined,
+  DollarOutlined,
+  GiftOutlined,
+  ThunderboltOutlined,
+  FireOutlined,
+  InboxOutlined,
+  TrophyOutlined,
+  BarChartOutlined,
+  RiseOutlined,
+  ReloadOutlined,
+  CalendarOutlined,
 } from "@ant-design/icons";
 import { dashboardAminService } from "../../service/dashboardAdminService";
 import { userService } from "../../service/userService";
 
 const { Title, Text } = Typography;
+const { RangePicker } = DatePicker;
 
 export default function AdminDashboard() {
   const [userData, setUserData] = useState([]);
@@ -47,6 +61,7 @@ export default function AdminDashboard() {
   const [topSubscriptions, setTopSubscriptions] = useState([]);
   const [revenueStats, setRevenueStats] = useState(null);
   const [loadingRevenue, setLoadingRevenue] = useState(false);
+  const [dateRange, setDateRange] = useState(null);
 
   useEffect(() => {
     dashboardAminService.fetchUser().then(setUserData);
@@ -133,7 +148,7 @@ export default function AdminDashboard() {
 
   return (
     <>
-      <Title level={3}>Admin Dashboard</Title>
+
 
       {/* ==================== TOP STATISTICS ==================== */}
       {/* ==================== TOP STATISTICS ==================== */}
@@ -244,7 +259,7 @@ export default function AdminDashboard() {
                   precision={0}
                   suffix="₫"
                   valueStyle={{ color: '#13c2c2' }}
-                  prefix={<span style={{ fontSize: 20 }}>💰</span>}
+                  prefix={<DollarOutlined style={{ fontSize: 20, color: "#13c2c2" }} />}
                 />
               </Card>
             </Col>
@@ -324,7 +339,7 @@ export default function AdminDashboard() {
       {/* ==================== TOP SUBSCRIPTIONS & TOKENS ==================== */}
       <Row gutter={16} style={{ marginTop: 32 }}>
         <Col span={12}>
-          <Card title="💎 Top Subscriptions">
+          <Card title={<><GiftOutlined style={{ marginRight: 8, color: "#faad14" }} />Top Subscriptions</>}>
             {topSubscriptions?.map((item, index) => (
               <Row
                 key={item.planId}
@@ -348,7 +363,7 @@ export default function AdminDashboard() {
         </Col>
 
         <Col span={12}>
-          <Card title="🪙 Top Token Packages">
+          <Card title={<><ThunderboltOutlined style={{ marginRight: 8, color: "#13c2c2" }} />Top Token Packages</>}>
             {topTokenPackages?.length > 0 ? (
               topTokenPackages.map((item, index) => (
                 <Row
@@ -376,7 +391,7 @@ export default function AdminDashboard() {
       {/* ==================== TOP COURSES + RESOURCES ==================== */}
       <Row gutter={16} style={{ marginTop: 32 }}>
         <Col span={12}>
-          <Card title="🔥 Top Courses">
+          <Card title={<><FireOutlined style={{ marginRight: 8, color: "#ff4d4f" }} />Top Courses</>}>
             {topCourses?.map((item, index) => (
               <Row
                 key={item.id}
@@ -397,7 +412,7 @@ export default function AdminDashboard() {
         </Col>
 
         <Col span={12}>
-          <Card title="📦 Top Resources">
+          <Card title={<><InboxOutlined style={{ marginRight: 8, color: "#13c2c2" }} />Top Resources</>}>
             {topResources?.map((item, index) => (
               <Row
                 key={item.id}
@@ -423,7 +438,7 @@ export default function AdminDashboard() {
       {/* ==================== TOP DESIGNERS ==================== */}
       <Row style={{ marginTop: 32 }}>
         <Col span={24}>
-          <Card title="🏆 Top Designers (Revenue)">
+          <Card title={<><TrophyOutlined style={{ marginRight: 8, color: "#faad14" }} />Top Designers (Revenue)</>}>
             <Table
               dataSource={topDesigners}
               rowKey="designerId"
@@ -435,9 +450,46 @@ export default function AdminDashboard() {
       </Row>
 
       {/* ==================== REVENUE CHARTS ==================== */}
-      <Row gutter={[16, 16]} style={{ marginTop: 32 }}>
+      {/* Date Filter for Revenue */}
+      <Card style={{ marginTop: 32, marginBottom: 16 }}>
+        <Space size="middle">
+          <CalendarOutlined style={{ fontSize: 20, color: "#1677ff" }} />
+          <Text strong>Filter Revenue by Date:</Text>
+          <RangePicker
+            style={{ width: 300 }}
+            placeholder={["Start Date", "End Date"]}
+            format="YYYY-MM-DD"
+            value={dateRange}
+            onChange={(dates) => setDateRange(dates)}
+          />
+          <Button
+            type="primary"
+            icon={<ReloadOutlined />}
+            onClick={() => {
+              setLoadingRevenue(true);
+              dashboardAminService.getRevenueDashboard()
+                .then(data => {
+                  setRevenueStats(data?.revenueStats);
+                })
+                .catch(err => console.error('Failed to fetch revenue:', err))
+                .finally(() => setLoadingRevenue(false));
+            }}
+          >
+            Refresh
+          </Button>
+          {dateRange && (
+            <Button
+              onClick={() => setDateRange(null)}
+            >
+              Clear Filter
+            </Button>
+          )}
+        </Space>
+      </Card>
+
+      <Row gutter={[16, 16]}>
         <Col xs={24} lg={16}>
-          <Card title="📊 Revenue Over Time" bordered={false} style={{ borderRadius: '12px' }}>
+          <Card title={<><BarChartOutlined style={{ marginRight: 8, color: "#1677ff" }} />Revenue Over Time</>} bordered={false} style={{ borderRadius: '12px' }}>
             <Spin spinning={loadingRevenue}>
               <ResponsiveContainer width="100%" height={400}>
                 <BarChart data={chartData}>
@@ -454,7 +506,7 @@ export default function AdminDashboard() {
           </Card>
         </Col>
         <Col xs={24} lg={8}>
-          <Card title="📈 Revenue Breakdown" bordered={false} style={{ borderRadius: '12px' }}>
+          <Card title={<><RiseOutlined style={{ marginRight: 8, color: "#52c41a" }} />Revenue Breakdown</>} bordered={false} style={{ borderRadius: '12px' }}>
             <Spin spinning={loadingRevenue}>
               <ResponsiveContainer width="100%" height={400}>
                 <PieChart>
