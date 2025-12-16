@@ -54,40 +54,71 @@ export const courseService = {
   updateCourse : async (id, courseData) =>{
     try {
       const res = await courseApiController.updateCourse(id, courseData);
+      
+      // Check if backend returned error in response body
+      if (res.data.code && res.data.code !== 200) {
+        const errorMsg = res.data.result || res.data.message || "Update course failed.";
+        throw new Error(errorMsg);
+      }
+      
       return res.data;
     } catch (error) {
       const message =
-        error.response?.data?.message || error.message || "Update course failed.";
+        error.response?.data?.result || error.response?.data?.message || error.message || "Update course failed.";
       throw new Error(message);
     }
   },
   deleteCourse : async (id) =>{
     try {
       const res = await courseApiController.deleteCourse(id);
+      
+      // Check if backend returned error in response body
+      if (res.data.code && res.data.code !== 200) {
+        const errorMsg = res.data.result || res.data.message || "Delete course failed.";
+        throw new Error(errorMsg);
+      }
+      
       return res.data;
     } catch (error) {
       const message =
-        error.response?.data?.message || error.message || "Delete course failed.";
+        error.response?.data?.result || error.response?.data?.message || error.message || "Delete course failed.";
       throw new Error(message);
     }
   },
   updateLesson : async (id, lessonData) =>{
     try {
       const res = await courseApiController.updateLesson(id, lessonData);
+      
+      // Check if backend returned error in response body
+      if (res.data.code && res.data.code !== 200) {
+        const errorMsg = res.data.result || res.data.message || "Update lesson failed.";
+        throw new Error(errorMsg);
+      }
+      
       return res.data;
     } catch (error) {
       const message =
-        error.response?.data?.message || error.message || "Update lesson failed.";
+        error.response?.data?.result || error.response?.data?.message || error.message || "Update lesson failed.";
       throw new Error(message);
     }
   },
-  deleteLesson : async (id) =>{
+  deleteLesson : async (id) => {
     try {
       const res = await courseApiController.deleteLesson(id);
+      console.log('Delete lesson response:', res.data);
+      
+      // Check if backend returned error in response body
+      if (res.data.code && res.data.code !== 200) {
+        const errorMsg = res.data.result || res.data.message || "Delete lesson failed.";
+        console.log('Backend error detected:', errorMsg);
+        throw new Error(errorMsg);
+      }
+      
       return res.data;
     } catch (error) {
+      console.log('Delete lesson error:', error);
       const message =
-        error.response?.data?.message || error.message || "Delete lesson failed.";
+        error.response?.data?.result || error.response?.data?.message || error.message || "Delete lesson failed.";
       throw new Error(message);
     }
   }

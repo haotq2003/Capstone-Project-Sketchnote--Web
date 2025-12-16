@@ -18,7 +18,9 @@ import {
   Image,
   Pagination,
   Spin,
-  BackTop
+  BackTop,
+  Upload,
+  Progress
 } from 'antd';
 import {
   PlusOutlined,
@@ -27,9 +29,12 @@ import {
   VideoCameraOutlined,
   ClockCircleOutlined,
   ArrowLeftOutlined,
-  PlayCircleOutlined
+  PlayCircleOutlined,
+  UploadOutlined,
+  InboxOutlined
 } from '@ant-design/icons';
 import { courseService } from '../../service/courseService';
+import { uploadService } from '../../service/uploadService';
 import formatDuration from '../../common/duration';
 
 const { Title, Text, Paragraph } = Typography;
@@ -51,7 +56,8 @@ const CourseDetail = ({ course, onBack }) => {
   const [lessonForms, setLessonForms] = useState([
     { title: '', description: '', content: '', videoUrl: '', duration: 0, orderIndex: 1 }
   ]);
-  const [fetchingDuration, setFetchingDuration] = useState({});
+  const [uploadingVideo, setUploadingVideo] = useState({});
+  const [uploadProgress, setUploadProgress] = useState({});
 
   const [courseForm, setCourseForm] = useState({
     title: course.title,
@@ -69,9 +75,10 @@ const CourseDetail = ({ course, onBack }) => {
     setLoading(true);
     try {
       const res = await courseService.getLessonsByCourseId(id);
+      console.log(res);
       setLessons(res.result || []);
     } catch (error) {
-      message.error(error.message);
+      message.error(error.message || 'Failed to load lessons');
     } finally {
       setLoading(false);
     }
@@ -112,91 +119,68 @@ const CourseDetail = ({ course, onBack }) => {
     setSearchTerm(value);
     setCurrentPage(1); // Reset về trang đầu khi tìm kiếm
   };
+  // Check if URL is YouTube URL
+  const isYouTubeUrl = (url) => {
+    if (!url) return false;
+    return url.includes('youtube.com') || url.includes('youtu.be');
+  };
+
+  // Extract YouTube video ID for backward compatibility
   const extractVideoId = (url) => {
     if (!url) return null;
-
     const cleanUrl = url.trim();
-
-    // Regex cải tiến hỗ trợ tất cả format YouTube
     const patterns = [
-      /(?:youtube\.com\/watch\?v=)([a-zA-Z0-9_-]{11})/, // youtube.com/watch?v=
-      /(?:youtu\.be\/)([a-zA-Z0-9_-]{11})/, // youtu.be/ (có thể có ?si= sau)
-      /(?:youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/, // youtube.com/embed/
-      /(?:youtube\.com\/v\/)([a-zA-Z0-9_-]{11})/, // youtube.com/v/
-      /(?:youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/ // youtube.com/shorts/
+      /(?:youtube\.com\/watch\?v=)([a-zA-Z0-9_-]{11})/,
+      /(?:youtu\.be\/)([a-zA-Z0-9_-]{11})/,
+      /(?:youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/,
+      /(?:youtube\.com\/v\/)([a-zA-Z0-9_-]{11})/,
+      /(?:youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/
     ];
-
     for (const pattern of patterns) {
       const match = cleanUrl.match(pattern);
-      if (match && match[1]) {
-        return match[1];
-      }
+      if (match && match[1]) return match[1];
     }
-
     return null;
   };
 
-  // Fetch YouTube video duration using YouTube Data API v3
-  const fetchYouTubeDuration = async (videoId) => {
+  // Handle video file upload
+  const handleVideoUpload = async (file, index) => {
+    // Validate file type
+    const isVideo = file.type.startsWith('video/');
+    if (!isVideo) {
+      message.error('You can only upload video files!');
+      return false;
+    }
+
+    // Validate file size (max 100MB)
+    const isLt100M = file.size / 1024 / 1024 < 100;
+    if (!isLt100M) {
+      message.error('Video must be smaller than 100MB!');
+      return false;
+    }
+
+    setUploadingVideo(prev => ({ ...prev, [index]: true }));
+    setUploadProgress(prev => ({ ...prev, [index]: 0 }));
+
     try {
-      const apiKey = import.meta.env.VITE_YOUTUBE_API_KEY;
+      const result = await uploadService.uploadVideo(file, (percent) => {
+        setUploadProgress(prev => ({ ...prev, [index]: percent }));
+      });
 
-      if (!apiKey || apiKey.includes('xZ9x')) {
-        message.warning('YouTube API key not configured.');
-        return null;
-      }
+      const updated = [...lessonForms];
+      updated[index].videoUrl = result.url;
+      updated[index].duration = Math.round(result.duration); // Cloudinary returns duration in seconds
+      setLessonForms(updated);
 
-      const url = `https://www.googleapis.com/youtube/v3/videos?id=${videoId}&part=contentDetails,snippet&key=${apiKey}`;
-      const response = await fetch(url);
-
-      if (!response.ok) {
-        throw new Error(`API returned ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      if (!data.items || data.items.length === 0) {
-        message.error('Video not found. Please check the URL.');
-        return null;
-      }
-
-      const video = data.items[0];
-      const duration = video.contentDetails.duration;
-      const title = video.snippet.title;
-
-      const durationInSeconds = parseDuration(duration);
-
-      message.success(`Video found: "${title}" (${formatDurationDisplay(durationInSeconds)})`);
-      return durationInSeconds;
+      message.success('Video uploaded successfully!');
     } catch (error) {
-      console.error('YouTube API error:', error);
-      message.error(`Could not fetch video info: ${error.message}`);
-      return null;
+      message.error('Failed to upload video: ' + error.message);
+    } finally {
+      setUploadingVideo(prev => ({ ...prev, [index]: false }));
+      setUploadProgress(prev => ({ ...prev, [index]: 0 }));
     }
-  };
 
-  // Parse ISO 8601 duration to seconds
-  const parseDuration = (duration) => {
-    const match = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
-    if (!match) return 0;
-
-    const hours = parseInt(match[1] || 0);
-    const minutes = parseInt(match[2] || 0);
-    const seconds = parseInt(match[3] || 0);
-
-    return hours * 3600 + minutes * 60 + seconds;
-  };
-
-  // Format seconds to HH:MM:SS for display
-  const formatDurationDisplay = (seconds) => {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
-
-    if (hours > 0) {
-      return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-    }
-    return `${minutes}:${secs.toString().padStart(2, '0')}`;
+    return false; // Prevent default upload behavior
   };
 
 
@@ -251,15 +235,19 @@ const CourseDetail = ({ course, onBack }) => {
     try {
       if (modalMode === 'edit' && editingLesson) {
         // Cập nhật bài học
-        const updatedLesson = await courseService.updateLesson(
+        await courseService.updateLesson(
           editingLesson.lessonId,
           lessonForms[0]
         );
 
-        setLessons(lessons.map(l =>
-          l.lessonId === editingLesson.lessonId ? updatedLesson : l
-        ));
+        // Refresh lại danh sách lessons
+        await featchLessonsByCourseId(course.courseId);
         message.success('Lesson updated successfully!');
+
+        // Delay nhỏ để user thấy message trước khi đóng modal
+        setTimeout(() => {
+          handleLessonCancel();
+        }, 500);
       } else {
         // Thêm mới bài học
         const response = await courseService.createLesson(course.courseId, lessonForms);
@@ -272,9 +260,9 @@ const CourseDetail = ({ course, onBack }) => {
           await featchLessonsByCourseId(course.courseId);
           message.success('Lesson added successfully!');
         }
-      }
 
-      handleLessonCancel();
+        handleLessonCancel();
+      }
     } catch (error) {
       message.error(error.message || 'Error while saving lesson');
     }
@@ -321,7 +309,7 @@ const CourseDetail = ({ course, onBack }) => {
           setLessons(lessons.filter(l => l.lessonId !== lessonId));
           message.success('Lesson deleted successfully!');
         } catch (error) {
-          message.error('Error while deleting lesson!');
+          message.error(error.message || 'Failed to delete lesson');
         }
       }
     });
@@ -367,154 +355,134 @@ const CourseDetail = ({ course, onBack }) => {
   };
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-      <div className="bg-white p-6 rounded-lg shadow-md">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <Space size="large">
-            <Button
-              icon={<ArrowLeftOutlined />}
-              onClick={onBack}
-              size="large"
-            >
-              Back
-            </Button>
-            <div>
-              <Title level={3} className="!m-0">
-                {course.title}
-              </Title>
-              <Text type="secondary">
-                {course.subtitle}
-              </Text>
+    <div className="min-h-screen bg-gray-50">
+      {/* Header Section */}
+      <div className="border-b border-gray-200 bg-white shadow-sm sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Button
+                icon={<ArrowLeftOutlined />}
+                onClick={onBack}
+                size="large"
+                className="hover:bg-gray-100 transition-all"
+                style={{ borderRadius: '8px' }}
+              >
+                Back
+              </Button>
+              <div className="border-l border-gray-300 pl-4">
+                <Title level={3} className="!m-0 !mb-1">
+                  {course.title}
+                </Title>
+                <Text type="secondary" className="text-sm">
+                  {course.subtitle}
+                </Text>
+              </div>
             </div>
-          </Space>
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={() => showLessonModal('add')}
-            size="large"
-          >
-            Add Lesson
-          </Button>
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={() => showLessonModal('add')}
+              size="large"
+              style={{ borderRadius: '8px' }}
+            >
+              Add Lesson
+            </Button>
+          </div>
         </div>
+      </div>
 
-        {/* Course Detail */}
-        <Row gutter={24} align="stretch">
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-6 py-8">
+
+        <Row gutter={[24, 24]}>
           {/* Left Column - Course Info */}
           <Col xs={24} lg={8}>
             <Card
-              className="shadow-lg"
+              className="shadow-sm hover:shadow-md transition-shadow"
               style={{
-                height: '100%',
                 borderRadius: '12px',
-                overflow: 'hidden'
+                border: '1px solid #e5e7eb'
               }}
+              bodyStyle={{ padding: '24px' }}
             >
-              {/* Course Image */}
-              {course.imageUrl && course.imageUrl !== 'string' && course.imageUrl.length > 10 && (
-                <div style={{ marginBottom: '20px' }}>
-                  <Image
-                    src={course.imageUrl}
-                    alt={course.title}
-                    width="100%"
-                    style={{
-                      borderRadius: '8px',
-                      objectFit: 'cover',
-                      maxHeight: '200px'
-                    }}
-                  />
-                </div>
-              )}
-
               <div className="space-y-4">
-                <div style={{
-                  padding: '16px',
-                  background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
-                  borderRadius: '8px'
-                }}>
-                  <Text type="secondary" className="block mb-2" style={{ fontSize: '12px', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                <div>
+                  <Text type="secondary" className="block mb-2" style={{ fontSize: '12px', fontWeight: '600' }}>
                     Course Title
                   </Text>
-                  <Title level={4} className="!m-0" style={{ color: '#1a1a1a' }}>
+                  <Title level={4} className="!m-0">
                     {course.title}
                   </Title>
                 </div>
 
-                <div style={{
-                  padding: '16px',
-                  background: '#f8f9fa',
-                  borderRadius: '8px'
-                }}>
-                  <Text type="secondary" className="block mb-2" style={{ fontSize: '12px', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                <div>
+                  <Text type="secondary" className="block mb-2" style={{ fontSize: '12px', fontWeight: '600' }}>
+                    Category
+                  </Text>
+                  {getCategoryTag(course.category)}
+                </div>
+
+                <div>
+                  <Text type="secondary" className="block mb-2" style={{ fontSize: '12px', fontWeight: '600' }}>
                     Description
                   </Text>
-                  <Paragraph className="!mb-0" style={{ color: '#4a5568' }}>
+                  <Paragraph className="!mb-0" style={{ color: '#6b7280' }}>
                     {course.description}
                   </Paragraph>
                 </div>
 
+                {/* Course Image */}
+                {course.imageUrl && course.imageUrl !== 'string' && course.imageUrl.length > 10 && (
+                  <div style={{ marginTop: '20px' }}>
+                    <Image
+                      src={course.imageUrl}
+                      alt={course.title}
+                      width="100%"
+                      style={{
+                        borderRadius: '8px',
+                        objectFit: 'cover',
+                        maxHeight: '200px'
+                      }}
+                    />
+                  </div>
+                )}
+
                 <Divider className="!my-4" />
 
                 {/* Stats Grid */}
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 1fr',
-                  gap: '12px'
-                }}>
-                  <div style={{
-                    padding: '16px',
-                    background: 'linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%)',
-                    borderRadius: '8px',
-                    textAlign: 'center'
-                  }}>
-                    <Text type="secondary" className="block mb-1" style={{ fontSize: '11px', textTransform: 'uppercase' }}>
-                      Category
-                    </Text>
-                    {getCategoryTag(course.category)}
-                  </div>
-
-                  <div style={{
-                    padding: '16px',
-                    background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
-                    borderRadius: '8px',
-                    textAlign: 'center'
-                  }}>
-                    <Text type="secondary" className="block mb-1" style={{ fontSize: '11px', textTransform: 'uppercase' }}>
-                      Price
-                    </Text>
-                    <Text strong style={{ fontSize: '16px', color: '#d97706' }}>
-                      {course.price.toLocaleString()} VND
-                    </Text>
-                  </div>
-
-                  <div style={{
-                    padding: '16px',
-                    background: 'linear-gradient(135deg, #ddd6fe 0%, #c4b5fd 100%)',
-                    borderRadius: '8px',
-                    textAlign: 'center'
-                  }}>
-                    <Text type="secondary" className="block mb-1" style={{ fontSize: '11px', textTransform: 'uppercase' }}>
-                      Students
-                    </Text>
-                    <Text strong style={{ fontSize: '18px', color: '#7c3aed' }}>
-                      {course.studentCount || 0}
-                    </Text>
-                  </div>
-
-                  <div style={{
-                    padding: '16px',
-                    background: 'linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)',
-                    borderRadius: '8px',
-                    textAlign: 'center'
-                  }}>
-                    <Text type="secondary" className="block mb-1" style={{ fontSize: '11px', textTransform: 'uppercase' }}>
-                      Lessons
-                    </Text>
-                    <Tag color="green" style={{ fontSize: '14px', padding: '4px 12px' }}>
-                      {lessons.length}
-                    </Tag>
-                  </div>
-                </div>
+                <Row gutter={[12, 12]}>
+                  <Col span={12}>
+                    <div style={{ textAlign: 'center', padding: '16px', background: '#f9fafb', borderRadius: '8px' }}>
+                      <Text type="secondary" style={{ fontSize: '12px', display: 'block', marginBottom: '4px' }}>
+                        Price
+                      </Text>
+                      <Text strong style={{ fontSize: '18px', display: 'block' }}>
+                        {course.price.toLocaleString()} đ
+                      </Text>
+                    </div>
+                  </Col>
+                  <Col span={12}>
+                    <div style={{ textAlign: 'center', padding: '16px', background: '#f9fafb', borderRadius: '8px' }}>
+                      <Text type="secondary" style={{ fontSize: '12px', display: 'block', marginBottom: '4px' }}>
+                        Students
+                      </Text>
+                      <Text strong style={{ fontSize: '18px', display: 'block' }}>
+                        {course.studentCount || 0}
+                      </Text>
+                    </div>
+                  </Col>
+                  <Col span={24}>
+                    <div style={{ textAlign: 'center', padding: '16px', background: '#f9fafb', borderRadius: '8px' }}>
+                      <Text type="secondary" style={{ fontSize: '12px', display: 'block', marginBottom: '4px' }}>
+                        Total Lessons
+                      </Text>
+                      <Text strong style={{ fontSize: '18px', display: 'block' }}>
+                        {lessons.length}
+                      </Text>
+                    </div>
+                  </Col>
+                </Row>
               </div>
             </Card>
           </Col>
@@ -522,37 +490,21 @@ const CourseDetail = ({ course, onBack }) => {
           {/* Right Column - Lessons List */}
           <Col xs={24} lg={16}>
             <Card
-              className="shadow-lg"
+              className="shadow-sm"
               style={{
                 borderRadius: '12px',
-                overflow: 'hidden'
+                border: '1px solid #e5e7eb'
               }}
               title={
-                <div className="flex items-center justify-between">
-                  <Space>
-                    <VideoCameraOutlined style={{ fontSize: '20px', color: '#667eea' }} />
-                    <span style={{ fontSize: '18px', fontWeight: '600' }}>Lesson List</span>
-                  </Space>
-                  <Tag
-                    color="blue"
-                    style={{
-                      fontSize: '14px',
-                      padding: '4px 16px',
-                      borderRadius: '20px'
-                    }}
-                  >
-                    {getFilteredLessons().length} lessons
-                  </Tag>
+                <div className="flex items-center gap-2">
+                  <VideoCameraOutlined style={{ fontSize: '18px' }} />
+                  <span>Lessons ({getFilteredLessons().length})</span>
                 </div>
               }
               extra={
                 <Input.Search
                   placeholder="Search lessons..."
-                  style={{
-                    width: 300,
-                    borderRadius: '8px'
-                  }}
-                  size="large"
+                  style={{ width: 250 }}
                   onSearch={handleSearch}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   allowClear
@@ -578,13 +530,39 @@ const CourseDetail = ({ course, onBack }) => {
                           setViewingLesson(lesson);
                           setIsViewLessonModalVisible(true);
                         }}
-                        className="hover:shadow-md transition-shadow"
+                        className="hover:shadow-md hover:border-blue-400"
+                        actions={[
+                          <Button
+                            key="edit"
+                            type="text"
+                            icon={<EditOutlined />}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              showLessonModal('edit', lesson);
+                            }}
+                            className="hover:text-blue-600"
+                          >
+                            Edit
+                          </Button>,
+                          <Button
+                            key="delete"
+                            type="text"
+                            danger
+                            icon={<DeleteOutlined />}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteLesson(lesson.lessonId);
+                            }}
+                          >
+                            Delete
+                          </Button>
+                        ]}
                       >
                         <List.Item.Meta
                           avatar={
                             <div style={{
-                              width: '50px',
-                              height: '50px',
+                              width: '48px',
+                              height: '48px',
                               borderRadius: '8px',
                               background: '#1890ff',
                               display: 'flex',
@@ -603,7 +581,7 @@ const CourseDetail = ({ course, onBack }) => {
                             </Text>
                           }
                           description={
-                            <div className="space-y-2 mt-2">
+                            <div className="mt-2">
                               <Paragraph
                                 ellipsis={{ rows: 2 }}
                                 className="!mb-2"
@@ -611,7 +589,7 @@ const CourseDetail = ({ course, onBack }) => {
                               >
                                 {lesson.description}
                               </Paragraph>
-                              <Space size="middle">
+                              <Space>
                                 <Tag icon={<ClockCircleOutlined />} color="blue">
                                   {formatDuration(lesson.duration)}
                                 </Tag>
@@ -795,60 +773,77 @@ const CourseDetail = ({ course, onBack }) => {
 
                 <div>
                   <label className="block mb-2 font-medium text-gray-700">
-                    URL Video YouTube
+                    Video Lesson
                   </label>
-                  <Input
-                    placeholder="https://www.youtube.com/watch?v=..."
-                    size="large"
-                    value={form.videoUrl}
-                    onChange={async (e) => {
-                      const url = e.target.value;
-                      const updated = [...lessonForms];
-                      updated[index].videoUrl = url;
-                      setLessonForms(updated);
+                  <Upload.Dragger
+                    accept="video/*"
+                    beforeUpload={(file) => handleVideoUpload(file, index)}
+                    showUploadList={false}
+                    disabled={uploadingVideo[index]}
+                  >
+                    <p className="ant-upload-drag-icon">
+                      <InboxOutlined />
+                    </p>
+                    <p className="ant-upload-text">
+                      Click or drag video file to upload
+                    </p>
+                    <p className="ant-upload-hint">
+                      Support for MP4, MOV, AVI, and other video formats. Max size: 100MB
+                    </p>
+                  </Upload.Dragger>
 
-                      // Auto-fetch duration when URL is pasted/changed
-                      const videoId = extractVideoId(url);
-                      if (videoId) {
-                        setFetchingDuration(prev => ({ ...prev, [index]: true }));
-                        const duration = await fetchYouTubeDuration(videoId);
-                        setFetchingDuration(prev => ({ ...prev, [index]: false }));
-
-                        if (duration !== null && duration > 0) {
-                          const updatedWithDuration = [...lessonForms];
-                          updatedWithDuration[index].duration = duration;
-                          setLessonForms(updatedWithDuration);
-                        }
-                      }
-                    }}
-                    suffix={
-                      fetchingDuration[index] && (
-                        <Spin size="small" />
-                      )
-                    }
-                  />
-                  <Text type="secondary" className="text-xs mt-1 block">
-                    Paste YouTube URL to automatically fetch video duration.
-                  </Text>
-                  {form.videoUrl && (
+                  {uploadingVideo[index] && (
                     <div className="mt-3">
-                      <Text type="secondary" className="block mb-2">Preview:</Text>
-                      <div className="relative inline-block">
-                        <iframe
-                          width="300"
-                          height="170"
-                          src={`https://www.youtube.com/embed/${extractVideoId(form.videoUrl)}`}
-                          title="YouTube video preview"
-                          frameBorder="0"
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                          allowFullScreen
-                          className="rounded"
-                        ></iframe>
-                      </div>
+                      <Progress percent={uploadProgress[index]} status="active" />
+                      <Text type="secondary" className="text-xs mt-1 block">
+                        Uploading video... Please wait.
+                      </Text>
                     </div>
                   )}
 
-
+                  {form.videoUrl && !uploadingVideo[index] && (
+                    <div className="mt-3">
+                      <Text type="secondary" className="block mb-2">Preview:</Text>
+                      {isYouTubeUrl(form.videoUrl) ? (
+                        <div className="relative inline-block">
+                          <iframe
+                            width="300"
+                            height="170"
+                            src={`https://www.youtube.com/embed/${extractVideoId(form.videoUrl)}`}
+                            title="YouTube video preview"
+                            frameBorder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                            className="rounded"
+                          ></iframe>
+                        </div>
+                      ) : (
+                        <video
+                          width="300"
+                          height="170"
+                          controls
+                          className="rounded"
+                          src={form.videoUrl}
+                        >
+                          Your browser does not support the video tag.
+                        </video>
+                      )}
+                      <div className="mt-2">
+                        <Button
+                          size="small"
+                          danger
+                          onClick={() => {
+                            const updated = [...lessonForms];
+                            updated[index].videoUrl = '';
+                            updated[index].duration = 0;
+                            setLessonForms(updated);
+                          }}
+                        >
+                          Remove Video
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </Card>
@@ -1013,20 +1008,36 @@ const CourseDetail = ({ course, onBack }) => {
                   borderRadius: '8px',
                   overflow: 'hidden'
                 }}>
-                  <iframe
-                    style={{
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      width: '100%',
-                      height: '100%'
-                    }}
-                    src={`https://www.youtube.com/embed/${extractVideoId(viewingLesson.videoUrl)}`}
-                    title={viewingLesson.title}
-                    frameBorder="0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                  ></iframe>
+                  {isYouTubeUrl(viewingLesson.videoUrl) ? (
+                    <iframe
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%'
+                      }}
+                      src={`https://www.youtube.com/embed/${extractVideoId(viewingLesson.videoUrl)}`}
+                      title={viewingLesson.title}
+                      frameBorder="0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    ></iframe>
+                  ) : (
+                    <video
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%'
+                      }}
+                      controls
+                      src={viewingLesson.videoUrl}
+                    >
+                      Your browser does not support the video tag.
+                    </video>
+                  )}
                 </div>
               </div>
             )}

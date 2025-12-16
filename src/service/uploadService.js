@@ -5,6 +5,7 @@ const CLOUDINARY_CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || 'dtu
 const CLOUDINARY_UPLOAD_PRESET = 'lovehaven_preset'; // Bạn cần tạo preset này trong Cloudinary Dashboard
 
 const CLOUDINARY_UPLOAD_URL = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`;
+const CLOUDINARY_VIDEO_UPLOAD_URL = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/video/upload`;
 
 export const uploadService = {
   /**
@@ -27,6 +28,46 @@ export const uploadService = {
             response: error.response ? error.response.data : null,
             status: error.response ? error.response.status : null,
           });
+      throw error;
+    }
+  },
+
+  /**
+   * Upload video lên Cloudinary
+   * @param {File} file - File video cần upload
+   * @param {Function} onProgress - Callback để theo dõi tiến trình upload
+   * @returns {Promise<Object>} - Thông tin video đã upload (bao gồm URL và duration)
+   */
+  uploadVideo: async (file, onProgress) => {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+      formData.append('resource_type', 'video');
+      
+      const response = await axios.post(CLOUDINARY_VIDEO_UPLOAD_URL, formData, {
+        onUploadProgress: (progressEvent) => {
+          if (onProgress) {
+            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+            onProgress(percentCompleted);
+          }
+        }
+      });
+      
+      return {
+        url: response.data.secure_url,
+        duration: response.data.duration, // Duration in seconds
+        publicId: response.data.public_id,
+        format: response.data.format,
+        resourceType: response.data.resource_type
+      };
+    } catch (error) {
+      console.error('Lỗi khi upload video:', {
+        message: error.message,
+        code: error.code,
+        response: error.response ? error.response.data : null,
+        status: error.response ? error.response.status : null,
+      });
       throw error;
     }
   },
