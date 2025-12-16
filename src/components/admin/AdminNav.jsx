@@ -28,10 +28,26 @@ const menuItems = [
     icon: ArrowRightLeft,
     hasSubmenu: true,
     submenu: [
-      { title: "All Transactions", icon: ArrowRightLeft, path: "/admin/transactions" },
-      { title: "Order Transactions", icon: ShoppingCart, path: "/admin/order-transactions" },
-      { title: "Credit Transactions", icon: Coins, path: "/admin/credit-transactions" },
-      { title: "Subscription Transactions", icon: Calendar, path: "/admin/subscription-transactions" },
+      {
+        title: "All Transactions",
+        icon: ArrowRightLeft,
+        path: "/admin/transactions",
+      },
+      {
+        title: "Order Transactions",
+        icon: ShoppingCart,
+        path: "/admin/order-transactions",
+      },
+      {
+        title: "Credit Transactions",
+        icon: Coins,
+        path: "/admin/credit-transactions",
+      },
+      {
+        title: "Subscription Transactions",
+        icon: Calendar,
+        path: "/admin/subscription-transactions",
+      },
     ],
   },
   {
@@ -40,7 +56,11 @@ const menuItems = [
     hasSubmenu: true,
     submenu: [
       { title: "All Wallets", icon: Wallet, path: "/admin/wallets" },
-      { title: "Withdrawal Management", icon: HandCoins, path: "/admin/withdrawals" },
+      {
+        title: "Withdrawal Management",
+        icon: HandCoins,
+        path: "/admin/withdrawals",
+      },
     ],
   },
 ];
@@ -65,7 +85,7 @@ export default function AdminNav() {
   return (
     <div className="w-80 bg-gradient-to-b from-white to-gray-50/30 h-screen border-r border-gray-200 flex flex-col sticky top-0 overflow-y-auto shadow-sm">
       {/* Logo */}
-      <div className="flex items-center gap-2.5 px-5 py-5 border-b border-gray-200 bg-white">
+      <div className="flex items-center gap-2.5 px-5 py-3.5 border-b border-gray-200 bg-white">
         <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center flex-shrink-0 shadow-md">
           <div className="flex gap-0.5">
             <img
@@ -76,8 +96,12 @@ export default function AdminNav() {
           </div>
         </div>
         <span
-          className="text-lg font-bold bg-gradient-to-r from-blue-700 to-blue-600 bg-clip-text text-transparent"
-          style={{ fontFamily: "Pacifico, cursive" }}
+          className="text-lg"
+          style={{
+            fontFamily: "Pacifico, cursive",
+            color: "#084f8c",
+            fontSize: "1.5rem",
+          }}
         >
           SketchNote
         </span>
@@ -117,7 +141,9 @@ export default function AdminNav() {
                         : "text-gray-400 group-hover:text-blue-600 group-hover:scale-110"
                     }`}
                   />
-                  <span className="transition-all duration-200">{item.title}</span>
+                  <span className="transition-all duration-200">
+                    {item.title}
+                  </span>
                 </div>
                 {item.hasSubmenu && (
                   <ChevronDown
@@ -144,12 +170,16 @@ export default function AdminNav() {
                             : "text-gray-600 hover:bg-white hover:shadow-sm"
                         }`}
                       >
-                        <subItem.icon className={`w-4 h-4 flex-shrink-0 transition-all duration-200 ${
-                          activeItem === `${index}-${subIndex}`
-                            ? "text-blue-600 scale-110"
-                            : "text-gray-400 group-hover:text-blue-600 group-hover:scale-105"
-                        }`} />
-                        <span className="transition-all duration-200">{subItem.title}</span>
+                        <subItem.icon
+                          className={`w-4 h-4 flex-shrink-0 transition-all duration-200 ${
+                            activeItem === `${index}-${subIndex}`
+                              ? "text-blue-600 scale-110"
+                              : "text-gray-400 group-hover:text-blue-600 group-hover:scale-105"
+                          }`}
+                        />
+                        <span className="transition-all duration-200">
+                          {subItem.title}
+                        </span>
                       </button>
                     </li>
                   ))}

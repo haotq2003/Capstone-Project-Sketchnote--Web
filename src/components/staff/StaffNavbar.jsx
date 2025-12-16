@@ -50,17 +50,23 @@ export default function StaffNavbar() {
         }
       `}</style>
       {/* Logo */}
-      <div className="flex items-center gap-2.5 px-5 py-5 border-b border-gray-200 bg-white">
+      <div className="flex items-center gap-2.5 px-5 py-3.5 border-b border-gray-200 bg-white">
         <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center flex-shrink-0 shadow-md">
-          <img
-            src="https://res.cloudinary.com/dturncvxv/image/upload/v1759910431/b5e15cec-6489-46e7-bd9e-596a24bd5225_wbpdjm.jpg"
-            alt="logo"
-            className="w-full h-full object-cover rounded-lg"
-          />
+          <div className="flex gap-0.5">
+            <img
+              src="https://res.cloudinary.com/dturncvxv/image/upload/v1759910431/b5e15cec-6489-46e7-bd9e-596a24bd5225_wbpdjm.jpg"
+              alt=""
+              className="w-full h-full object-cover rounded-lg"
+            />
+          </div>
         </div>
         <span
-          className="text-lg font-bold bg-gradient-to-r from-blue-700 to-blue-600 bg-clip-text text-transparent"
-          style={{ fontFamily: "Pacifico, cursive" }}
+          className="text-lg"
+          style={{
+            fontFamily: "Pacifico, cursive",
+            color: "#084f8c",
+            fontSize: "1.5rem",
+          }}
         >
           SketchNote
         </span>
