@@ -18,7 +18,16 @@ const PaymentFailed = () => {
     const isCancelled = searchParams.get('cancel') === 'true';
 
     const handleBackToWallet = () => {
-        navigate('/admin/my-wallet');
+        // Detect environment and redirect accordingly
+        const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
+        if (isLocalhost) {
+            // Local development - use navigate
+            navigate('/admin/my-wallet');
+        } else {
+            // Production - redirect to full URL
+            window.location.href = `${window.location.origin}/admin/my-wallet`;
+        }
     };
 
     return (
