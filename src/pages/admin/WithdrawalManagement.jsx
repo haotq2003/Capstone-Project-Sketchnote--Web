@@ -20,9 +20,13 @@ const AdminWithdrawalManagement = () => {
 
     const columns = [
         {
-            title: "ID",
-            dataIndex: "id",
+            title: "No.",
+            key: "index",
             width: 60,
+            render: (_, __, index) => {
+                const { current, pageSize } = pagination;
+                return (current - 1) * pageSize + index + 1;
+            },
         },
         {
             title: "Amount",
@@ -228,13 +232,44 @@ const AdminWithdrawalManagement = () => {
             >
                 {selectedRecord && (
                     <Descriptions bordered column={1}>
-                        {Object.entries(selectedRecord).map(([key, value]) => (
-                            <Descriptions.Item key={key} label={key}>
-                                {typeof value === "object" && value !== null
-                                    ? JSON.stringify(value, null, 2)
-                                    : String(value)}
-                            </Descriptions.Item>
-                        ))}
+                        {Object.entries(selectedRecord)
+                            .filter(([key, value]) => {
+                                // Hide null, undefined, or empty values
+                                return value !== null && value !== undefined && value !== "";
+                            })
+                            .map(([key, value]) => {
+                                let displayValue = value;
+
+                                // Format currency fields
+                                if ((key === "amount" || key === "balance") && typeof value === "number") {
+                                    displayValue = `${value.toLocaleString()} đ`;
+                                } else if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}T/.test(value)) {
+                                    displayValue = new Date(value).toLocaleString();
+                                } else if (typeof value === "object" && value !== null) {
+                                    displayValue = JSON.stringify(value, null, 2);
+                                } else {
+                                    displayValue = String(value);
+                                }
+
+                                // Status tag
+                                if (key === "status") {
+                                    let color = "default";
+                                    if (value === "APPROVED" || value === "SUCCESS") color = "success";
+                                    if (value === "PENDING") color = "warning";
+                                    if (value === "REJECTED" || value === "FAILED") color = "error";
+                                    return (
+                                        <Descriptions.Item key={key} label={key}>
+                                            <Tag color={color}>{value}</Tag>
+                                        </Descriptions.Item>
+                                    );
+                                }
+
+                                return (
+                                    <Descriptions.Item key={key} label={key}>
+                                        {displayValue}
+                                    </Descriptions.Item>
+                                );
+                            })}
                     </Descriptions>
                 )}
             </Modal>

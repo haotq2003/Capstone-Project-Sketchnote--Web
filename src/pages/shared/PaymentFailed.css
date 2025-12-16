@@ -1,0 +1,120 @@
+.payment-failed {
+    background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+}
+
+/* Error Icon */
+.error-icon-wrapper {
+    width: 100px;
+    height: 100px;
+    margin: 0 auto 24px;
+    background: linear-gradient(135deg, #FEE2E2 0%, #FECACA 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: bounceIn 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.error-icon {
+    font-size: 56px;
+    color: #DC2626;
+}
+
+/* Shake Animation */
+.shake-animation {
+    animation: shake 0.8s cubic-bezier(.36, .07, .19, .97) both;
+    animation-delay: 0.5s;
+}
+
+@keyframes shake {
+
+    10%,
+    90% {
+        transform: translate3d(-1px, 0, 0);
+    }
+
+    20%,
+    80% {
+        transform: translate3d(2px, 0, 0);
+    }
+
+    30%,
+    50%,
+    70% {
+        transform: translate3d(-4px, 0, 0);
+    }
+
+    40%,
+    60% {
+        transform: translate3d(4px, 0, 0);
+    }
+}
+
+/* Error Title */
+.error-title {
+    color: #DC2626 !important;
+    margin-bottom: 12px !important;
+    animation: fadeIn 0.6s ease-out 0.3s both;
+}
+
+.error-subtitle {
+    display: block;
+    font-size: 16px;
+    color: #6B7280;
+    margin-bottom: 24px;
+    animation: fadeIn 0.6s ease-out 0.5s both;
+}
+
+/* Error Alert */
+.error-alert {
+    margin-bottom: 24px;
+    border-radius: 8px;
+    animation: fadeIn 0.6s ease-out 0.6s both;
+}
+
+/* Error Card */
+.error-card {
+    background: #FEF2F2;
+    border: 1px solid #FEE2E2;
+}
+
+/* Error Button */
+.error-button {
+    background: linear-gradient(135deg, #DC2626 0%, #B91C1C 100%) !important;
+    border: none !important;
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+}
+
+.error-button:hover {
+    background: linear-gradient(135deg, #B91C1C 0%, #991B1B 100%) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(220, 38, 38, 0.4);
+}
+
+/* Try Again Button */
+.try-again-button {
+    background: #F3F4F6 !important;
+    color: #1F2937 !important;
+    border: 1px solid #D1D5DB !important;
+}
+
+.try-again-button:hover {
+    background: #E5E7EB !important;
+    border-color: #9CA3AF !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .error-icon-wrapper {
+        width: 80px;
+        height: 80px;
+    }
+
+    .error-icon {
+        font-size: 48px;
+    }
+
+    .error-title {
+        font-size: 24px !important;
+    }
+}
