@@ -1,0 +1,50 @@
+.welcome-page {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: white;
+  font-family: "Baloo", cursive;
+  position: relative;
+  opacity: 1;
+  transition: opacity 1s ease-in-out;
+}
+
+.welcome-page.fade-out {
+  opacity: 0;
+}
+
+.welcome-video {
+  width: 150px;
+  height: auto;
+  margin-bottom: 10px;
+}
+
+.typing-text {
+  font-size: 2.3rem;
+  font-weight: bold;
+  color: rgb(65, 5, 46);
+  overflow: hidden;
+  white-space: nowrap;
+  border-right: 3px solid white;
+  width: 0;
+  animation: typing 3.5s steps(40, end) forwards, blink 0.8s infinite;
+  text-align: center;
+  max-width: 100%;
+}
+
+@keyframes typing {
+  from {
+    width: 0;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+@keyframes blink {
+  50% {
+    border-color: transparent;
+  }
+}

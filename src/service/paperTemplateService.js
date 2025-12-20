@@ -75,4 +75,80 @@ export const paperTemplateService = {
             throw new Error(message);
         }
     },
+
+    // Get all paper templates with pagination and filtering
+    getPaperTemplates: async (categoryId = "", paperSize = "", keyword = "", page = 0, size = 10) => {
+        try {
+            const res = await PaperTemplateApiController.getPaperTemplates(
+                categoryId,
+                paperSize,
+                keyword,
+                page,
+                size
+            );
+            return res.data.result;
+        } catch (error) {
+            const message =
+                error.response?.data?.message ||
+                error.message ||
+                "Failed to get paper templates.";
+            throw new Error(message);
+        }
+    },
+
+    // Get a single paper template by ID
+    getPaperTemplateById: async (id) => {
+        try {
+            const res = await PaperTemplateApiController.getPaperTemplateById(id);
+            return res.data.result;
+        } catch (error) {
+            const message =
+                error.response?.data?.message ||
+                error.message ||
+                "Failed to get paper template.";
+            throw new Error(message);
+        }
+    },
+
+    // Create a new paper template
+    createPaperTemplate: async (data) => {
+        try {
+            const res = await PaperTemplateApiController.createPaperTemplate(data);
+            return res.data;
+        } catch (error) {
+            const message =
+                error.response?.data?.message ||
+                error.message ||
+                "Failed to create paper template.";
+            throw new Error(message);
+        }
+    },
+
+    // Update a paper template by ID
+    updatePaperTemplate: async (id, data) => {
+        try {
+            const res = await PaperTemplateApiController.updatePaperTemplate(id, data);
+            return res.data;
+        } catch (error) {
+            const message =
+                error.response?.data?.message ||
+                error.message ||
+                "Failed to update paper template.";
+            throw new Error(message);
+        }
+    },
+
+    // Delete a paper template by ID
+    deletePaperTemplate: async (id) => {
+        try {
+            const res = await PaperTemplateApiController.deletePaperTemplate(id);
+            return res.data;
+        } catch (error) {
+            const message =
+                error.response?.data?.message ||
+                error.message ||
+                "Failed to delete paper template.";
+            throw new Error(message);
+        }
+    },
 };
