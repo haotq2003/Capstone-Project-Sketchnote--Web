@@ -171,6 +171,34 @@ const SketchnoteLogin = () => {
     try {
       const { roles } = await authService.login(email, password);
 
+      // Check if user is CUSTOMER only (not ADMIN or STAFF)
+      const isCustomerOnly = roles.includes("CUSTOMER") &&
+        !roles.includes("ADMIN") &&
+        !roles.includes("STAFF");
+
+      if (isCustomerOnly) {
+        // Show access denied modal for customers
+        message.error({
+          content: (
+            <div>
+              <div className="font-semibold mb-2">Access Restricted</div>
+              <div className="text-sm">This web platform is for Admin and Staff only.</div>
+              <div className="text-sm mt-1">Please use our Mobile App instead.</div>
+            </div>
+          ),
+          duration: 5,
+          style: { marginTop: "20vh" },
+        });
+
+        // Logout and clear session
+        localStorage.removeItem('token');
+        localStorage.removeItem('userInfo');
+        localStorage.removeItem('roles');
+
+        setLoading(false);
+        return;
+      }
+
       message.success({
         content: "Login successful! Redirecting...",
         duration: 2,
@@ -184,6 +212,8 @@ const SketchnoteLogin = () => {
           navigate("/staff/courses");
         } else if (roles.includes("DESIGNER")) {
           navigate("/designer");
+        } else {
+          navigate("/");
         }
       }, 800);
     } catch (error) {

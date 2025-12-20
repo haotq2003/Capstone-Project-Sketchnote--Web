@@ -36,7 +36,11 @@ const CTASection = () => {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button variant="hero" size="xl">
+              <Button
+                variant="hero"
+                size="xl"
+                onClick={() => window.location.href = 'https://expo.dev/artifacts/eas/qKdsbo1ysamCsX3JP97kCi.apk'}
+              >
                 <Download className="w-5 h-5" />
                 Download App
               </Button>

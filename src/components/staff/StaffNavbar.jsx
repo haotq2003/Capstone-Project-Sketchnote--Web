@@ -20,7 +20,7 @@ export default function StaffNavbar() {
     { path: "/staff/courses", icon: BookOpen, label: "Courses" },
     // { path: "/staff/support", icon: Headphones, label: "Support" },
 
-    { path: "/staff/resources", icon: ScrollText, label: "Resources" },
+    { path: "/staff/resources", icon: ScrollText, label: "Accept Resources" },
     { path: "/staff/accept-blog", icon: FileCheck, label: "Accept Blog" },
     { path: "/staff/credit", icon: Coins, label: "Credit Packages" },
     { path: "/staff/subscriptions", icon: Box, label: "Subscription Packages" },

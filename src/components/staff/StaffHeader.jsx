@@ -13,7 +13,7 @@ export default function StaffHeader() {
 
   const menuItems = [
     { icon: User, label: "Profile", path: "/staff/profile" },
-    { icon: Settings, label: "Settings", path: "/staff/settings" },
+    // { icon: Settings, label: "Settings", path: "/staff/settings" },
     {
       icon: LogOut,
       label: "Logout",
