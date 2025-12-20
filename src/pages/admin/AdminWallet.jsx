@@ -164,6 +164,7 @@ const AdminWallet = () => {
             fetchWithdrawHistory();
         } catch (error) {
             message.error(error.message || "Withdrawal request failed");
+            console.error("Withdrawal error:", error);
         }
     };
 
@@ -733,6 +734,17 @@ const AdminWallet = () => {
                                 </Button>
                             </div>
 
+                            {/* Hidden fields to store bank account info */}
+                            <Form.Item name="bankName" hidden>
+                                <Input />
+                            </Form.Item>
+                            <Form.Item name="accountNumber" hidden>
+                                <Input />
+                            </Form.Item>
+                            <Form.Item name="accountName" hidden>
+                                <Input />
+                            </Form.Item>
+
                             <Divider style={{ margin: "16px 0" }} />
 
                             {/* Amount Input */}
@@ -741,13 +753,13 @@ const AdminWallet = () => {
                                 label={<Text strong>Withdrawal Amount</Text>}
                                 rules={[
                                     { required: true, message: "Please enter amount" },
-                                    { type: "number", min: 100000, message: "Minimum 100,000 VND" },
+                                    { type: "number", min: 50000, message: "Minimum 50,000 VND" },
                                 ]}
                             >
                                 <InputNumber
                                     style={{ width: "100%" }}
                                     size="large"
-                                    min={100000}
+                                    min={50000}
                                     max={walletData.balance}
                                     step={10000}
                                     formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
