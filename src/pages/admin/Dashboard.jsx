@@ -11,6 +11,7 @@ import {
   DatePicker,
   Space,
   Button,
+  Select,
 } from "antd";
 import {
   BarChart,
@@ -62,11 +63,11 @@ export default function AdminDashboard() {
   const [revenueStats, setRevenueStats] = useState(null);
   const [loadingRevenue, setLoadingRevenue] = useState(false);
   const [dateRange, setDateRange] = useState(null);
+  const [filterType, setFilterType] = useState('date'); // 'date', 'month', 'year'
 
   useEffect(() => {
     dashboardAminService.fetchUser().then(setUserData);
     dashboardAminService.fetchTotalOrderAndEnrollments().then(setTotalOrderAndEnrollments);
-    dashboardAminService.fetchTopCourses(5).then(setTopCourses);
     dashboardAminService.fetchTopCourses(5).then(setTopCourses);
     dashboardAminService.fetchTopResources(5).then(setTopResources);
     dashboardAminService.getDashboardOverview().then(setWalletOverview);
@@ -89,15 +90,76 @@ export default function AdminDashboard() {
       });
     });
 
-    // Fetch revenue data for charts
+    // Fetch initial revenue data
+    fetchRevenueData();
+  }, []);
+
+  // Auto-fetch when filter changes
+  useEffect(() => {
+    if (dateRange && dateRange[0]) {
+      handleApplyFilter();
+    }
+  }, [dateRange, filterType]);
+
+  const fetchRevenueData = (start = null, end = null, groupBy = 'day') => {
+    console.log('🔄 [Revenue API] Fetching with params:', { start, end, groupBy });
     setLoadingRevenue(true);
-    dashboardAminService.getRevenueDashboard()
+    dashboardAminService.getRevenueDashboard(start, end, groupBy, null)
       .then(data => {
+        console.log('✅ [Revenue API] Response received:', data);
+        console.log('📊 [Revenue Stats]:', data?.revenueStats);
         setRevenueStats(data?.revenueStats);
       })
-      .catch(err => console.error('Failed to fetch revenue:', err))
+      .catch(err => {
+        console.error('❌ [Revenue API] Error:', err);
+        console.error('Error details:', err.response?.data || err.message);
+        message.error('Failed to load revenue data');
+      })
       .finally(() => setLoadingRevenue(false));
-  }, []);
+  };
+
+  const handleApplyFilter = () => {
+    if (!dateRange || !dateRange[0]) {
+      console.log('⚠️ [Filter] No date range selected');
+      return;
+    }
+
+    let start = null;
+    let end = null;
+    let groupBy = 'day';
+
+    if (filterType === 'date' && dateRange[1]) {
+      // Date range filter
+      start = dateRange[0].format('YYYY-MM-DD');
+      end = dateRange[1].format('YYYY-MM-DD');
+      groupBy = 'day';
+      console.log('📅 [Filter] Date Range:', { start, end, groupBy });
+    } else if (filterType === 'month') {
+      // Month filter - group by month to show monthly data
+      start = dateRange[0].startOf('month').format('YYYY-MM-DD');
+      end = dateRange[0].endOf('month').format('YYYY-MM-DD');
+      groupBy = 'month';
+      console.log('📆 [Filter] Month:', { start, end, groupBy });
+    } else if (filterType === 'year') {
+      // Year filter - group by year to show yearly data
+      start = dateRange[0].startOf('year').format('YYYY-MM-DD');
+      end = dateRange[0].endOf('year').format('YYYY-MM-DD');
+      groupBy = 'year';
+      console.log('🗓️ [Filter] Year:', { start, end, groupBy });
+    }
+
+    fetchRevenueData(start, end, groupBy);
+  };
+
+  const handleClearFilter = () => {
+    setDateRange(null);
+    fetchRevenueData();
+  };
+
+  const handleFilterTypeChange = (value) => {
+    setFilterType(value);
+    setDateRange(null);
+  };
 
   // ================= DESIGNER TABLE COLUMNS =================
   const designerColumns = [
@@ -142,8 +204,35 @@ export default function AdminDashboard() {
     },
   ];
 
-  // Process chart data
-  const chartData = React.useMemo(() => processChartData(revenueStats), [revenueStats]);
+  // Process chart data with filtering
+  const chartData = React.useMemo(() => {
+    const data = processChartData(revenueStats);
+    if (!dateRange || !dateRange[0]) return data;
+
+    // Filter based on filterType
+    return data.filter(item => {
+      const itemDate = new Date(item.date);
+
+      if (filterType === 'date' && dateRange[1]) {
+        // Date range filter
+        const startDate = new Date(dateRange[0].format('YYYY-MM-DD'));
+        const endDate = new Date(dateRange[1].format('YYYY-MM-DD'));
+        return itemDate >= startDate && itemDate <= endDate;
+      } else if (filterType === 'month') {
+        // Month filter
+        const selectedMonth = dateRange[0].format('YYYY-MM');
+        const itemMonth = item.date.substring(0, 7); // Get YYYY-MM from date
+        return itemMonth === selectedMonth;
+      } else if (filterType === 'year') {
+        // Year filter
+        const selectedYear = dateRange[0].format('YYYY');
+        const itemYear = item.date.substring(0, 4); // Get YYYY from date
+        return itemYear === selectedYear;
+      }
+      return true;
+    });
+  }, [revenueStats, dateRange, filterType]);
+
   const pieData = React.useMemo(() => processPieData(revenueStats), [revenueStats]);
 
   return (
@@ -230,8 +319,11 @@ export default function AdminDashboard() {
             onMouseLeave={(e) => (e.currentTarget.style.transform = "translateY(0)")}
           >
             <Statistic
-              title="Total Enrollments"
-              value={totalOrderAndEnrollments?.totalEnrollments || 0}
+              title="Course Balance"
+              value={walletOverview?.courseBalance || 0}
+              precision={0}
+              suffix="₫"
+              valueStyle={{ color: '#722ed1' }}
               prefix={<BookOutlined style={{ color: "#722ed1" }} />}
             />
           </Card>
@@ -452,37 +544,62 @@ export default function AdminDashboard() {
       {/* ==================== REVENUE CHARTS ==================== */}
       {/* Date Filter for Revenue */}
       <Card style={{ marginTop: 32, marginBottom: 16 }}>
-        <Space size="middle">
-          <CalendarOutlined style={{ fontSize: 20, color: "#1677ff" }} />
-          <Text strong>Filter Revenue by Date:</Text>
-          <RangePicker
-            style={{ width: 300 }}
-            placeholder={["Start Date", "End Date"]}
-            format="YYYY-MM-DD"
-            value={dateRange}
-            onChange={(dates) => setDateRange(dates)}
-          />
-          <Button
-            type="primary"
-            icon={<ReloadOutlined />}
-            onClick={() => {
-              setLoadingRevenue(true);
-              dashboardAminService.getRevenueDashboard()
-                .then(data => {
-                  setRevenueStats(data?.revenueStats);
-                })
-                .catch(err => console.error('Failed to fetch revenue:', err))
-                .finally(() => setLoadingRevenue(false));
-            }}
-          >
-            Refresh
-          </Button>
-          {dateRange && (
-            <Button
-              onClick={() => setDateRange(null)}
+        <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+          <Space size="middle" wrap>
+            <CalendarOutlined style={{ fontSize: 20, color: "#1677ff" }} />
+            <Text strong>Filter Revenue:</Text>
+            <Select
+              value={filterType}
+              onChange={setFilterType}
+              style={{ width: 120 }}
             >
-              Clear Filter
-            </Button>
+              <Select.Option value="date">By Date</Select.Option>
+              <Select.Option value="month">By Month</Select.Option>
+              <Select.Option value="year">By Year</Select.Option>
+            </Select>
+
+            {filterType === 'date' && (
+              <RangePicker
+                style={{ width: 300 }}
+                placeholder={["Start Date", "End Date"]}
+                format="YYYY-MM-DD"
+                value={dateRange}
+                onChange={(dates) => setDateRange(dates)}
+              />
+            )}
+
+            {filterType === 'month' && (
+              <DatePicker
+                picker="month"
+                style={{ width: 200 }}
+                placeholder="Select Month"
+                format="YYYY-MM"
+                value={dateRange?.[0]}
+                onChange={(date) => setDateRange(date ? [date] : null)}
+              />
+            )}
+
+            {filterType === 'year' && (
+              <DatePicker
+                picker="year"
+                style={{ width: 150 }}
+                placeholder="Select Year"
+                format="YYYY"
+                value={dateRange?.[0]}
+                onChange={(date) => setDateRange(date ? [date] : null)}
+              />
+            )}
+          </Space>
+
+          {/* Display current date range */}
+          {chartData.length > 0 && (
+            <div style={{ padding: '6px 12px', background: '#f0f5ff', borderRadius: 6, display: 'inline-block' }}>
+              <Text type="secondary" style={{ fontSize: 12 }}>
+                📊 Viewing: <Text strong style={{ color: '#1677ff' }}>
+                  {chartData[0]?.date} → {chartData[chartData.length - 1]?.date}
+                </Text>
+              </Text>
+            </div>
           )}
         </Space>
       </Card>
@@ -498,8 +615,9 @@ export default function AdminDashboard() {
                   <YAxis />
                   <Tooltip formatter={(value) => `${value.toLocaleString()} đ`} />
                   <Legend />
-                  <Bar dataKey="subscription" name="Subscription" fill="#8B5CF6" stackId="a" />
-                  <Bar dataKey="token" name="Token" fill="#10B981" stackId="a" />
+                  <Bar dataKey="subscription" name="Subscription" fill="#3B82F6" stackId="a" />
+                  <Bar dataKey="token" name="Token" fill="#F59E0B" stackId="a" />
+                  <Bar dataKey="course" name="Course" fill="#8B5CF6" stackId="a" />
                 </BarChart>
               </ResponsiveContainer>
             </Spin>
@@ -545,7 +663,7 @@ function processChartData(revenueStats) {
       const amount = item.amount || item.revenue || 0;
 
       if (!dataMap.has(date)) {
-        dataMap.set(date, { date, subscription: 0, token: 0, total: 0 });
+        dataMap.set(date, { date, subscription: 0, token: 0, course: 0, total: 0 });
       }
       const entry = dataMap.get(date);
       entry[key] = amount;
@@ -554,6 +672,7 @@ function processChartData(revenueStats) {
 
   addToMap(revenueStats.subscriptionRevenueTimeSeries, 'subscription');
   addToMap(revenueStats.tokenRevenueTimeSeries, 'token');
+  addToMap(revenueStats.courseRevenueTimeSeries, 'course');
   addToMap(revenueStats.totalRevenueTimeSeries, 'total');
 
   return Array.from(dataMap.values()).sort((a, b) => new Date(a.date) - new Date(b.date));
@@ -562,7 +681,8 @@ function processChartData(revenueStats) {
 function processPieData(revenueStats) {
   if (!revenueStats) return [];
   return [
-    { name: 'Subscription', value: revenueStats.totalSubscriptionRevenue, fill: '#8B5CF6' },
-    { name: 'Token', value: revenueStats.totalTokenRevenue, fill: '#10B981' }
+    { name: 'Subscription', value: revenueStats.totalSubscriptionRevenue || 0, fill: '#3B82F6' },
+    { name: 'Token', value: revenueStats.totalTokenRevenue || 0, fill: '#F59E0B' },
+    { name: 'Course', value: revenueStats.totalCourseRevenue || 0, fill: '#8B5CF6' }
   ].filter(item => item.value > 0);
 }
