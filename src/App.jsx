@@ -17,6 +17,8 @@ import ManagerCredit from "./pages/admin/ManagerCredit";
 import ResourceTemplate from "./pages/staff/ResourceTemplate";
 
 import NotFound from "./pages/NotFound";
+import Welcome from "./pages/welcome/Welcome";
+import HomeScreen from "./pages/home/HomeScreen";
 
 import DesignerResourceManager from "./pages/designer/ResourceManager";
 import DesignerReportView from "./pages/designer/ReportView";
@@ -49,7 +51,8 @@ function App() {
     <Routes>
       <Route path="/" element={<Navigate to="/login" replace />} />
       <Route path="/login" element={<Login />} />
-
+      <Route path="/welcome" element={<Welcome />} />
+      <Route path="/home" element={<HomeScreen />} />
       {/* Payment callback routes (public) */}
       <Route path="/payment-callback" element={<PaymentCallback />} />
       <Route path="/wallet-success" element={<PaymentSuccess />} />
@@ -74,7 +77,10 @@ function App() {
       {/* Designer (single role) */}
       <Route element={<ProtectedRoute allowedRoles={["DESIGNER"]} />}>
         <Route path="/designer" element={<DesignerLayout />}>
-          <Route path="resource-manager" element={<DesignerResourceManager />} />
+          <Route
+            path="resource-manager"
+            element={<DesignerResourceManager />}
+          />
           <Route path="reports" element={<DesignerReportView />} />
           <Route path="profile" element={<DesignerProfile />} />
         </Route>

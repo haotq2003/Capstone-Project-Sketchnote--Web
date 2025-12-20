@@ -1,8 +1,19 @@
-import React from "react";
+import React, { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Lottie from "lottie-react";
 import celebrationAnimation from "../assets/celebration.json";
 
 const VerifyEmailSuccess = () => {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      navigate("/welcome");
+    }, 4000); // 4 giây
+
+    return () => clearTimeout(timer);
+  }, [navigate]);
+
   return (
     <div style={styles.page}>
       <div style={styles.card}>
