@@ -1,820 +1,833 @@
 import React, { useEffect, useState } from "react";
 import {
-  Card,
-  Row,
-  Col,
-  Statistic,
-  Table,
-  Typography,
-  Tag,
-  Spin,
-  DatePicker,
-  Space,
-  Button,
-  Select,
-  message,
+    Card,
+    Table,
+    Button,
+    Row,
+    Col,
+    Statistic,
+    message,
+    Modal,
+    Form,
+    Input,
+    InputNumber,
+    Tag,
+    Divider,
+    Space,
+    Typography,
+    Tabs,
+    Tooltip,
+    Select,
 } from "antd";
 import {
-  BarChart,
-  Bar,
-  PieChart,
-  Pie,
-  Cell,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from "recharts";
-import {
-  ShoppingCartOutlined,
-  UserOutlined,
-  TeamOutlined,
-  CrownOutlined,
-  BookOutlined,
-  FileImageOutlined,
-  DollarOutlined,
-  GiftOutlined,
-  ThunderboltOutlined,
-  FireOutlined,
-  InboxOutlined,
-  TrophyOutlined,
-  BarChartOutlined,
-  RiseOutlined,
-  ReloadOutlined,
-  CalendarOutlined,
+    WalletOutlined,
+    DollarOutlined,
+    HistoryOutlined,
+    BankOutlined,
+    ArrowUpOutlined,
+    ArrowDownOutlined,
+    ReloadOutlined,
+    SettingOutlined,
+    PlusOutlined,
 } from "@ant-design/icons";
-import { dashboardAminService } from "../../service/dashboardAdminService";
-import { userService } from "../../service/userService";
-import dayjs from "dayjs";
+import { walletService } from "../../service/walletService";
+import BankAccountManagement from "./BankAccountManagement";
 
 const { Title, Text } = Typography;
-const { RangePicker } = DatePicker;
 
-export default function AdminDashboard() {
-  const [userData, setUserData] = useState([]);
-  const [totalOrderAndEnrollments, setTotalOrderAndEnrollments] = useState([]);
-  const [topCourses, setTopCourses] = useState([]);
-  const [topResources, setTopResources] = useState([]);
-  const [topDesigners, setTopDesigners] = useState([]);
-  const [designerNames, setDesignerNames] = useState({});
-  const [walletOverview, setWalletOverview] = useState(null);
-  const [topTokenPackages, setTopTokenPackages] = useState([]);
-  const [topSubscriptions, setTopSubscriptions] = useState([]);
-  const [revenueStats, setRevenueStats] = useState(null);
-  const [loadingRevenue, setLoadingRevenue] = useState(false);
-  const [dateRange, setDateRange] = useState(null);
-  const [filterType, setFilterType] = useState('date');
+const quickAmounts = [100000, 200000, 500000, 1000000, 2000000, 5000000];
 
-  useEffect(() => {
-    fetchInitialData();
-  }, []);
-
-  const fetchInitialData = () => {
-    dashboardAminService.fetchUser().then(setUserData);
-    dashboardAminService.fetchTotalOrderAndEnrollments().then(setTotalOrderAndEnrollments);
-    dashboardAminService.fetchTopCourses(5).then(setTopCourses);
-    dashboardAminService.fetchTopResources(5).then(setTopResources);
-    dashboardAminService.getDashboardOverview().then(setWalletOverview);
-    dashboardAminService.getTopTokenPackages(5).then(setTopTokenPackages);
-    dashboardAminService.getTopSubscriptions(5).then(setTopSubscriptions);
-    dashboardAminService.fetchTopDesigners(5).then((designers) => {
-      setTopDesigners(designers);
-      designers.forEach(designer => {
-        userService.fetchUserById(designer.designerId)
-          .then(response => {
-            setDesignerNames(prev => ({
-              ...prev,
-              [designer.designerId]: `${response.result.firstName} ${response.result.lastName}`
-            }));
-          })
-          .catch(error => {
-            console.error(`Failed to fetch designer ${designer.designerId}:`, error);
-          });
-      });
+const AdminWallet = () => {
+    const [loading, setLoading] = useState(false);
+    const [walletData, setWalletData] = useState({
+        balance: 0,
+        transactions: [],
     });
+    const [withdrawHistory, setWithdrawHistory] = useState([]);
+    const [withdrawLoading, setWithdrawLoading] = useState(false);
+    const [depositModalVisible, setDepositModalVisible] = useState(false);
+    const [withdrawModalVisible, setWithdrawModalVisible] = useState(false);
+    const [depositAmount, setDepositAmount] = useState("");
+    const [activeTab, setActiveTab] = useState("transactions");
+    const [withdrawForm] = Form.useForm();
+    const [bankAccounts, setBankAccounts] = useState([]);
+    const [selectedBankAccount, setSelectedBankAccount] = useState(null);
+    const [bankManagementVisible, setBankManagementVisible] = useState(false);
 
-    // Fetch initial revenue data
-    fetchRevenueData();
-  };
-
-  const fetchRevenueData = (params = {}) => {
-    setLoadingRevenue(true);
-    dashboardAminService.getRevenueDashboard(params)
-      .then(data => {
-        setRevenueStats(data?.revenueStats);
-      })
-      .catch(err => {
-        console.error('Failed to fetch revenue:', err);
-        message.error('Failed to load revenue data');
-      })
-      .finally(() => setLoadingRevenue(false));
-  };
-
-  const handleApplyFilter = () => {
-    if (!dateRange) {
-      message.warning('Please select a date/month/year');
-      return;
-    }
-
-    const params = {};
-
-    if (filterType === 'date' && dateRange[0] && dateRange[1]) {
-      params.startDate = dateRange[0].format('YYYY-MM-DD');
-      params.endDate = dateRange[1].format('YYYY-MM-DD');
-    } else if (filterType === 'month' && dateRange[0]) {
-      const start = dateRange[0].startOf('month');
-      const end = dateRange[0].endOf('month');
-      params.startDate = start.format('YYYY-MM-DD');
-      params.endDate = end.format('YYYY-MM-DD');
-    } else if (filterType === 'year' && dateRange[0]) {
-      const start = dateRange[0].startOf('year');
-      const end = dateRange[0].endOf('year');
-      params.startDate = start.format('YYYY-MM-DD');
-      params.endDate = end.format('YYYY-MM-DD');
-    }
-
-    fetchRevenueData(params);
-  };
-
-  const handleClearFilter = () => {
-    setDateRange(null);
-    fetchRevenueData();
-  };
-
-  const handleFilterTypeChange = (value) => {
-    setFilterType(value);
-    setDateRange(null);
-  };
-
-  const designerColumns = [
-    {
-      title: "#",
-      width: 60,
-      render: (_, __, index) => (
-        <Tag
-          color={
-            index === 0
-              ? "gold"
-              : index === 1
-                ? "silver"
-                : index === 2
-                  ? "blue"
-                  : "purple"
-          }
-          style={{ fontWeight: 600 }}
-        >
-          {index + 1}
-        </Tag>
-      ),
-    },
-    {
-      title: "Designer",
-      dataIndex: "designerId",
-      render: (id) => (
-        <span style={{ fontWeight: 600 }}>
-          <CrownOutlined style={{ marginRight: 6, color: "#faad14" }} />
-          {designerNames[id] || `Designer #${id}`}
-        </span>
-      ),
-    },
-    {
-      title: "Total Revenue",
-      dataIndex: "totalRevenue",
-      render: (value) => (
-        <Tag color="green" style={{ fontSize: 14, padding: "6px 12px" }}>
-          {value.toLocaleString()} ₫
-        </Tag>
-      ),
-    },
-  ];
-
-  const chartData = React.useMemo(() => processChartData(revenueStats), [revenueStats]);
-  const pieData = React.useMemo(() => processPieData(revenueStats), [revenueStats]);
-
-  const getDisplayPeriod = () => {
-    if (!chartData || chartData.length === 0) return null;
-    return {
-      start: chartData[0]?.date,
-      end: chartData[chartData.length - 1]?.date
+    const formatCurrency = (amount) => {
+        if (!amount && amount !== 0) return "0 đ";
+        return new Intl.NumberFormat("vi-VN").format(amount) + " đ";
     };
-  };
 
-  const displayPeriod = getDisplayPeriod();
+    const formatDate = (dateString) => {
+        if (!dateString) return "-";
+        const date = new Date(dateString);
+        return date.toLocaleString("en-GB", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+        });
+    };
 
-  return (
-    <>
-      {/* ==================== TOP STATISTICS ==================== */}
-      <Row gutter={[16, 16]}>
-        <Col span={6}>
-          <Card
-            style={{
-              borderLeft: "4px solid #1677ff",
-              backgroundColor: "#e6f4ff",
-              transition: "all 0.3s",
-              cursor: "pointer",
-            }}
-            hoverable
-            bodyStyle={{ padding: 20 }}
-            onMouseEnter={(e) => (e.currentTarget.style.transform = "translateY(-5px)")}
-            onMouseLeave={(e) => (e.currentTarget.style.transform = "translateY(0)")}
-          >
-            <Statistic
-              title="Total Users"
-              value={userData?.totalUsers || 0}
-              prefix={<UserOutlined style={{ color: "#1677ff" }} />}
-            />
-          </Card>
-        </Col>
+    const fetchWallet = async () => {
+        setLoading(true);
+        try {
+            const res = await walletService.getWallet();
+            setWalletData(res.result || { balance: 0, transactions: [] });
+        } catch (error) {
+            message.error(error.message || "Failed to load wallet");
+        }
+        setLoading(false);
+    };
 
-        <Col span={6}>
-          <Card
-            style={{
-              borderLeft: "4px solid #52c41a",
-              backgroundColor: "#f6ffed",
-              transition: "all 0.3s",
-              cursor: "pointer",
-            }}
-            hoverable
-            bodyStyle={{ padding: 20 }}
-            onMouseEnter={(e) => (e.currentTarget.style.transform = "translateY(-5px)")}
-            onMouseLeave={(e) => (e.currentTarget.style.transform = "translateY(0)")}
-          >
-            <Statistic
-              title="Total Customers"
-              value={userData?.customers || 0}
-              prefix={<TeamOutlined style={{ color: "#52c41a" }} />}
-            />
-          </Card>
-        </Col>
+    const fetchWithdrawHistory = async () => {
+        setWithdrawLoading(true);
+        try {
+            const res = await walletService.getWithdrawHistory(0, 50, "createdAt", "desc");
+            setWithdrawHistory(res?.content || res || []);
+        } catch (error) {
+            console.error("Failed to load withdraw history:", error);
+        }
+        setWithdrawLoading(false);
+    };
 
-        <Col span={6}>
-          <Card
-            style={{
-              borderLeft: "4px solid #faad14",
-              backgroundColor: "#fff7e6",
-              transition: "all 0.3s",
-              cursor: "pointer",
-            }}
-            hoverable
-            bodyStyle={{ padding: 20 }}
-            onMouseEnter={(e) => (e.currentTarget.style.transform = "translateY(-5px)")}
-            onMouseLeave={(e) => (e.currentTarget.style.transform = "translateY(0)")}
-          >
-            <Statistic
-              title="Total Designers"
-              value={userData?.designers || 0}
-              prefix={<CrownOutlined style={{ color: "#faad14" }} />}
-            />
-          </Card>
-        </Col>
+    const fetchBankAccounts = async () => {
+        try {
+            const res = await walletService.getBankAccountByUserId();
+            setBankAccounts(res.result || res || []);
+        } catch (error) {
+            console.error("Failed to load bank accounts:", error);
+        }
+    };
 
-        <Col span={6}>
-          <Card
-            style={{
-              borderLeft: "4px solid #722ed1",
-              backgroundColor: "#f9f0ff",
-              transition: "all 0.3s",
-              cursor: "pointer",
-            }}
-            hoverable
-            bodyStyle={{ padding: 20 }}
-            onMouseEnter={(e) => (e.currentTarget.style.transform = "translateY(-5px)")}
-            onMouseLeave={(e) => (e.currentTarget.style.transform = "translateY(0)")}
-          >
-            <Statistic
-              title="Course Balance"
-              value={walletOverview?.courseBalance || 0}
-              precision={0}
-              suffix="₫"
-              valueStyle={{ color: '#722ed1' }}
-              prefix={<BookOutlined style={{ color: "#722ed1" }} />}
-            />
-          </Card>
-        </Col>
+    useEffect(() => {
+        fetchWallet();
+        fetchWithdrawHistory();
+        fetchBankAccounts();
+    }, []);
 
-        {walletOverview && (
-          <>
-            <Col span={6}>
-              <Card
-                style={{
-                  borderLeft: "4px solid #13c2c2",
-                  backgroundColor: "#e6fffb",
-                  transition: "all 0.3s",
-                  cursor: "pointer",
-                }}
-                hoverable
-                bodyStyle={{ padding: 20 }}
-                onMouseEnter={(e) => (e.currentTarget.style.transform = "translateY(-5px)")}
-                onMouseLeave={(e) => (e.currentTarget.style.transform = "translateY(0)")}
-              >
-                <Statistic
-                  title="Total Balance"
-                  value={walletOverview.totalBalance}
-                  precision={0}
-                  suffix="₫"
-                  valueStyle={{ color: '#13c2c2' }}
-                  prefix={<DollarOutlined style={{ fontSize: 20, color: "#13c2c2" }} />}
-                />
-              </Card>
-            </Col>
-            <Col span={6}>
-              <Card
-                style={{
-                  borderLeft: "4px solid #ff4d4f",
-                  backgroundColor: "#fff1f0",
-                  transition: "all 0.3s",
-                  cursor: "pointer",
-                }}
-                hoverable
-                bodyStyle={{ padding: 20 }}
-                onMouseEnter={(e) => (e.currentTarget.style.transform = "translateY(-5px)")}
-                onMouseLeave={(e) => (e.currentTarget.style.transform = "translateY(0)")}
-              >
-                <Statistic
-                  title="Subscription Balance"
-                  value={walletOverview.subscriptionBalance}
-                  precision={0}
-                  suffix="₫"
-                  valueStyle={{ color: '#ff4d4f' }}
-                  prefix={<CrownOutlined style={{ color: "#ff4d4f" }} />}
-                />
-              </Card>
-            </Col>
-            <Col span={6}>
-              <Card
-                style={{
-                  borderLeft: "4px solid #2f54eb",
-                  backgroundColor: "#f0f5ff",
-                  transition: "all 0.3s",
-                  cursor: "pointer",
-                }}
-                hoverable
-                bodyStyle={{ padding: 20 }}
-                onMouseEnter={(e) => (e.currentTarget.style.transform = "translateY(-5px)")}
-                onMouseLeave={(e) => (e.currentTarget.style.transform = "translateY(0)")}
-              >
-                <Statistic
-                  title="Token Balance"
-                  value={walletOverview.tokenBalance}
-                  precision={0}
-                  suffix="₫"
-                  valueStyle={{ color: '#2f54eb' }}
-                  prefix={<BookOutlined style={{ color: "#2f54eb" }} />}
-                />
-              </Card>
-            </Col>
-            <Col span={6}>
-              <Card
-                style={{
-                  borderLeft: "4px solid #eb2f96",
-                  backgroundColor: "#fff0f6",
-                  transition: "all 0.3s",
-                  cursor: "pointer",
-                }}
-                hoverable
-                bodyStyle={{ padding: 20 }}
-                onMouseEnter={(e) => (e.currentTarget.style.transform = "translateY(-5px)")}
-                onMouseLeave={(e) => (e.currentTarget.style.transform = "translateY(0)")}
-              >
-                <Statistic
-                  title="User Wallet Balance"
-                  value={walletOverview.totalUserWalletBalance}
-                  precision={0}
-                  suffix="₫"
-                  valueStyle={{ color: '#eb2f96' }}
-                  prefix={<UserOutlined style={{ color: "#eb2f96" }} />}
-                />
-              </Card>
-            </Col>
-          </>
-        )}
-      </Row>
+    const handleDeposit = async () => {
+        const amount = parseInt(depositAmount);
+        if (!amount || amount < 10000) {
+            message.error("Minimum deposit amount is 10,000 VND");
+            return;
+        }
+        try {
+            // Generate return URL to payment callback interceptor
+            // Backend will redirect to: {baseUrl}/payment-callback?status=SUCCESS&orderCode=...
+            // PaymentCallback will then route to /wallet-success or /wallet-fail
+            const baseUrl = window.location.origin; // e.g., http://localhost:8888
+            const returnUrl = `${baseUrl}/payment-callback`;
 
-      {/* ==================== TOP SUBSCRIPTIONS & TOKENS ==================== */}
-      <Row gutter={16} style={{ marginTop: 32 }}>
-        <Col span={12}>
-          <Card title={<><GiftOutlined style={{ marginRight: 8, color: "#faad14" }} />Top Subscriptions</>}>
-            {topSubscriptions?.map((item, index) => (
-              <Row
-                key={item.planId}
-                justify="space-between"
-                style={{
-                  padding: "14px 0",
-                  borderBottom: "1px solid #f0f0f0",
-                }}
-              >
-                <Text strong>
-                  <CrownOutlined style={{ color: "#faad14", marginRight: 8 }} />
-                  {index + 1}. {item.planName}
-                </Text>
-                <div>
-                  <Tag color="gold">Count: {item.purchaseCount}</Tag>
-                  <Tag color="green">{item.totalRevenue?.toLocaleString()} ₫</Tag>
-                </div>
-              </Row>
-            ))}
-          </Card>
-        </Col>
+            const res = await walletService.depositWallet(amount, returnUrl);
 
-        <Col span={12}>
-          <Card title={<><ThunderboltOutlined style={{ marginRight: 8, color: "#13c2c2" }} />Top Token Packages</>}>
-            {topTokenPackages?.length > 0 ? (
-              topTokenPackages.map((item, index) => (
-                <Row
-                  key={index}
-                  justify="space-between"
-                  style={{
-                    padding: "14px 0",
-                    borderBottom: "1px solid #f0f0f0",
-                  }}
-                >
-                  <Text strong>
-                    <BookOutlined style={{ color: "#13c2c2", marginRight: 8 }} />
-                    {index + 1}. {item.packageName || "Package"}
-                  </Text>
-                  <Tag color="cyan">Sold: {item.purchaseCount || 0}</Tag>
-                </Row>
-              ))
-            ) : (
-              <div style={{ padding: 20, textAlign: "center" }}>No data</div>
-            )}
-          </Card>
-        </Col>
-      </Row>
 
-      {/* ==================== TOP COURSES + RESOURCES ==================== */}
-      <Row gutter={16} style={{ marginTop: 32 }}>
-        <Col span={12}>
-          <Card title={<><FireOutlined style={{ marginRight: 8, color: "#ff4d4f" }} />Top Courses</>}>
-            {topCourses?.map((item, index) => (
-              <Row
-                key={item.id}
-                justify="space-between"
-                style={{
-                  padding: "14px 0",
-                  borderBottom: "1px solid #f0f0f0",
-                }}
-              >
-                <Text strong>
-                  <BookOutlined style={{ color: "#722ed1", marginRight: 8 }} />
-                  {index + 1}. {item.name}
-                </Text>
-                <Tag color="purple">Enrolls: {item.count}</Tag>
-              </Row>
-            ))}
-          </Card>
-        </Col>
+            // Payment URL có thể ở res.message hoặc res.result
+            const paymentUrl = res?.message || res?.result;
 
-        <Col span={12}>
-          <Card title={<><InboxOutlined style={{ marginRight: 8, color: "#13c2c2" }} />Top Resources</>}>
-            {topResources?.map((item, index) => (
-              <Row
-                key={item.id}
-                justify="space-between"
-                style={{
-                  padding: "14px 0",
-                  borderBottom: "1px solid #f0f0f0",
-                }}
-              >
-                <Text strong>
-                  <FileImageOutlined
-                    style={{ color: "#13c2c2", marginRight: 8 }}
-                  />
-                  {index + 1}. {item.name}
-                </Text>
-                <Tag color="cyan">Sold: {item.count}</Tag>
-              </Row>
-            ))}
-          </Card>
-        </Col>
-      </Row>
-
-      {/* ==================== TOP DESIGNERS ==================== */}
-      <Row style={{ marginTop: 32 }}>
-        <Col span={24}>
-          <Card title={<><TrophyOutlined style={{ marginRight: 8, color: "#faad14" }} />Top Designers (Revenue)</>}>
-            <Table
-              dataSource={topDesigners}
-              rowKey="designerId"
-              pagination={false}
-              columns={designerColumns}
-            />
-          </Card>
-        </Col>
-      </Row>
-
-      {/* ==================== REVENUE FILTER ==================== */}
-      <Card 
-        style={{ 
-          marginTop: 32, 
-          marginBottom: 16,
-          borderRadius: 12,
-          boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
-        }}
-      >
-        <Space direction="vertical" size="large" style={{ width: '100%' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <CalendarOutlined style={{ fontSize: 20, color: "#1677ff" }} />
-              <Text strong style={{ fontSize: 15 }}>Filter Revenue:</Text>
-            </div>
-            
-            <Select
-              value={filterType}
-              onChange={handleFilterTypeChange}
-              style={{ width: 140 }}
-              size="large"
-            >
-              <Select.Option value="date">📅 By Date Range</Select.Option>
-              <Select.Option value="month">📆 By Month</Select.Option>
-              <Select.Option value="year">🗓️ By Year</Select.Option>
-            </Select>
-
-            {filterType === 'date' && (
-              <RangePicker
-                style={{ width: 320 }}
-                size="large"
-                placeholder={["Start Date", "End Date"]}
-                format="YYYY-MM-DD"
-                value={dateRange}
-                onChange={(dates) => setDateRange(dates)}
-              />
-            )}
-
-            {filterType === 'month' && (
-              <DatePicker
-                picker="month"
-                style={{ width: 200 }}
-                size="large"
-                placeholder="Select Month"
-                format="YYYY-MM"
-                value={dateRange?.[0]}
-                onChange={(date) => setDateRange(date ? [date] : null)}
-              />
-            )}
-
-            {filterType === 'year' && (
-              <DatePicker
-                picker="year"
-                style={{ width: 180 }}
-                size="large"
-                placeholder="Select Year"
-                format="YYYY"
-                value={dateRange?.[0]}
-                onChange={(date) => setDateRange(date ? [date] : null)}
-              />
-            )}
-            
-            <Button
-              type="primary"
-              icon={<BarChartOutlined />}
-              onClick={handleApplyFilter}
-              size="large"
-              disabled={!dateRange}
-            >
-              Apply Filter
-            </Button>
-
-            {dateRange && (
-              <Button
-                icon={<ReloadOutlined />}
-                onClick={handleClearFilter}
-                size="large"
-              >
-                Clear
-              </Button>
-            )}
-          </div>
-
-          {displayPeriod && (
-            <div 
-              style={{ 
-                padding: '12px 16px', 
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                borderRadius: 8,
-                display: 'inline-block'
-              }}
-            >
-              <Text style={{ color: 'white', fontSize: 14 }}>
-                📊 Viewing: <Text strong style={{ color: 'white' }}>
-                  {displayPeriod.start} → {displayPeriod.end}
-                </Text>
-              </Text>
-            </div>
-          )}
-        </Space>
-      </Card>
-
-      {/* ==================== REVENUE CHARTS ==================== */}
-      <Row gutter={[16, 16]}>
-        <Col xs={24} lg={16}>
-          <Card 
-            title={
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <BarChartOutlined style={{ color: "#1677ff", fontSize: 18 }} />
-                <span>Revenue Over Time</span>
-              </div>
+            if (paymentUrl && typeof paymentUrl === 'string' && paymentUrl.startsWith('http')) {
+                // Navigate to payment page in same tab
+                // After payment, backend will redirect to /wallet-success or /wallet-fail
+                window.location.href = paymentUrl;
+            } else {
+                console.error("Invalid payment URL:", paymentUrl);
+                message.error("Invalid payment URL received");
+                return;
             }
-            bordered={false} 
-            style={{ 
-              borderRadius: 12,
-              boxShadow: '0 4px 12px rgba(0,0,0,0.08)'
-            }}
-          >
-            <Spin spinning={loadingRevenue} tip="Loading revenue data...">
-              {chartData.length > 0 ? (
-                <ResponsiveContainer width="100%" height={420}>
-                  <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                    <XAxis 
-                      dataKey="date" 
-                      tick={{ fontSize: 12 }}
-                      angle={-45}
-                      textAnchor="end"
-                      height={80}
-                    />
-                    <YAxis 
-                      tick={{ fontSize: 12 }}
-                      tickFormatter={(value) => `${(value / 1000).toFixed(0)}K`}
-                    />
-                    <Tooltip 
-                      formatter={(value) => `${value.toLocaleString()} ₫`}
-                      contentStyle={{ 
-                        borderRadius: 8,
-                        border: '1px solid #e8e8e8',
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
-                      }}
-                    />
-                    <Legend 
-                      wrapperStyle={{ paddingTop: 20 }}
-                      iconType="circle"
-                    />
-                    <Bar 
-                      dataKey="subscription" 
-                      name="Subscription" 
-                      fill="#8B5CF6" 
-                      stackId="a"
-                      radius={[0, 0, 0, 0]}
-                    />
-                    <Bar 
-                      dataKey="token" 
-                      name="Token" 
-                      fill="#10B981" 
-                      stackId="a"
-                      radius={[0, 0, 0, 0]}
-                    />
-                    <Bar 
-                      dataKey="course" 
-                      name="Course" 
-                      fill="#722ed1" 
-                      stackId="a"
-                      radius={[4, 4, 0, 0]}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
-              ) : (
-                <div style={{ 
-                  height: 420, 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center',
-                  color: '#999'
-                }}>
-                  No data available for the selected period
-                </div>
-              )}
-            </Spin>
-          </Card>
-        </Col>
 
-        <Col xs={24} lg={8}>
-          <Card 
-            title={
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <RiseOutlined style={{ color: "#52c41a", fontSize: 18 }} />
-                <span>Revenue Breakdown</span>
-              </div>
-            }
-            bordered={false} 
-            style={{ 
-              borderRadius: 12,
-              boxShadow: '0 4px 12px rgba(0,0,0,0.08)'
-            }}
-          >
-            <Spin spinning={loadingRevenue} tip="Loading...">
-              {pieData.length > 0 ? (
-                <>
-                  <ResponsiveContainer width="100%" height={320}>
-                    <PieChart>
-                      <Pie
-                        data={pieData}
-                        cx="50%"
-                        cy="50%"
-                        outerRadius={100}
-                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(1)}%`}
-                        dataKey="value"
-                        labelLine={{ stroke: '#999', strokeWidth: 1 }}
-                      >
-                        {pieData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.fill} />
-                        ))}
-                      </Pie>
-                      <Tooltip 
-                        formatter={(value) => `${value.toLocaleString()} ₫`}
-                        contentStyle={{ 
-                          borderRadius: 8,
-                          border: '1px solid #e8e8e8',
-                          boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
+            setDepositModalVisible(false);
+            setDepositAmount("");
+        } catch (error) {
+            console.error("Deposit error:", error);
+            message.error(error.message || "Deposit failed");
+        }
+    };
+
+    const handleWithdraw = async (values) => {
+        if (values.amount > walletData.balance) {
+            message.error("Insufficient balance");
+            return;
+        }
+        try {
+            await walletService.withdrawRequest({
+                amount: values.amount,
+                bankName: values.bankName,
+                bankAccountNumber: values.accountNumber,
+                bankAccountHolder: values.accountName,
+            });
+            message.success("Withdrawal request submitted successfully");
+            setWithdrawModalVisible(false);
+            withdrawForm.resetFields();
+            fetchWallet();
+            fetchWithdrawHistory();
+        } catch (error) {
+            message.error(error.message || "Withdrawal request failed");
+            console.error("Withdrawal error:", error);
+        }
+    };
+
+    const getTransactionStyle = (type, status) => {
+        const styles = {
+            DEPOSIT: { color: status === "SUCCESS" ? "#52c41a" : status === "PENDING" ? "#faad14" : "#ff4d4f", icon: <ArrowDownOutlined /> },
+            WITHDRAWAL: { color: "#ff4d4f", icon: <ArrowUpOutlined /> },
+            PURCHASE: { color: "#ff4d4f", icon: <ArrowUpOutlined /> },
+            COURSE_FEE: { color: "#722ed1", icon: <ArrowUpOutlined /> },
+        };
+        return styles[type] || styles.PURCHASE;
+    };
+
+    const transactionColumns = [
+        {
+            title: "Type",
+            dataIndex: "type",
+            width: 120,
+            render: (type, record) => {
+                const style = getTransactionStyle(type, record.status);
+                return (
+                    <Tag color={style.color === "#52c41a" ? "green" : style.color === "#ff4d4f" ? "red" : style.color === "#faad14" ? "orange" : "purple"}>
+                        {type}
+                    </Tag>
+                );
+            },
+        },
+        {
+            title: "Amount",
+            dataIndex: "amount",
+            width: 150,
+            render: (amount, record) => {
+                const style = getTransactionStyle(record.type, record.status);
+                return (
+                    <Text style={{ color: style.color, fontWeight: 600 }}>
+                        {record.type === "DEPOSIT" ? "+" : "-"}{formatCurrency(Math.abs(amount))}
+                    </Text>
+                );
+            },
+        },
+        {
+            title: "Balance After",
+            dataIndex: "balance",
+            width: 150,
+            render: (balance) => formatCurrency(balance),
+        },
+        {
+            title: "Order Code",
+            dataIndex: "orderCode",
+            width: 120,
+            render: (code) => code || "-",
+        },
+        {
+            title: "Status",
+            dataIndex: "status",
+            width: 100,
+            render: (status) => (
+                <Tag color={status === "SUCCESS" ? "green" : status === "PENDING" ? "orange" : "red"}>
+                    {status}
+                </Tag>
+            ),
+        },
+        {
+            title: "Date",
+            dataIndex: "createdAt",
+            width: 180,
+            render: (date) => formatDate(date),
+        },
+    ];
+
+    const withdrawColumns = [
+        {
+            title: "Amount",
+            dataIndex: "amount",
+            width: 150,
+            render: (amount) => (
+                <Text style={{ color: "#ff4d4f", fontWeight: 600 }}>
+                    -{formatCurrency(amount)}
+                </Text>
+            ),
+        },
+        {
+            title: "Bank Name",
+            dataIndex: "bankName",
+            width: 150,
+        },
+        {
+            title: "Account Number",
+            dataIndex: "bankAccountNumber",
+            width: 180,
+        },
+        {
+            title: "Account Holder",
+            dataIndex: "bankAccountHolder",
+            width: 180,
+        },
+        {
+            title: "Status",
+            dataIndex: "status",
+            width: 100,
+            render: (status) => (
+                <Tag color={status === "COMPLETED" || status === "APPROVED" ? "green" : status === "PENDING" ? "orange" : "red"}>
+                    {status}
+                </Tag>
+            ),
+        },
+        {
+            title: "Date",
+            dataIndex: "createdAt",
+            width: 180,
+            render: (date) => formatDate(date),
+        },
+    ];
+
+    const totalDeposit = walletData.transactions
+        .filter((t) => t.type === "DEPOSIT" && t.status === "SUCCESS")
+        .reduce((sum, t) => sum + (t.amount || 0), 0);
+
+    const totalSpent = walletData.transactions
+        .filter((t) => t.type !== "DEPOSIT")
+        .reduce((sum, t) => sum + Math.abs(t.amount || 0), 0);
+
+    const tabItems = [
+        {
+            key: "transactions",
+            label: (
+                <span>
+                    <HistoryOutlined /> Transactions
+                </span>
+            ),
+            children: (
+                <Table
+                    columns={transactionColumns}
+                    dataSource={[...walletData.transactions].sort(
+                        (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+                    )}
+                    rowKey={(r) => r.transactionId || r.id || `trans-${Math.random()}`}
+                    loading={loading}
+                    pagination={{ pageSize: 10, showSizeChanger: true }}
+                    scroll={{ x: "max-content" }}
+                />
+            ),
+        },
+        {
+            key: "withdrawals",
+            label: (
+                <span>
+                    <BankOutlined /> Withdrawal History
+                </span>
+            ),
+            children: (
+                <Table
+                    columns={withdrawColumns}
+                    dataSource={withdrawHistory}
+                    rowKey={(r) => r.withdrawId || r.id || `withdraw-${Math.random()}`}
+                    loading={withdrawLoading}
+                    pagination={{ pageSize: 10, showSizeChanger: true }}
+                    scroll={{ x: "max-content" }}
+                />
+            ),
+        },
+    ];
+
+    return (
+        <div style={{ padding: 24 }}>
+            <Row gutter={[24, 24]}>
+                {/* Balance Card - Blue Theme & Compact */}
+                <Col xs={24} lg={12}>
+                    <Card
+                        variant="borderless"
+                        style={{
+                            height: '100%',
+                            minHeight: 180,
+                            borderRadius: 24,
+                            background: 'linear-gradient(110deg, #1890ff 0%, #40a9ff 50%, #69c0ff 100%)',
+                            position: 'relative',
+                            overflow: 'hidden',
+                            boxShadow: '0 10px 30px rgba(24, 144, 255, 0.3)',
                         }}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                  
-                  <div style={{ marginTop: 20, borderTop: '1px solid #f0f0f0', paddingTop: 16 }}>
-                    {pieData.map((item, index) => (
-                      <div 
-                        key={index}
-                        style={{ 
-                          display: 'flex', 
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          marginBottom: 12,
-                          padding: '8px 12px',
-                          borderRadius: 6,
-                          background: '#fafafa'
+                        styles={{
+                            body: {
+                                height: '100%',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                justifyContent: 'space-between',
+                                padding: '20px 24px',
+                                position: 'relative',
+                                zIndex: 2
+                            }
                         }}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                          <div 
-                            style={{ 
-                              width: 12, 
-                              height: 12, 
-                              borderRadius: '50%', 
-                              background: item.fill 
-                            }}
-                          />
-                          <Text strong>{item.name}</Text>
+                    >
+                        {/* Decorative Background Elements (Họa tiết trang trí - tone trắng/xanh) */}
+                        <div style={{
+                            position: 'absolute',
+                            top: -60,
+                            right: -60,
+                            width: 200,
+                            height: 200,
+                            // Họa tiết màu trắng mờ
+                            background: 'radial-gradient(circle, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 70%)',
+                            borderRadius: '50%',
+                            zIndex: 1,
+                        }} />
+                        <div style={{
+                            position: 'absolute',
+                            bottom: -40,
+                            left: -20,
+                            width: 180,
+                            height: 180,
+                            // Họa tiết màu xanh nhạt mờ
+                            background: 'radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, rgba(255,255,255,0) 70%)',
+                            borderRadius: '50%',
+                            zIndex: 1,
+                        }} />
+
+                        {/* Top Section: Label & Balance */}
+                        <div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,0.2)', padding: '4px 10px', borderRadius: 20 }}>
+                                    <WalletOutlined style={{ fontSize: 16, color: '#fff' }} />
+                                    <Text style={{ color: '#fff', fontSize: 13, letterSpacing: '0.5px', textTransform: 'uppercase', fontWeight: 600 }}>
+                                        Total Balance
+                                    </Text>
+                                </div>
+
+                                {/* Refresh Button */}
+                                <Tooltip title="Refresh Balance">
+                                    <Button
+                                        type="text"
+                                        shape="circle"
+                                        icon={<ReloadOutlined style={{ color: 'rgba(255,255,255,0.8)' }} />}
+                                        onClick={() => { fetchWallet(); fetchWithdrawHistory(); }}
+                                        style={{ background: 'transparent' }}
+                                    />
+                                </Tooltip>
+                            </div>
+
+                            <Title level={1} style={{
+                                color: '#fff',
+                                marginTop: 16, // Giảm margin
+                                marginBottom: 4,
+                                fontSize: 40, // Giảm kích thước font một chút
+                                fontWeight: 800,
+                                letterSpacing: '-1px',
+                                textShadow: '0 2px 5px rgba(0,0,0,0.1)'
+                            }}>
+                                {formatCurrency(walletData.balance)}
+                            </Title>
+
+                            <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: 13 }}>
+                                Available for withdrawal
+                            </Text>
                         </div>
-                        <Text style={{ color: item.fill, fontWeight: 600 }}>
-                          {item.value.toLocaleString()} ₫
-                        </Text>
-                      </div>
-                    ))}
-                  </div>
-                </>
-              ) : (
-                <div style={{ 
-                  height: 420, 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center',
-                  color: '#999'
-                }}>
-                  No revenue data available
+
+                        {/* Bottom Section: Actions */}
+                        <div style={{ marginTop: 24, position: 'relative', zIndex: 10 }}>
+                            <Space size={12} style={{ width: '100%' }}>
+                                <Button
+                                    type="primary"
+                                    size="large"
+                                    icon={<DollarOutlined />}
+                                    style={{
+                                        height: 44,
+                                        padding: '0 24px',
+                                        borderRadius: 12,
+                                        background: 'rgba(255,255,255,0.25)', // Nền trong suốt sáng hơn
+                                        border: '1px solid rgba(255,255,255,0.4)',
+                                        color: '#fff',
+                                        fontWeight: 600,
+                                        backdropFilter: 'blur(10px)',
+                                        display: 'flex',
+                                        alignItems: 'center'
+                                    }}
+                                    onClick={() => { console.log('Deposit button clicked'); setDepositModalVisible(true); }}
+                                >
+                                    Deposit
+                                </Button>
+
+                                <Button
+                                    size="middle" // Dùng size middle thay vì large
+                                    icon={<BankOutlined />}
+                                    onClick={() => { console.log('Withdraw button clicked'); setWithdrawModalVisible(true); }}
+                                    style={{
+                                        height: 44,
+                                        padding: '0 24px',
+                                        borderRadius: 12,
+                                        background: 'rgba(255,255,255,0.25)', // Nền trong suốt sáng hơn
+                                        border: '1px solid rgba(255,255,255,0.4)',
+                                        color: '#fff',
+                                        fontWeight: 600,
+                                        backdropFilter: 'blur(10px)',
+                                        display: 'flex',
+                                        alignItems: 'center'
+                                    }}
+                                >
+                                    Withdraw
+                                </Button>
+                            </Space>
+                        </div>
+                    </Card>
+                </Col>
+
+                {/* Stats Cards (Giữ nguyên phần bên phải) */}
+                <Col xs={24} lg={12}>
+                    <Row gutter={[16, 16]}>
+                        <Col span={24}>
+                            <Card
+                                style={{
+                                    borderRadius: 12,
+                                    border: "1px solid #f0f0f0",
+                                    boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+                                    transition: "all 0.3s",
+                                }}
+                                styles={{ body: { padding: "20px 24px" } }}
+                            >
+                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                    <div>
+                                        <Text type="secondary" style={{ fontSize: 14, display: "block", marginBottom: 8 }}>
+                                            Total Deposited
+                                        </Text>
+                                        <Title level={3} style={{ margin: 0, color: "#52c41a", fontSize: 28, fontWeight: 700 }}>
+                                            {new Intl.NumberFormat("vi-VN").format(totalDeposit)} đ
+                                        </Title>
+                                    </div>
+                                    <div style={{
+                                        width: 56,
+                                        height: 56,
+                                        borderRadius: 12,
+                                        background: "linear-gradient(135deg, #52c41a15 0%, #52c41a25 100%)",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                    }}>
+                                        <ArrowDownOutlined style={{ fontSize: 24, color: "#52c41a" }} />
+                                    </div>
+                                </div>
+                            </Card>
+                        </Col>
+                        <Col span={24}>
+                            <Card
+                                style={{
+                                    borderRadius: 12,
+                                    border: "1px solid #f0f0f0",
+                                    boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+                                    transition: "all 0.3s",
+                                }}
+                                styles={{ body: { padding: "20px 24px" } }}
+                            >
+                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                    <div>
+                                        <Text type="secondary" style={{ fontSize: 14, display: "block", marginBottom: 8 }}>
+                                            Total Spent
+                                        </Text>
+                                        <Title level={3} style={{ margin: 0, color: "#ff4d4f", fontSize: 28, fontWeight: 700 }}>
+                                            {new Intl.NumberFormat("vi-VN").format(totalSpent)} đ
+                                        </Title>
+                                    </div>
+                                    <div style={{
+                                        width: 56,
+                                        height: 56,
+                                        borderRadius: 12,
+                                        background: "linear-gradient(135deg, #ff4d4f15 0%, #ff4d4f25 100%)",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                    }}>
+                                        <ArrowUpOutlined style={{ fontSize: 24, color: "#ff4d4f" }} />
+                                    </div>
+                                </div>
+                            </Card>
+                        </Col>
+                    </Row>
+                </Col>
+            </Row>
+
+            {/* Transactions Table */}
+            <Card style={{ marginTop: 24, borderRadius: 12 }}>
+                <Tabs
+                    activeKey={activeTab}
+                    onChange={setActiveTab}
+                    items={tabItems}
+                />
+            </Card>
+
+            {/* Deposit Modal */}
+            <Modal
+                title={<><DollarOutlined /> Deposit Funds</>}
+                open={depositModalVisible}
+                onCancel={() => { setDepositModalVisible(false); setDepositAmount(""); }}
+                onOk={handleDeposit}
+                okText="Proceed to Payment"
+                okButtonProps={{ disabled: !depositAmount || parseInt(depositAmount) < 10000 }}
+            >
+                <div style={{ marginBottom: 16 }}>
+                    <Text>Enter deposit amount:</Text>
+                    <InputNumber
+                        style={{ width: "100%", marginTop: 8 }}
+                        size="large"
+                        min={10000}
+                        step={10000}
+                        value={depositAmount ? parseInt(depositAmount) : null}
+                        onChange={(val) => setDepositAmount(val ? val.toString() : "")}
+                        formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+                        parser={(value) => value.replace(/\,/g, "")}
+                        addonAfter="VND"
+                        placeholder="Minimum 10,000 VND"
+                    />
                 </div>
-              )}
-            </Spin>
-          </Card>
-        </Col>
-      </Row>
-    </>
-  );
-}
+                <Text type="secondary">Quick amounts:</Text>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 8 }}>
+                    {quickAmounts.map((amt) => (
+                        <Button
+                            key={amt}
+                            type={depositAmount === amt.toString() ? "primary" : "default"}
+                            onClick={() => setDepositAmount(amt.toString())}
+                        >
+                            {new Intl.NumberFormat("vi-VN").format(amt)}
+                        </Button>
+                    ))}
+                </div>
+            </Modal>
 
-// Helper functions
-function processChartData(revenueStats) {
-  if (!revenueStats) return [];
+            {/* Withdraw Modal */}
+            <Modal
+                title={<><BankOutlined /> Request Withdrawal</>}
+                open={withdrawModalVisible}
+                onCancel={() => {
+                    setWithdrawModalVisible(false);
+                    withdrawForm.resetFields();
+                    setSelectedBankAccount(null);
+                }}
+                footer={null}
+                width={500}
+            >
+                <Form
+                    form={withdrawForm}
+                    layout="vertical"
+                    onFinish={handleWithdraw}
+                >
+                    {/* Bank Account Required Notice */}
+                    {bankAccounts.length === 0 ? (
+                        <div style={{
+                            background: "linear-gradient(135deg, #f0f5ff 0%, #e6f7ff 100%)",
+                            padding: 24,
+                            borderRadius: 12,
+                            marginBottom: 16,
+                            textAlign: "center",
+                            border: "1px solid #91d5ff"
+                        }}>
+                            <BankOutlined style={{ fontSize: 48, color: "#1890ff", marginBottom: 16 }} />
+                            <Title level={5} style={{ marginBottom: 8 }}>No Bank Account Found</Title>
+                            <Text type="secondary" style={{ display: "block", marginBottom: 16 }}>
+                                You need to add a bank account before making a withdrawal request.
+                            </Text>
+                            <Button
+                                type="primary"
+                                icon={<PlusOutlined />}
+                                onClick={() => {
+                                    setWithdrawModalVisible(false);
+                                    setBankManagementVisible(true);
+                                }}
+                            >
+                                Add Bank Account
+                            </Button>
+                        </div>
+                    ) : (
+                        <>
+                            {/* Bank Account Selector */}
+                            <Form.Item
+                                label={<Text strong>Select Bank Account</Text>}
+                                required
+                                style={{ marginBottom: 16 }}
+                            >
+                                <Select
+                                    size="large"
+                                    placeholder="Choose a bank account for withdrawal"
+                                    value={selectedBankAccount}
+                                    onChange={(value) => {
+                                        setSelectedBankAccount(value);
+                                        if (value) {
+                                            const account = bankAccounts.find(acc => acc.id === value);
+                                            if (account) {
+                                                withdrawForm.setFieldsValue({
+                                                    bankName: account.bankName,
+                                                    accountNumber: account.accountNumber,
+                                                    accountName: account.accountHolderName,
+                                                });
+                                            }
+                                        }
+                                    }}
+                                    dropdownStyle={{
+                                        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                                    }}
+                                    optionLabelProp="label"
+                                >
+                                    {bankAccounts.map((acc, index) => (
+                                        <Select.Option
+                                            key={acc.id || `acc-${index}`}
+                                            value={acc.id}
+                                            label={`${acc.bankName} - ${acc.accountNumber}`}
+                                        >
+                                            <div style={{
+                                                padding: '8px 4px',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: 12
+                                            }}>
+                                                <div style={{
+                                                    width: 40,
+                                                    height: 40,
+                                                    borderRadius: 8,
+                                                    background: 'linear-gradient(135deg, #1890ff15 0%, #1890ff25 100%)',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center'
+                                                }}>
+                                                    <BankOutlined style={{ color: '#1890ff', fontSize: 18 }} />
+                                                </div>
+                                                <div style={{ flex: 1 }}>
+                                                    <div style={{ fontWeight: 600, marginBottom: 2 }}>
+                                                        {acc.bankName}
+                                                    </div>
+                                                    <Text type="secondary" style={{ fontSize: 12 }}>
+                                                        {acc.accountNumber} • {acc.accountHolderName}
+                                                    </Text>
+                                                </div>
+                                                {acc.isDefault && <Tag color="gold">Default</Tag>}
+                                            </div>
+                                        </Select.Option>
+                                    ))}
+                                </Select>
+                            </Form.Item>
 
-  const dataMap = new Map();
+                            {/* Selected Account Display */}
+                            {selectedBankAccount && (() => {
+                                const account = bankAccounts.find(acc => acc.id === selectedBankAccount);
+                                return account ? (
+                                    <Card
+                                        size="small"
+                                        style={{
+                                            marginBottom: 16,
+                                            background: 'linear-gradient(135deg, #f6ffed 0%, #f0f5ff 100%)',
+                                            border: '1px solid #b7eb8f'
+                                        }}
+                                    >
+                                        <Space direction="vertical" size={4} style={{ width: '100%' }}>
+                                            <Text type="secondary" style={{ fontSize: 12 }}>Withdrawal will be sent to:</Text>
+                                            <Text strong style={{ fontSize: 14 }}>{account.bankName}</Text>
+                                            <Text code>{account.accountNumber}</Text>
+                                            <Text>{account.accountHolderName}</Text>
+                                        </Space>
+                                    </Card>
+                                ) : null;
+                            })()}
 
-  const addToMap = (series, key) => {
-    series?.forEach(item => {
-      const date = item.date || item.period;
-      const amount = item.amount || item.revenue || 0;
+                            <div style={{ textAlign: "right", marginBottom: 16 }}>
+                                <Button
+                                    type="link"
+                                    size="small"
+                                    icon={<SettingOutlined />}
+                                    onClick={() => {
+                                        setWithdrawModalVisible(false);
+                                        setBankManagementVisible(true);
+                                    }}
+                                >
+                                    Manage Bank Accounts
+                                </Button>
+                            </div>
 
-      if (!dataMap.has(date)) {
-        dataMap.set(date, { date, subscription: 0, token: 0, course: 0, total: 0 });
-      }
-      const entry = dataMap.get(date);
-      entry[key] = amount;
-    });
-  };
+                            {/* Hidden fields to store bank account info */}
+                            <Form.Item name="bankName" hidden>
+                                <Input />
+                            </Form.Item>
+                            <Form.Item name="accountNumber" hidden>
+                                <Input />
+                            </Form.Item>
+                            <Form.Item name="accountName" hidden>
+                                <Input />
+                            </Form.Item>
 
-  addToMap(revenueStats.subscriptionRevenueTimeSeries, 'subscription');
-  addToMap(revenueStats.tokenRevenueTimeSeries, 'token');
-  addToMap(revenueStats.courseRevenueTimeSeries, 'course');
-  addToMap(revenueStats.totalRevenueTimeSeries, 'total');
+                            <Divider style={{ margin: "16px 0" }} />
 
-  return Array.from(dataMap.values()).sort((a, b) => new Date(a.date) - new Date(b.date));
-}
+                            {/* Amount Input */}
+                            <Form.Item
+                                name="amount"
+                                label={<Text strong>Withdrawal Amount</Text>}
+                                rules={[
+                                    { required: true, message: "Please enter amount" },
+                                    { type: "number", min: 50000, message: "Minimum 50,000 VND" },
+                                ]}
+                            >
+                                <InputNumber
+                                    style={{ width: "100%" }}
+                                    size="large"
+                                    min={50000}
+                                    max={walletData.balance}
+                                    step={10000}
+                                    formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+                                    parser={(value) => value.replace(/\,/g, "")}
+                                    addonAfter="VND"
+                                    placeholder="Enter amount"
+                                />
+                            </Form.Item>
 
-function processPieData(revenueStats) {
-  if (!revenueStats) return [];
-  return [
-    { name: 'Subscription', value: revenueStats.totalSubscriptionRevenue || 0, fill: '#8B5CF6' },
-    { name: 'Token', value: revenueStats.totalTokenRevenue || 0, fill: '#10B981' },
-    { name: 'Course', value: revenueStats.totalCourseRevenue || 0, fill: '#722ed1' }
-  ].filter(item => item.value > 0);
-}
+                            <Text type="secondary" style={{ display: "block", marginBottom: 16 }}>
+                                Available Balance: <Text strong style={{ color: '#52c41a' }}>{formatCurrency(walletData.balance)}</Text>
+                            </Text>
+
+                            {/* Quick Amount Buttons */}
+                            <div style={{ marginBottom: 24 }}>
+
+                                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                                    {quickAmounts.filter(a => a <= walletData.balance).map((amt) => (
+                                        <Button
+                                            key={amt}
+                                            size="small"
+                                            onClick={() => withdrawForm.setFieldValue("amount", amt)}
+                                            style={{ borderRadius: 6 }}
+                                        >
+                                            {new Intl.NumberFormat("vi-VN").format(amt)}
+                                        </Button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Form Actions */}
+                            <Form.Item style={{ marginBottom: 0, textAlign: "right", marginTop: 24 }}>
+                                <Space>
+                                    <Button onClick={() => {
+                                        setWithdrawModalVisible(false);
+                                        withdrawForm.resetFields();
+                                        setSelectedBankAccount(null);
+                                    }}>
+                                        Cancel
+                                    </Button>
+                                    <Button
+                                        type="primary"
+                                        htmlType="submit"
+                                        danger
+                                        disabled={!selectedBankAccount}
+                                    >
+                                        Submit Request
+                                    </Button>
+                                </Space>
+                            </Form.Item>
+                        </>
+                    )}
+                </Form>
+            </Modal>
+
+            {/* Bank Account Management Modal */}
+            <Modal
+                // title="Bank Account Management"
+                open={bankManagementVisible}
+                onCancel={() => setBankManagementVisible(false)}
+                footer={null}
+                width={1000}
+                destroyOnClose
+            >
+                <BankAccountManagement onAccountChange={fetchBankAccounts} />
+            </Modal>
+        </div>
+    );
+};
+
+export default AdminWallet;

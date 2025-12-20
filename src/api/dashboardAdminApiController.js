@@ -167,13 +167,12 @@ getDashboardOverview: async () => {
 
 
 getRevenueDashboard: async (start, end, groupBy, type) => {
-    return await privateApi.get(`/api/admin/revenue/dashboard`,{
-        params:{
-            start,
-            end,
-            groupBy,
-            type
-        },
-    });
+    const params = {};
+    if (start) params.start = start;
+    if (end) params.end = end;
+    if (groupBy) params.groupBy = groupBy;
+    if (type) params.type = type;
+    
+    return await privateApi.get(`/api/admin/revenue/dashboard`, { params });
 },
 }

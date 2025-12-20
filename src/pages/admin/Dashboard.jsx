@@ -12,6 +12,8 @@ import {
   Space,
   Button,
   Select,
+  Input,
+  message,
 } from "antd";
 import {
   BarChart,
@@ -46,6 +48,7 @@ import {
 } from "@ant-design/icons";
 import { dashboardAminService } from "../../service/dashboardAdminService";
 import { userService } from "../../service/userService";
+import dayjs from 'dayjs';
 
 const { Title, Text } = Typography;
 const { RangePicker } = DatePicker;
@@ -120,7 +123,6 @@ export default function AdminDashboard() {
 
   const handleApplyFilter = () => {
     if (!dateRange || !dateRange[0]) {
-      console.log('⚠️ [Filter] No date range selected');
       return;
     }
 
@@ -129,23 +131,17 @@ export default function AdminDashboard() {
     let groupBy = 'day';
 
     if (filterType === 'date' && dateRange[1]) {
-      // Date range filter
       start = dateRange[0].format('YYYY-MM-DD');
       end = dateRange[1].format('YYYY-MM-DD');
       groupBy = 'day';
-      console.log('📅 [Filter] Date Range:', { start, end, groupBy });
     } else if (filterType === 'month') {
-      // Month filter - group by month to show monthly data
       start = dateRange[0].startOf('month').format('YYYY-MM-DD');
       end = dateRange[0].endOf('month').format('YYYY-MM-DD');
       groupBy = 'month';
-      console.log('📆 [Filter] Month:', { start, end, groupBy });
     } else if (filterType === 'year') {
-      // Year filter - group by year to show yearly data
       start = dateRange[0].startOf('year').format('YYYY-MM-DD');
       end = dateRange[0].endOf('year').format('YYYY-MM-DD');
       groupBy = 'year';
-      console.log('🗓️ [Filter] Year:', { start, end, groupBy });
     }
 
     fetchRevenueData(start, end, groupBy);
@@ -204,34 +200,8 @@ export default function AdminDashboard() {
     },
   ];
 
-  // Process chart data with filtering
-  const chartData = React.useMemo(() => {
-    const data = processChartData(revenueStats);
-    if (!dateRange || !dateRange[0]) return data;
-
-    // Filter based on filterType
-    return data.filter(item => {
-      const itemDate = new Date(item.date);
-
-      if (filterType === 'date' && dateRange[1]) {
-        // Date range filter
-        const startDate = new Date(dateRange[0].format('YYYY-MM-DD'));
-        const endDate = new Date(dateRange[1].format('YYYY-MM-DD'));
-        return itemDate >= startDate && itemDate <= endDate;
-      } else if (filterType === 'month') {
-        // Month filter
-        const selectedMonth = dateRange[0].format('YYYY-MM');
-        const itemMonth = item.date.substring(0, 7); // Get YYYY-MM from date
-        return itemMonth === selectedMonth;
-      } else if (filterType === 'year') {
-        // Year filter
-        const selectedYear = dateRange[0].format('YYYY');
-        const itemYear = item.date.substring(0, 4); // Get YYYY from date
-        return itemYear === selectedYear;
-      }
-      return true;
-    });
-  }, [revenueStats, dateRange, filterType]);
+  // Process chart data (filtering is done server-side via API)
+  const chartData = React.useMemo(() => processChartData(revenueStats), [revenueStats]);
 
   const pieData = React.useMemo(() => processPieData(revenueStats), [revenueStats]);
 
@@ -548,9 +518,67 @@ export default function AdminDashboard() {
           <Space size="middle" wrap>
             <CalendarOutlined style={{ fontSize: 20, color: "#1677ff" }} />
             <Text strong>Filter Revenue:</Text>
+
+            {/* Quick Filter Buttons */}
+            <Button
+              onClick={() => {
+                const today = dayjs();
+                setFilterType('date');
+                setDateRange([today, today]);
+              }}
+            >
+              Today
+            </Button>
+
+            <Button
+              onClick={() => {
+                const today = dayjs();
+                const weekStart = today.startOf('week');
+                const weekEnd = today.endOf('week');
+                setFilterType('date');
+                setDateRange([weekStart, weekEnd]);
+              }}
+            >
+              This Week
+            </Button>
+
+            <Button
+              onClick={() => {
+                const today = dayjs();
+                setFilterType('month');
+                setDateRange([today]);
+              }}
+            >
+              This Month
+            </Button>
+
+            <Button
+              onClick={() => {
+                const today = dayjs();
+                setFilterType('year');
+                setDateRange([today]);
+              }}
+            >
+              This Year
+            </Button>
+
+            <Button
+              icon={<ReloadOutlined />}
+              onClick={() => {
+                setDateRange(null);
+                fetchRevenueData();
+              }}
+            >
+              All Time
+            </Button>
+          </Space>
+
+          {/* Custom Filter */}
+          <Space size="middle" wrap>
+            <Text type="secondary">Custom:</Text>
             <Select
               value={filterType}
-              onChange={setFilterType}
+              onChange={handleFilterTypeChange}
               style={{ width: 120 }}
             >
               <Select.Option value="date">By Date</Select.Option>
