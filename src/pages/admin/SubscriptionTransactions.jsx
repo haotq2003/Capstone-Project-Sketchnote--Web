@@ -163,7 +163,6 @@ const SubscriptionTransactions = () => {
       </Card>
 
       <Modal
-        title="Subscription Transaction Details"
         open={isModalVisible}
         onCancel={() => setIsModalVisible(false)}
         footer={[
@@ -171,47 +170,149 @@ const SubscriptionTransactions = () => {
             Close
           </Button>,
         ]}
-        width={800}
+        width={700}
       >
         {selectedRecord && (
-          <Descriptions bordered column={1}>
-            {Object.entries(selectedRecord)
-              .filter(([key, value]) => {
-                // Hide null, undefined, or empty values
-                return value !== null && value !== undefined && value !== "";
-              })
-              .map(([key, value]) => {
-                let displayValue = value;
-
-                // Format currency fields
-                if ((key === "price" || key === "amount") && typeof value === "number") {
-                  displayValue = `${value.toLocaleString()} đ`;
-                } else if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}T/.test(value)) {
-                  displayValue = new Date(value).toLocaleString();
-                } else if (typeof value === "object" && value !== null) {
-                  displayValue = JSON.stringify(value, null, 2);
-                } else {
-                  displayValue = String(value);
-                }
-
-                if (key === "status") {
-                  let color = "default";
-                  if (value === "ACTIVE") color = "success";
-                  else if (value === "EXPIRED") color = "error";
-                  else if (value === "PENDING") color = "warning";
-                  return (
-                    <Descriptions.Item key={key} label={key}>
-                      <Tag color={color}>{value}</Tag>
-                    </Descriptions.Item>
-                  );
-                }
-                return (
-                  <Descriptions.Item key={key} label={key}>
-                    {displayValue}
+          <div style={{ maxHeight: '70vh', overflowY: 'auto' }}>
+            {/* Subscription Information Section */}
+            <div style={{ marginBottom: 24 }}>
+              <h3 style={{
+                fontSize: 16,
+                fontWeight: 600,
+                marginBottom: 16,
+                paddingBottom: 8,
+                borderBottom: '2px solid #1890ff',
+                color: '#1890ff'
+              }}>
+                Subscription Information
+              </h3>
+              <Descriptions bordered column={1} size="small">
+                {selectedRecord.planName && (
+                  <Descriptions.Item label="Plan">
+                    <Tag color="purple" style={{ fontSize: 14, padding: '4px 12px' }}>
+                      {selectedRecord.planName}
+                    </Tag>
                   </Descriptions.Item>
-                );
-              })}
-          </Descriptions>
+                )}
+                <Descriptions.Item label="Status">
+                  {(() => {
+                    let color = "default";
+                    if (selectedRecord.status === "ACTIVE") color = "success";
+                    else if (selectedRecord.status === "EXPIRED") color = "error";
+                    else if (selectedRecord.status === "PENDING") color = "warning";
+                    return <Tag color={color}>{selectedRecord.status}</Tag>;
+                  })()}
+                </Descriptions.Item>
+              </Descriptions>
+            </div>
+
+            {/* User Information Section */}
+            <div style={{ marginBottom: 24 }}>
+              <h3 style={{
+                fontSize: 16,
+                fontWeight: 600,
+                marginBottom: 16,
+                paddingBottom: 8,
+                borderBottom: '2px solid #52c41a',
+                color: '#52c41a'
+              }}>
+                User Information
+              </h3>
+              <Descriptions bordered column={1} size="small">
+                {selectedRecord.userEmail && (
+                  <Descriptions.Item label="Email">
+                    {selectedRecord.userEmail}
+                  </Descriptions.Item>
+                )}
+              </Descriptions>
+            </div>
+
+            {/* Payment Details Section */}
+            <div style={{ marginBottom: 24 }}>
+              <h3 style={{
+                fontSize: 16,
+                fontWeight: 600,
+                marginBottom: 16,
+                paddingBottom: 8,
+                borderBottom: '2px solid #fa8c16',
+                color: '#fa8c16'
+              }}>
+                Payment Details
+              </h3>
+              <Descriptions bordered column={1} size="small">
+                <Descriptions.Item label="Price">
+                  <span style={{
+                    fontSize: 18,
+                    fontWeight: 'bold',
+                    color: '#52c41a'
+                  }}>
+                    {(selectedRecord.price || 0).toLocaleString()} đ
+                  </span>
+                </Descriptions.Item>
+              </Descriptions>
+            </div>
+
+            {/* Subscription Period Section */}
+            <div style={{ marginBottom: 24 }}>
+              <h3 style={{
+                fontSize: 16,
+                fontWeight: 600,
+                marginBottom: 16,
+                paddingBottom: 8,
+                borderBottom: '2px solid #13c2c2',
+                color: '#13c2c2'
+              }}>
+                Subscription Period
+              </h3>
+              <Descriptions bordered column={1} size="small">
+                {selectedRecord.createdAt && (
+                  <Descriptions.Item label="Start Date">
+                    {new Date(selectedRecord.createdAt).toLocaleString('vi-VN', {
+                      year: 'numeric',
+                      month: '2-digit',
+                      day: '2-digit',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      second: '2-digit'
+                    })}
+                  </Descriptions.Item>
+                )}
+                {selectedRecord.endDate && (
+                  <Descriptions.Item label="End Date">
+                    {new Date(selectedRecord.endDate).toLocaleString('vi-VN', {
+                      year: 'numeric',
+                      month: '2-digit',
+                      day: '2-digit',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      second: '2-digit'
+                    })}
+                  </Descriptions.Item>
+                )}
+              </Descriptions>
+            </div>
+
+            {/* Additional Information Section */}
+            {selectedRecord.description && (
+              <div>
+                <h3 style={{
+                  fontSize: 16,
+                  fontWeight: 600,
+                  marginBottom: 16,
+                  paddingBottom: 8,
+                  borderBottom: '2px solid #722ed1',
+                  color: '#722ed1'
+                }}>
+                  Additional Information
+                </h3>
+                <Descriptions bordered column={1} size="small">
+                  <Descriptions.Item label="Description">
+                    {selectedRecord.description}
+                  </Descriptions.Item>
+                </Descriptions>
+              </div>
+            )}
+          </div>
         )}
       </Modal>
     </div>

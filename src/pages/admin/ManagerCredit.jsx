@@ -16,6 +16,7 @@ import {
   Popconfirm,
   Divider,
   Statistic,
+  Descriptions,
 } from "antd";
 import {
   PlusOutlined,
@@ -333,7 +334,6 @@ const AdminCreditPackages = () => {
 
         {/* Detail Modal */}
         <Modal
-          title={<span style={{ fontSize: 18, fontWeight: 600 }}>Package Details</span>}
           open={detailOpen}
           onCancel={() => setDetailOpen(false)}
           footer={[
@@ -341,78 +341,112 @@ const AdminCreditPackages = () => {
               Close
             </Button>,
           ]}
-          width={600}
+          width={700}
         >
           {selectedPackage && (
-            <div style={{ lineHeight: 2 }}>
-              <Row gutter={[16, 16]}>
-                <Col span={12}>
-                  <strong>ID:</strong> {selectedPackage.id}
-                </Col>
-                <Col span={12}>
-                  <strong>Display Order:</strong> {selectedPackage.displayOrder}
-                </Col>
-                <Col span={24}>
-                  <strong>Name:</strong> {selectedPackage.name}
-                  {selectedPackage.isPopular && (
-                    <Tag color="gold" style={{ marginLeft: 8 }}>
-                      ⭐ POPULAR
-                    </Tag>
+            <div style={{ maxHeight: '70vh', overflowY: 'auto' }}>
+              {/* Package Information Section */}
+              <div style={{ marginBottom: 24 }}>
+                <h3 style={{
+                  fontSize: 16,
+                  fontWeight: 600,
+                  marginBottom: 16,
+                  paddingBottom: 8,
+                  borderBottom: '2px solid #1890ff',
+                  color: '#1890ff'
+                }}>
+                  Package Information
+                </h3>
+                <Descriptions bordered column={1} size="small">
+                  <Descriptions.Item label="Package Name">
+                    <span style={{ fontWeight: 600 }}>
+                      {selectedPackage.name}
+                    </span>
+                    {selectedPackage.isPopular && (
+                      <Tag color="gold" style={{ marginLeft: 8 }}>
+                        ⭐ POPULAR
+                      </Tag>
+                    )}
+                  </Descriptions.Item>
+                  {selectedPackage.description && (
+                    <Descriptions.Item label="Description">
+                      {selectedPackage.description}
+                    </Descriptions.Item>
                   )}
-                </Col>
-                <Col span={24}>
-                  <strong>Description:</strong> {selectedPackage.description || "N/A"}
-                </Col>
-                <Col span={12}>
-                  <strong>Credit Amount:</strong>{" "}
-                  <span style={{ color: "#1677ff", fontWeight: 600 }}>
-                    {selectedPackage.creditAmount?.toLocaleString()}
-                  </span>
-                </Col>
-                <Col span={12}>
-                  <strong>Price per Credit:</strong> {selectedPackage.pricePerCredit?.toLocaleString()} đ
-                </Col>
-                <Col span={12}>
-                  <strong>Original Price:</strong>{" "}
-                  <span >
-                    {selectedPackage.originalPrice?.toLocaleString()} đ
-                  </span>
-                </Col>
-                <Col span={12}>
-                  <strong>Discounted Price:</strong>{" "}
-                  <span style={{ color: "#52c41a", fontWeight: 600, fontSize: 16 }}>
-                    {selectedPackage.discountedPrice?.toLocaleString()} đ
-                  </span>
-                </Col>
-                <Col span={12}>
-                  <strong>Discount Percent:</strong>{" "}
-                  <Tag color="blue">{selectedPackage.discountPercent}%</Tag>
-                </Col>
-                <Col span={12}>
-                  <strong>Savings Amount:</strong>{" "}
-                  <Tag color="green">-{selectedPackage.savingsAmount?.toLocaleString()} đ</Tag>
-                </Col>
-                <Col span={12}>
-                  <strong>Status:</strong>{" "}
-                  <Tag color={selectedPackage.isActive ? "green" : "red"}>
-                    {selectedPackage.isActive ? "Active" : "Inactive"}
-                  </Tag>
-                </Col>
-                <Col span={12}>
-                  <strong>Currency:</strong> {selectedPackage.currency || "VND"}
-                </Col>
-              </Row>
+                  <Descriptions.Item label="Credit Amount">
+                    <span style={{ fontSize: 16, fontWeight: 600, color: '#1677ff' }}>
+                      {selectedPackage.creditAmount?.toLocaleString()} credits
+                    </span>
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Display Order">
+                    #{selectedPackage.displayOrder}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Status">
+                    <Tag color={selectedPackage.isActive ? "green" : "red"} icon={selectedPackage.isActive ? <CheckCircleOutlined /> : <StopOutlined />}>
+                      {selectedPackage.isActive ? "Active" : "Inactive"}
+                    </Tag>
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Published Date">
+                    {formatDate(selectedPackage.createdAt)}
+                  </Descriptions.Item>
 
-              <Divider />
+                </Descriptions>
+              </div>
 
-              <Row gutter={[16, 8]}>
-                <Col span={24}>
-                  <strong>Created At:</strong> {formatDate(selectedPackage.createdAt)}
-                </Col>
-                <Col span={24}>
-                  <strong>Updated At:</strong> {formatDate(selectedPackage.updatedAt)}
-                </Col>
-              </Row>
+              {/* Pricing Details Section */}
+              <div style={{ marginBottom: 24 }}>
+                <h3 style={{
+                  fontSize: 16,
+                  fontWeight: 600,
+                  marginBottom: 16,
+                  paddingBottom: 8,
+                  borderBottom: '2px solid #52c41a',
+                  color: '#52c41a'
+                }}>
+                  Pricing Details
+                </h3>
+                <Descriptions bordered column={1} size="small">
+                  <Descriptions.Item label="Original Price">
+                    <span style={{ textDecoration: 'line-through', color: '#999' }}>
+                      {selectedPackage.originalPrice?.toLocaleString()} đ
+                    </span>
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Discounted Price">
+                    <span style={{ fontSize: 18, fontWeight: 'bold', color: '#52c41a' }}>
+                      {selectedPackage.discountedPrice?.toLocaleString()} đ
+                    </span>
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Price per Credit">
+                    {selectedPackage.pricePerCredit?.toLocaleString()} đ
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Currency">
+                    {selectedPackage.currency || "VND"}
+                  </Descriptions.Item>
+                </Descriptions>
+              </div>
+
+              {/* Discount Information Section */}
+              <div style={{ marginBottom: 24 }}>
+                <h3 style={{
+                  fontSize: 16,
+                  fontWeight: 600,
+                  marginBottom: 16,
+                  paddingBottom: 8,
+                  borderBottom: '2px solid #fa8c16',
+                  color: '#fa8c16'
+                }}>
+                  Discount Information
+                </h3>
+                <Descriptions bordered column={1} size="small">
+                  <Descriptions.Item label="Discount Percent">
+                    <Tag color="blue">{selectedPackage.discountPercent}%</Tag>
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Savings Amount">
+                    <Tag color="green">-{selectedPackage.savingsAmount?.toLocaleString()} đ</Tag>
+                  </Descriptions.Item>
+                </Descriptions>
+              </div>
+
             </div>
           )}
         </Modal>
