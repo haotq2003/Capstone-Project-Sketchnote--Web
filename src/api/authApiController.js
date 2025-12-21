@@ -19,7 +19,7 @@ register: async (userData) => {
       });
    
   },
-refeshToken : async (refreshToken) => {
+refreshToken: async (refreshToken) => {
 
        return await publicApi.post(`/api/auth/refresh-token`, { refreshToken });
  
