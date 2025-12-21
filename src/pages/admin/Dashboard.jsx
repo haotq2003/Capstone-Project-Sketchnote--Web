@@ -14,6 +14,7 @@ import {
   Select,
   Input,
   message,
+  Empty,
 } from "antd";
 import {
   BarChart,
@@ -648,6 +649,12 @@ export default function AdminDashboard() {
                   <Bar dataKey="course" name="Course" fill="#8B5CF6" stackId="a" />
                 </BarChart>
               </ResponsiveContainer>
+              {!loadingRevenue && chartData.length === 0 && (
+                <Empty
+                  description="No revenue data available for the selected period"
+                  image={Empty.PRESENTED_IMAGE_SIMPLE}
+                />
+              )}
             </Spin>
           </Card>
         </Col>
@@ -671,6 +678,12 @@ export default function AdminDashboard() {
                   <Tooltip formatter={(value) => `${value.toLocaleString()} đ`} />
                 </PieChart>
               </ResponsiveContainer>
+              {!loadingRevenue && pieData.length === 0 && (
+                <Empty
+                  description="No revenue breakdown available"
+                  image={Empty.PRESENTED_IMAGE_SIMPLE}
+                />
+              )}
             </Spin>
           </Card>
         </Col>
