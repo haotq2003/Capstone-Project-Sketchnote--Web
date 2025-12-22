@@ -184,7 +184,6 @@ const OrderTransactions = () => {
       </Card>
 
       <Modal
-        title="Order Transaction Details"
         open={isModalVisible}
         onCancel={() => setIsModalVisible(false)}
         footer={[
@@ -192,69 +191,179 @@ const OrderTransactions = () => {
             Close
           </Button>,
         ]}
-        width={800}
+        width={900}
       >
         {selectedRecord && (
-          <Descriptions bordered column={1}>
-            {Object.entries(selectedRecord)
-              .filter(([key, value]) => {
-                // Hide null, undefined, or empty values
-                return value !== null && value !== undefined && value !== "";
-              })
-              .map(([key, value]) => {
-                if (key === "items" && Array.isArray(value)) {
-                  return (
-                    <Descriptions.Item key={key} label={key} span={1}>
-                      <Table
-                        dataSource={value}
-                        rowKey="orderDetailId"
-                        pagination={false}
-                        size="small"
-                        columns={[
-                          { title: "Item Name", dataIndex: "templateName", key: "templateName" },
-                          { title: "Type", dataIndex: "templateType", key: "templateType" },
-                          { title: "Price", dataIndex: "unitPrice", key: "unitPrice", render: (v) => `${v?.toLocaleString()} đ` },
-                          { title: "Discount", dataIndex: "discount", key: "discount", render: (v) => `${v?.toLocaleString()} đ` },
-                          { title: "Subtotal", dataIndex: "subtotalAmount", key: "subtotalAmount", render: (v) => `${v?.toLocaleString()} đ` },
-                          { title: "Date", dataIndex: "createdAt", key: "createdAt", render: (v) => v ? new Date(v).toLocaleDateString() : "" },
-                        ]}
-                      />
-                    </Descriptions.Item>
-                  );
-                }
-
-                let displayValue = value;
-
-                // Format currency fields
-                if ((key === "totalAmount" || key === "amount" || key === "subtotalAmount" || key === "unitPrice" || key === "discount") && typeof value === "number") {
-                  displayValue = `${value.toLocaleString()} đ`;
-                } else if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}T/.test(value)) {
-                  displayValue = new Date(value).toLocaleString();
-                } else if (typeof value === "object" && value !== null) {
-                  displayValue = JSON.stringify(value, null, 2);
-                } else {
-                  displayValue = String(value);
-                }
-
-                if (key === "orderStatus" || key === "paymentStatus") {
-                  let color = "default";
-                  if (value === "COMPLETED" || value === "PAID") color = "success";
-                  else if (value === "PENDING") color = "warning";
-                  else if (value === "CANCELLED" || value === "FAILED") color = "error";
-                  return (
-                    <Descriptions.Item key={key} label={key}>
-                      <Tag color={color}>{value}</Tag>
-                    </Descriptions.Item>
-                  );
-                }
-
-                return (
-                  <Descriptions.Item key={key} label={key}>
-                    {displayValue}
+          <div style={{ maxHeight: '70vh', overflowY: 'auto' }}>
+            {/* Order Information Section */}
+            <div style={{ marginBottom: 24 }}>
+              <h3 style={{
+                fontSize: 16,
+                fontWeight: 600,
+                marginBottom: 16,
+                paddingBottom: 8,
+                borderBottom: '2px solid #1890ff',
+                color: '#1890ff'
+              }}>
+                Order Information
+              </h3>
+              <Descriptions bordered column={1} size="small">
+                {selectedRecord.invoiceNumber && (
+                  <Descriptions.Item label="Invoice Number">
+                    <span style={{ fontFamily: 'monospace', fontWeight: 500 }}>
+                      {selectedRecord.invoiceNumber}
+                    </span>
                   </Descriptions.Item>
-                );
-              })}
-          </Descriptions>
+                )}
+                <Descriptions.Item label="Order Status">
+                  {(() => {
+                    let color = "default";
+                    if (selectedRecord.orderStatus === "COMPLETED") color = "success";
+                    else if (selectedRecord.orderStatus === "PENDING") color = "warning";
+                    else if (selectedRecord.orderStatus === "CANCELLED") color = "error";
+                    return <Tag color={color}>{selectedRecord.orderStatus}</Tag>;
+                  })()}
+                </Descriptions.Item>
+                {selectedRecord.createdAt && (
+                  <Descriptions.Item label="Order Date">
+                    {new Date(selectedRecord.createdAt).toLocaleString('vi-VN', {
+                      year: 'numeric',
+                      month: '2-digit',
+                      day: '2-digit',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      second: '2-digit'
+                    })}
+                  </Descriptions.Item>
+                )}
+              </Descriptions>
+            </div>
+
+            {/* Payment Information Section */}
+            <div style={{ marginBottom: 24 }}>
+              <h3 style={{
+                fontSize: 16,
+                fontWeight: 600,
+                marginBottom: 16,
+                paddingBottom: 8,
+                borderBottom: '2px solid #52c41a',
+                color: '#52c41a'
+              }}>
+                Payment Information
+              </h3>
+              <Descriptions bordered column={1} size="small">
+                <Descriptions.Item label="Payment Status">
+                  {(() => {
+                    let color = "default";
+                    if (selectedRecord.paymentStatus === "PAID") color = "success";
+                    else if (selectedRecord.paymentStatus === "PENDING") color = "warning";
+                    else if (selectedRecord.paymentStatus === "FAILED") color = "error";
+                    return <Tag color={color}>{selectedRecord.paymentStatus}</Tag>;
+                  })()}
+                </Descriptions.Item>
+                {selectedRecord.paymentMethod && (
+                  <Descriptions.Item label="Payment Method">
+                    {selectedRecord.paymentMethod}
+                  </Descriptions.Item>
+                )}
+                <Descriptions.Item label="Total Amount">
+                  <span style={{
+                    fontSize: 18,
+                    fontWeight: 'bold',
+                    color: '#52c41a'
+                  }}>
+                    {(selectedRecord.totalAmount || 0).toLocaleString()} đ
+                  </span>
+                </Descriptions.Item>
+              </Descriptions>
+            </div>
+
+            {/* Order Items Section */}
+            {selectedRecord.items && Array.isArray(selectedRecord.items) && selectedRecord.items.length > 0 && (
+              <div style={{ marginBottom: 24 }}>
+                <h3 style={{
+                  fontSize: 16,
+                  fontWeight: 600,
+                  marginBottom: 16,
+                  paddingBottom: 8,
+                  borderBottom: '2px solid #fa8c16',
+                  color: '#fa8c16'
+                }}>
+                  Order Items
+                </h3>
+                <Table
+                  dataSource={selectedRecord.items}
+                  rowKey="orderDetailId"
+                  pagination={false}
+                  size="small"
+                  bordered
+                  columns={[
+                    {
+                      title: "Item Name",
+                      dataIndex: "templateName",
+                      key: "templateName",
+                      ellipsis: true
+                    },
+                    {
+                      title: "Type",
+                      dataIndex: "templateType",
+                      key: "templateType",
+                      width: 120
+                    },
+                    {
+                      title: "Price",
+                      dataIndex: "unitPrice",
+                      key: "unitPrice",
+                      width: 120,
+                      render: (v) => `${v?.toLocaleString()} đ`,
+                      align: 'right'
+                    },
+                    {
+                      title: "Discount",
+                      dataIndex: "discount",
+                      key: "discount",
+                      width: 100,
+                      render: (v) => v ? `${v?.toLocaleString()} đ` : '-',
+                      align: 'right'
+                    },
+                    {
+                      title: "Subtotal",
+                      dataIndex: "subtotalAmount",
+                      key: "subtotalAmount",
+                      width: 120,
+                      render: (v) => (
+                        <span style={{ fontWeight: 600 }}>
+                          {v?.toLocaleString()} đ
+                        </span>
+                      ),
+                      align: 'right'
+                    },
+                  ]}
+                />
+              </div>
+            )}
+
+            {/* Additional Information Section */}
+            {selectedRecord.note && (
+              <div>
+                <h3 style={{
+                  fontSize: 16,
+                  fontWeight: 600,
+                  marginBottom: 16,
+                  paddingBottom: 8,
+                  borderBottom: '2px solid #722ed1',
+                  color: '#722ed1'
+                }}>
+                  Additional Information
+                </h3>
+                <Descriptions bordered column={1} size="small">
+                  <Descriptions.Item label="Note">
+                    {selectedRecord.note}
+                  </Descriptions.Item>
+                </Descriptions>
+              </div>
+            )}
+          </div>
         )}
       </Modal>
     </div>

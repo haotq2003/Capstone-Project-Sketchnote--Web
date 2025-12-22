@@ -220,7 +220,6 @@ const AdminWithdrawalManagement = () => {
             </Card>
 
             <Modal
-                title="Withdrawal Details"
                 open={isModalVisible}
                 onCancel={() => setIsModalVisible(false)}
                 footer={[
@@ -228,49 +227,140 @@ const AdminWithdrawalManagement = () => {
                         Close
                     </Button>,
                 ]}
-                width={800}
+                width={700}
             >
                 {selectedRecord && (
-                    <Descriptions bordered column={1}>
-                        {Object.entries(selectedRecord)
-                            .filter(([key, value]) => {
-                                // Hide null, undefined, or empty values
-                                return value !== null && value !== undefined && value !== "";
-                            })
-                            .map(([key, value]) => {
-                                let displayValue = value;
-
-                                // Format currency fields
-                                if ((key === "amount" || key === "balance") && typeof value === "number") {
-                                    displayValue = `${value.toLocaleString()} đ`;
-                                } else if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}T/.test(value)) {
-                                    displayValue = new Date(value).toLocaleString();
-                                } else if (typeof value === "object" && value !== null) {
-                                    displayValue = JSON.stringify(value, null, 2);
-                                } else {
-                                    displayValue = String(value);
-                                }
-
-                                // Status tag
-                                if (key === "status") {
-                                    let color = "default";
-                                    if (value === "APPROVED" || value === "SUCCESS") color = "success";
-                                    if (value === "PENDING") color = "warning";
-                                    if (value === "REJECTED" || value === "FAILED") color = "error";
-                                    return (
-                                        <Descriptions.Item key={key} label={key}>
-                                            <Tag color={color}>{value}</Tag>
-                                        </Descriptions.Item>
-                                    );
-                                }
-
-                                return (
-                                    <Descriptions.Item key={key} label={key}>
-                                        {displayValue}
+                    <div style={{ maxHeight: '70vh', overflowY: 'auto' }}>
+                        {/* Withdrawal Information Section */}
+                        <div style={{ marginBottom: 24 }}>
+                            <h3 style={{
+                                fontSize: 16,
+                                fontWeight: 600,
+                                marginBottom: 16,
+                                paddingBottom: 8,
+                                borderBottom: '2px solid #1890ff',
+                                color: '#1890ff'
+                            }}>
+                                Withdrawal Information
+                            </h3>
+                            <Descriptions bordered column={1} size="small">
+                                <Descriptions.Item label="Status">
+                                    {(() => {
+                                        let color = "default";
+                                        if (selectedRecord.status === "APPROVED" || selectedRecord.status === "SUCCESS") color = "success";
+                                        if (selectedRecord.status === "PENDING") color = "warning";
+                                        if (selectedRecord.status === "REJECTED" || selectedRecord.status === "FAILED") color = "error";
+                                        return <Tag color={color}>{selectedRecord.status}</Tag>;
+                                    })()}
+                                </Descriptions.Item>
+                                {selectedRecord.createdAt && (
+                                    <Descriptions.Item label="Request Date">
+                                        {new Date(selectedRecord.createdAt).toLocaleString('vi-VN', {
+                                            year: 'numeric',
+                                            month: '2-digit',
+                                            day: '2-digit',
+                                            hour: '2-digit',
+                                            minute: '2-digit',
+                                            second: '2-digit'
+                                        })}
                                     </Descriptions.Item>
-                                );
-                            })}
-                    </Descriptions>
+                                )}
+                                {selectedRecord.updatedAt && (
+                                    <Descriptions.Item label="Last Updated">
+                                        {new Date(selectedRecord.updatedAt).toLocaleString('vi-VN', {
+                                            year: 'numeric',
+                                            month: '2-digit',
+                                            day: '2-digit',
+                                            hour: '2-digit',
+                                            minute: '2-digit',
+                                            second: '2-digit'
+                                        })}
+                                    </Descriptions.Item>
+                                )}
+                            </Descriptions>
+                        </div>
+
+                        {/* Bank Account Details Section */}
+                        <div style={{ marginBottom: 24 }}>
+                            <h3 style={{
+                                fontSize: 16,
+                                fontWeight: 600,
+                                marginBottom: 16,
+                                paddingBottom: 8,
+                                borderBottom: '2px solid #52c41a',
+                                color: '#52c41a'
+                            }}>
+                                Bank Account Details
+                            </h3>
+                            <Descriptions bordered column={1} size="small">
+                                {selectedRecord.bankName && (
+                                    <Descriptions.Item label="Bank Name">
+                                        <span style={{ fontWeight: 500 }}>
+                                            {selectedRecord.bankName}
+                                        </span>
+                                    </Descriptions.Item>
+                                )}
+                                {selectedRecord.bankAccountNumber && (
+                                    <Descriptions.Item label="Account Number">
+                                        <span style={{ fontFamily: 'monospace', fontWeight: 500 }}>
+                                            {selectedRecord.bankAccountNumber}
+                                        </span>
+                                    </Descriptions.Item>
+                                )}
+                                {selectedRecord.bankAccountHolder && (
+                                    <Descriptions.Item label="Account Holder">
+                                        {selectedRecord.bankAccountHolder}
+                                    </Descriptions.Item>
+                                )}
+                            </Descriptions>
+                        </div>
+
+                        {/* Amount Details Section */}
+                        <div style={{ marginBottom: 24 }}>
+                            <h3 style={{
+                                fontSize: 16,
+                                fontWeight: 600,
+                                marginBottom: 16,
+                                paddingBottom: 8,
+                                borderBottom: '2px solid #fa8c16',
+                                color: '#fa8c16'
+                            }}>
+                                Amount Details
+                            </h3>
+                            <Descriptions bordered column={1} size="small">
+                                <Descriptions.Item label="Withdrawal Amount">
+                                    <span style={{
+                                        fontSize: 18,
+                                        fontWeight: 'bold',
+                                        color: '#f5222d'
+                                    }}>
+                                        {(selectedRecord.amount || 0).toLocaleString()} đ
+                                    </span>
+                                </Descriptions.Item>
+                            </Descriptions>
+                        </div>
+
+                        {/* Additional Information Section */}
+                        {selectedRecord.note && (
+                            <div>
+                                <h3 style={{
+                                    fontSize: 16,
+                                    fontWeight: 600,
+                                    marginBottom: 16,
+                                    paddingBottom: 8,
+                                    borderBottom: '2px solid #722ed1',
+                                    color: '#722ed1'
+                                }}>
+                                    Additional Information
+                                </h3>
+                                <Descriptions bordered column={1} size="small">
+                                    <Descriptions.Item label="Note">
+                                        {selectedRecord.note}
+                                    </Descriptions.Item>
+                                </Descriptions>
+                            </div>
+                        )}
+                    </div>
                 )}
             </Modal>
         </div>

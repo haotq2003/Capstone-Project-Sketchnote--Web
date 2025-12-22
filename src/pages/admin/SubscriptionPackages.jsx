@@ -15,6 +15,7 @@ import {
   Row,
   Col,
   Divider,
+  Descriptions,
 } from "antd";
 import {
   PlusOutlined,
@@ -220,60 +221,79 @@ const SubscriptionPackages = () => {
 
       {/* DETAIL MODAL */}
       <Modal
-        title={<span style={{ fontSize: 18, fontWeight: 600 }}>Subscription Plan Details</span>}
         open={isDetailModal}
         footer={[
           <Button key="close" onClick={() => setIsDetailModal(false)}>
             Close
-          </Button>
+          </Button>,
         ]}
         onCancel={() => setIsDetailModal(false)}
-        width={600}
+        width={700}
       >
         {detailData && (
-          <div style={{ lineHeight: 2 }}>
-            <Row gutter={[16, 16]}>
-              <Col span={24}>
-                <strong>Plan Name:</strong> {detailData.planName}
-              </Col>
+          <div style={{ maxHeight: '80vh', overflowY: 'auto' }}>
+            {/* Plan Information Section */}
+            <div style={{ marginBottom: 24 }}>
+              <h3 style={{
+                fontSize: 16,
+                fontWeight: 600,
+                marginBottom: 16,
+                paddingBottom: 8,
+                borderBottom: '2px solid #1890ff',
+                color: '#1890ff'
+              }}>
+                Plan Information
+              </h3>
+              <Descriptions bordered column={1} size="small">
+                <Descriptions.Item label="Plan Name">
+                  <span style={{ fontWeight: 600 }}>
+                    {detailData.planName}
+                  </span>
+                </Descriptions.Item>
+                {detailData.description && (
+                  <Descriptions.Item label="Description">
+                    {detailData.description}
+                  </Descriptions.Item>
+                )}
+                <Descriptions.Item label="Plan Type">
+                  <Tag color={detailData.planType === "DESIGNER" ? "purple" : "gold"}>
+                    {detailData.planType}
+                  </Tag>
+                </Descriptions.Item>
+                <Descriptions.Item label="Duration">
+                  <span style={{ fontSize: 16, fontWeight: 600, color: '#1677ff' }}>
+                    {detailData.durationDays} days
+                  </span>
+                </Descriptions.Item>
+                <Descriptions.Item label="Published Date">
+                  {new Date(detailData.createdAt).toLocaleDateString('vi-VN')}
+                </Descriptions.Item>
+              </Descriptions>
+            </div>
 
-              <Col span={12}>
-                <strong>Plan Type:</strong>{" "}
-                <Tag color={detailData.planType === "DESIGNER" ? "purple" : "gold"}>
-                  {detailData.planType}
-                </Tag>
-              </Col>
-
-              <Col span={12}>
-                <strong>Duration:</strong> {detailData.durationDays} days
-              </Col>
-
-              <Col span={12}>
-                <strong>Price:</strong>{" "}
-                <span style={{ color: "#52c41a", fontWeight: 600, fontSize: 16 }}>
-                  {detailData.price.toLocaleString()} {detailData.currency}
-                </span>
-              </Col>
-
-              <Col span={12}>
-                <strong>Currency:</strong> {detailData.currency}
-              </Col>
-
-              <Col span={24}>
-                <strong>Description:</strong> {detailData.description || "No description"}
-              </Col>
-            </Row>
-
-            <Divider />
-
-            <Row gutter={[16, 8]}>
-              <Col span={24}>
-                <strong>Created At:</strong> {new Date(detailData.createdAt).toLocaleString("vi-VN")}
-              </Col>
-              <Col span={24}>
-                <strong>Updated At:</strong> {new Date(detailData.updatedAt).toLocaleString("vi-VN")}
-              </Col>
-            </Row>
+            {/* Pricing Details Section */}
+            <div>
+              <h3 style={{
+                fontSize: 16,
+                fontWeight: 600,
+                marginBottom: 16,
+                paddingBottom: 8,
+                borderBottom: '2px solid #52c41a',
+                color: '#52c41a'
+              }}>
+                Pricing Details
+              </h3>
+              <Descriptions bordered column={1} size="small">
+                <Descriptions.Item label="Price">
+                  <span style={{ fontSize: 18, fontWeight: 'bold', color: '#52c41a' }}>
+                    {detailData.price.toLocaleString()} {detailData.currency}
+                  </span>
+                </Descriptions.Item>
+                <Descriptions.Item label="Currency">
+                  {detailData.currency}
+                </Descriptions.Item>
+              </Descriptions>
+            </div>
           </div>
         )}
       </Modal>
