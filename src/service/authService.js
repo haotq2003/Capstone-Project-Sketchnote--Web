@@ -1,5 +1,3 @@
-// authService.js
-
 import { jwtDecode } from "jwt-decode";
 import { authApiController } from "../api/authApiController";
 
@@ -16,6 +14,16 @@ export const authService = {
         const decoded = jwtDecode(accessToken);
         const roles = decoded?.realm_access?.roles || [];
         localStorage.setItem("roles", JSON.stringify(roles));
+
+        // Lưu thông tin user
+        const userInfo = {
+          id: decoded?.sub,
+          email: decoded?.email || decoded?.preferred_username,
+          firstName: decoded?.given_name,
+          lastName: decoded?.family_name,
+          name: decoded?.name,
+        };
+        localStorage.setItem("userInfo", JSON.stringify(userInfo));
 
         return { accessToken, refreshToken, roles };
       }
@@ -39,34 +47,51 @@ export const authService = {
     }
   },
 
-  refreshToken: async (refreshToken) => {
+  refreshToken: async () => {
     try {
+      const refreshToken = localStorage.getItem("refreshToken");
+
+      if (!refreshToken) {
+        console.log("No refresh token found");
+        return null;
+      }
+
       const res = await authApiController.refreshToken(refreshToken);
 
-      if (res?.data?.result?.accessToken) {
-        localStorage.setItem("accessToken", res.data.result.accessToken);
-        return res.data.result.accessToken;
+      if (res?.data?.code === 200 && res?.data?.result?.accessToken) {
+        const { accessToken, refreshToken: newRefreshToken } = res.data.result;
+
+        localStorage.setItem("accessToken", accessToken);
+        if (newRefreshToken) {
+          localStorage.setItem("refreshToken", newRefreshToken);
+        }
+
+        // Cập nhật roles từ token mới
+        const decoded = jwtDecode(accessToken);
+        const roles = decoded?.realm_access?.roles || [];
+        localStorage.setItem("roles", JSON.stringify(roles));
+
+        return accessToken;
       }
 
       return null;
     } catch (err) {
-      console.log("Refresh token failed:", err.response?.data);
+      console.log("Refresh token failed:", err.response?.data || err.message);
       return null;
     }
   },
 
   logout: async () => {
     try {
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("refreshToken");
-      localStorage.removeItem("roles");
+      await authApiController.logout();
       return true;
     } catch (e) {
       console.error("Error logging out:", e);
       return false;
     }
   },
-  getProfile : async () => {
+
+  getProfile: async () => {
     try {
       const res = await authApiController.getProfile();
       return res.data.result;
@@ -74,6 +99,37 @@ export const authService = {
       const message =
         err.response?.data?.message || "Get profile failed. Please try again.";
       throw new Error(message);
+    }
+  },
+
+  // Kiểm tra token còn hạn không
+  isTokenExpired: (token) => {
+    try {
+      const decoded = jwtDecode(token);
+      const currentTime = Date.now() / 1000;
+      return decoded.exp < currentTime;
+    } catch {
+      return true;
+    }
+  },
+
+  // Lấy thông tin user từ localStorage
+  getCurrentUser: () => {
+    try {
+      const userInfo = localStorage.getItem("userInfo");
+      return userInfo ? JSON.parse(userInfo) : null;
+    } catch {
+      return null;
+    }
+  },
+
+  // Lấy roles từ localStorage
+  getRoles: () => {
+    try {
+      const roles = localStorage.getItem("roles");
+      return roles ? JSON.parse(roles) : [];
+    } catch {
+      return [];
     }
   },
 };

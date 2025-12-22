@@ -1,117 +1,90 @@
-import iconPencil from "../../assets/icon-pencil.png";
-import iconNotebook from "../../assets/icon-notebook.png";
-import iconLightbulb from "../../assets/icon-lightbulb.png";
-import { Palette, Share2, Layers } from "lucide-react";
-
-const features = [
-  {
-    icon: iconPencil,
-    title: "Free Drawing",
-    description:
-      "Various pens and brushes for all your creative styles.",
-    color: "bg-blue-50 border-blue-100",
-  },
-  {
-    icon: iconNotebook,
-    title: "Smart Notes",
-    description: "Combine text, drawings, and stickers to create vivid notes.",
-    color: "bg-sky-50 border-sky-100",
-  },
-  {
-    icon: iconLightbulb,
-    title: "Creative Templates",
-    description: "Hundreds of available templates to help you start quickly.",
-    color: "bg-amber-50 border-amber-100",
-  },
-];
-
-const moreFeatures = [
-  {
-    icon: <Palette className="w-8 h-8 text-primary" />,
-    title: "Rich Colors",
-    description: "Diverse color palette with unlimited customization.",
-  },
-  {
-    icon: <Share2 className="w-8 h-8 text-secondary" />,
-    title: "Easy Sharing",
-    description: "Export and share your sketchnotes anytime, anywhere.",
-  },
-  {
-    icon: <Layers className="w-8 h-8 text-accent" />,
-    title: "Pro Layers",
-    description: "Manage layers like a real designer.",
-  },
-];
+import { Pencil, Palette, Share2, Sparkles, Zap, Cloud } from "lucide-react";
 
 const FeaturesSection = () => {
-  return (
-    <section className="py-24 relative overflow-hidden bg-white">
-      {/* Background Decoration */}
-      <div className="absolute inset-0 -z-10">
-        <div className="absolute top-0 left-1/4 w-64 h-64 bg-primary/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-secondary/5 rounded-full blur-3xl" />
-      </div>
+  const features = [
+    {
+      icon: Pencil,
+      title: "Natural Drawing",
+      description:
+        "Sketch with precision using our advanced drawing tools that feel just like pen on paper.",
+    },
+    {
+      icon: Palette,
+      title: "Rich Color Palette",
+      description:
+        "Express yourself with unlimited colors, gradients, and custom color schemes.",
+    },
+    {
+      icon: Share2,
+      title: "Easy Sharing",
+      description:
+        "Share your creations instantly with friends, colleagues, or on social media.",
+    },
+    {
+      icon: Sparkles,
+      title: "Smart Templates",
+      description:
+        "Start quickly with beautiful templates designed for various note-taking styles.",
+    },
+    {
+      icon: Zap,
+      title: "Lightning Fast",
+      description:
+        "Experience smooth, lag-free drawing with our optimized rendering engine.",
+    },
+    {
+      icon: Cloud,
+      title: "Cloud Sync",
+      description:
+        "Access your notes anywhere, anytime. Your sketches are always backed up safely.",
+    },
+  ];
 
+  return (
+    <section id="features" className="py-20 bg-background">
       <div className="container mx-auto px-4">
         {/* Section Header */}
         <div className="text-center mb-16">
-          <span className="inline-block font-hand text-xl text-primary mb-4 font-medium">
-            ⭐ Highlight Features
+          <span
+            className="inline-block font-body text-sm font-normal tracking-wider uppercase mb-4"
+            style={{ color: "#084F8C" }}
+          >
+            Features
           </span>
-          <h2 className="font-sketch text-4xl md:text-5xl font-medium text-foreground mb-4">
-            Everything you need to
-            <br />
-            <span className="text-primary sketch-underline">create</span>
+          <h2 className="font-sketch text-4xl md:text-5xl font-normal text-foreground mb-6">
+            Everything You Need to{" "}
+            <span style={{ color: "#084F8C" }}>Create</span>
           </h2>
-          <p className="font-body text-muted-foreground max-w-2xl mx-auto text-lg">
-            Full set of tools to help you go from idea to product easily
+          <p className="font-body text-lg text-muted-foreground max-w-2xl mx-auto">
+            Powerful tools designed to help you capture, organize, and share
+            your ideas in the most creative way possible.
           </p>
         </div>
 
-        {/* Main Features */}
-        <div className="grid md:grid-cols-3 gap-8 mb-16">
+        {/* Features Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {features.map((feature, index) => (
             <div
-              key={feature.title}
-              className={`group p-8 rounded-[2rem] border ${feature.color} shadow-sm hover:shadow-md transition-all duration-500 hover:-translate-y-2 animate-fade-up`}
-              style={{ animationDelay: `${index * 0.2}s` }}
+              key={index}
+              className="group p-8 bg-white rounded-2xl border border-border shadow-sketch hover:shadow-hover transition-all duration-300 hover:-translate-y-2"
             >
-              <div className="w-20 h-20 mb-6 animate-float-slow mx-auto">
-                <img
-                  src={feature.icon}
-                  alt={feature.title}
-                  className="w-full h-full object-contain"
+              <div
+                className="w-14 h-14 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300"
+                style={{ backgroundColor: "rgba(8, 79, 140, 0.1)" }}
+              >
+                <feature.icon
+                  className="w-7 h-7"
+                  style={{ color: "#084F8C" }}
                 />
               </div>
-              <h3 className="font-sketch text-2xl font-medium text-foreground mb-3 text-center">
+
+              <h3 className="font-sketch text-xl font-normal text-foreground mb-3">
                 {feature.title}
               </h3>
-              <p className="font-body text-muted-foreground leading-relaxed text-center">
+
+              <p className="font-body text-muted-foreground leading-relaxed">
                 {feature.description}
               </p>
-            </div>
-          ))}
-        </div>
-
-        {/* More Features */}
-        <div className="grid md:grid-cols-3 gap-6">
-          {moreFeatures.map((feature, index) => (
-            <div
-              key={feature.title}
-              className="flex items-start gap-4 p-6 rounded-2xl bg-white border border-border hover:shadow-md transition-all duration-300 animate-fade-up"
-              style={{ animationDelay: `${0.6 + index * 0.15}s` }}
-            >
-              <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-blue-50 flex items-center justify-center">
-                {feature.icon}
-              </div>
-              <div>
-                <h4 className="font-sketch text-xl font-medium text-foreground mb-1">
-                  {feature.title}
-                </h4>
-                <p className="font-body text-sm text-muted-foreground">
-                  {feature.description}
-                </p>
-              </div>
             </div>
           ))}
         </div>

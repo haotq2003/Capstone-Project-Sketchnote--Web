@@ -1,53 +1,40 @@
-import React from "react";
+const Button = ({
+  children,
+  variant = "primary",
+  className = "",
+  ...props
+}) => {
+  const baseStyles =
+    "inline-flex items-center justify-center gap-2 font-normal py-3 px-6 rounded-xl transition-all duration-300 transform hover:-translate-y-1";
 
-const VARIANTS = {
-    default: "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm hover:-translate-y-1 rounded-xl",
-    destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-xl",
-    outline: "border-2 border-primary/30 bg-background hover:bg-primary/5 hover:border-primary/50 rounded-xl text-primary",
-    secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-xl",
-    ghost: "hover:bg-accent hover:text-accent-foreground rounded-xl",
-    link: "text-primary underline-offset-4 hover:underline",
-    sketch: "bg-white border-2 border-primary/20 shadow-sm hover:-translate-y-1 rounded-xl text-foreground font-medium",
-    hero: "bg-primary text-white font-bold hover:-translate-y-1 shadow-lg shadow-primary/30 rounded-xl",
-    blue: "bg-sketch-blue text-primary-foreground rounded-xl",
-    sky: "bg-sketch-sky text-foreground rounded-xl",
-};
+  const variants = {
+    primary: "text-white shadow-lg hover:shadow-xl",
+    secondary: "bg-white border-2 shadow-sketch hover:shadow-hover",
+    outline: "bg-transparent border-2 hover:bg-opacity-10",
+  };
 
-const SIZES = {
-    default: "h-10 px-4 py-2 text-sm",
-    sm: "h-9 px-3 text-sm",
-    lg: "h-12 px-8 text-base",
-    xl: "h-14 px-10 text-lg rounded-2xl",
-    icon: "h-10 w-10",
-};
-
-export const Button = React.forwardRef(
-    (
-        {
-            className = "",
-            variant = "default",
-            size = "default",
-            type = "button",
-            ...props
-        },
-        ref
-    ) => {
-        return (
-            <button
-                ref={ref}
-                type={type}
-                className={`
-          inline-flex items-center justify-center gap-2
-          font-medium transition-all duration-300
-          disabled:opacity-50 disabled:pointer-events-none
-          ${VARIANTS[variant]}
-          ${SIZES[size]}
-          ${className}
-        `}
-                {...props}
-            />
-        );
+  const getStyle = () => {
+    switch (variant) {
+      case "primary":
+        return { backgroundColor: "#084F8C", color: "white" };
+      case "secondary":
+        return { color: "#084F8C", borderColor: "#084F8C" };
+      case "outline":
+        return { color: "#084F8C", borderColor: "#084F8C" };
+      default:
+        return { backgroundColor: "#084F8C", color: "white" };
     }
-);
+  };
 
-Button.displayName = "Button";
+  return (
+    <button
+      className={`${baseStyles} ${variants[variant]} ${className}`}
+      style={getStyle()}
+      {...props}
+    >
+      {children}
+    </button>
+  );
+};
+
+export default Button;
