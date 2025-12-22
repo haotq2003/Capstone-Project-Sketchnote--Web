@@ -1,129 +1,133 @@
-import { useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { Button } from "./Button";
-
-const screenshots = [
-  {
-    id: 1,
-    title: "Main Canvas",
-    description: "Clean and intuitive workspace",
-  },
-  {
-    id: 2,
-    title: "Tool Palette",
-    description: "Full set of brushes and drawing tools",
-  },
-  {
-    id: 3,
-    title: "Template Library",
-    description: "Hundreds of beautiful templates",
-  },
-  {
-    id: 4,
-    title: "Export & Share",
-    description: "Share your work easily",
-  },
-];
+import { ArrowRight } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const GallerySection = () => {
-  const [activeIndex, setActiveIndex] = useState(0);
-
-  const nextSlide = () => {
-    setActiveIndex((prev) => (prev + 1) % screenshots.length);
-  };
-
-  const prevSlide = () => {
-    setActiveIndex(
-      (prev) => (prev - 1 + screenshots.length) % screenshots.length
-    );
-  };
+  const galleryItems = [
+    {
+      id: 1,
+      title: "Meeting Notes",
+      category: "Business",
+      image:
+        "https://images.unsplash.com/photo-1517842645767-c639042777db?w=400&h=300&fit=crop",
+    },
+    {
+      id: 2,
+      title: "Study Guide",
+      category: "Education",
+      image:
+        "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=400&h=300&fit=crop",
+    },
+    {
+      id: 3,
+      title: "Recipe Collection",
+      category: "Personal",
+      image:
+        "https://images.unsplash.com/photo-1466637574441-749b8f19452f?w=400&h=300&fit=crop",
+    },
+    {
+      id: 4,
+      title: "Travel Journal",
+      category: "Adventure",
+      image:
+        "https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=400&h=300&fit=crop",
+    },
+    {
+      id: 5,
+      title: "Project Planning",
+      category: "Business",
+      image:
+        "https://images.unsplash.com/photo-1507925921958-8a62f3d1a50d?w=400&h=300&fit=crop",
+    },
+    {
+      id: 6,
+      title: "Creative Ideas",
+      category: "Art",
+      image:
+        "https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=400&h=300&fit=crop",
+    },
+  ];
 
   return (
-    <section className="py-24 bg-muted/30">
+    <section id="gallery" className="py-20 bg-muted/30">
       <div className="container mx-auto px-4">
         {/* Section Header */}
         <div className="text-center mb-16">
-          <span className="inline-block font-hand text-lg text-primary mb-4 font-medium">
-            📱 App Preview
+          <span
+            className="inline-block font-body text-sm font-normal tracking-wider uppercase mb-4"
+            style={{ color: "#084F8C" }}
+          >
+            Gallery
           </span>
-          <h2 className="font-sketch text-4xl md:text-5xl font-medium text-foreground mb-4">
-            Beautiful <span className="text-primary">Interface</span>
+          <h2 className="font-sketch text-4xl md:text-5xl font-normal text-foreground mb-6">
+            Get Inspired by Our{" "}
+            <span style={{ color: "#084F8C" }}>Community</span>
           </h2>
-          <p className="font-body text-muted-foreground max-w-2xl mx-auto">
-            Exquisite design experience, optimized for every interaction
+          <p className="font-body text-lg text-muted-foreground max-w-2xl mx-auto">
+            Explore beautiful sketchnotes created by our amazing community of
+            visual thinkers.
           </p>
         </div>
 
         {/* Gallery Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-          {screenshots.map((screenshot, index) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+          {galleryItems.map((item) => (
             <div
-              key={screenshot.id}
-              className={`group relative overflow-hidden rounded-3xl border-2 border-border bg-card shadow-soft hover:shadow-hover transition-all duration-500 hover:-translate-y-2 cursor-pointer animate-fade-up ${activeIndex === index ? "ring-4 ring-primary ring-offset-4" : ""
-                }`}
-              style={{ animationDelay: `${index * 0.15}s` }}
-              onClick={() => setActiveIndex(index)}
+              key={item.id}
+              className="group relative bg-white rounded-2xl overflow-hidden shadow-sketch hover:shadow-hover transition-all duration-300 hover:-translate-y-2"
             >
-              {/* Placeholder for app screenshot */}
-              <div className="aspect-[9/16] bg-gradient-to-br from-primary/5 to-secondary/5 flex items-center justify-center p-4">
-                <div className="text-center">
-                  <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-primary/10 flex items-center justify-center">
-                    <span className="font-sketch text-3xl">📱</span>
-                  </div>
-                  <p className="font-hand text-muted-foreground text-sm">
-                    Add screenshot #{screenshot.id}
-                  </p>
-                  <p className="font-body text-xs text-muted-foreground/70 mt-1">
-                    (Size: 1080x1920)
-                  </p>
-                </div>
+              {/* Image */}
+              <div className="aspect-[4/3] overflow-hidden">
+                <img
+                  src={item.image}
+                  alt={item.title}
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                />
               </div>
 
-              {/* Overlay Info */}
-              <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-foreground/90 to-transparent">
-                <h4 className="font-sketch text-lg font-medium text-background">
-                  {screenshot.title}
-                </h4>
-                <p className="font-body text-sm text-background/80">
-                  {screenshot.description}
-                </p>
+              {/* Overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+              {/* Content */}
+              <div className="absolute bottom-0 left-0 right-0 p-6 transform translate-y-4 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 transition-all duration-300">
+                <span
+                  className="inline-block px-3 py-1 text-xs font-normal rounded-full mb-2"
+                  style={{ backgroundColor: "#084F8C", color: "white" }}
+                >
+                  {item.category}
+                </span>
+                <h3 className="font-sketch text-xl font-normal text-white">
+                  {item.title}
+                </h3>
+              </div>
+
+              {/* Category Badge (always visible) */}
+              <div className="absolute top-4 right-4">
+                <span
+                  className="px-3 py-1 text-xs font-normal rounded-full"
+                  style={{
+                    backgroundColor: "rgba(8, 79, 140, 0.9)",
+                    color: "white",
+                  }}
+                >
+                  {item.category}
+                </span>
               </div>
             </div>
           ))}
         </div>
 
-        {/* Navigation */}
-        <div className="flex items-center justify-center gap-4">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={prevSlide}
-            className="rounded-full"
+        {/* View More Button */}
+        <div className="text-center">
+          <Link
+            to="/gallery"
+            className="inline-flex items-center gap-2 font-body font-normal transition-colors"
+            style={{ color: "#084F8C" }}
+            onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.8")}
+            onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
           >
-            <ChevronLeft className="w-5 h-5" />
-          </Button>
-
-          <div className="flex gap-2">
-            {screenshots.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => setActiveIndex(index)}
-                className={`w-3 h-3 rounded-full transition-all duration-300 ${activeIndex === index
-                  ? "bg-primary w-8"
-                  : "bg-muted hover:bg-muted-foreground/30"
-                  }`}
-              />
-            ))}
-          </div>
-
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={nextSlide}
-            className="rounded-full"
-          >
-            <ChevronRight className="w-5 h-5" />
-          </Button>
+            View Full Gallery
+            <ArrowRight className="w-5 h-5" />
+          </Link>
         </div>
       </div>
     </section>

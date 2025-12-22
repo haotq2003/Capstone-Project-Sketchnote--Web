@@ -1,115 +1,123 @@
 import { Link } from "react-router-dom";
-import {
-  Pencil,
-  Heart,
-  Mail,
-  Instagram,
-  Facebook,
-  Twitter,
-} from "lucide-react";
+import { Github, Twitter, Instagram, Heart } from "lucide-react";
 
 const Footer = () => {
+  const currentYear = new Date().getFullYear();
+
+  const footerLinks = {
+    Product: [
+      { name: "Features", href: "/features" },
+      { name: "Gallery", href: "/gallery" },
+      { name: "Pricing", href: "/pricing" },
+      { name: "Download", href: "/download" },
+    ],
+    Company: [
+      { name: "About Us", href: "/about" },
+      { name: "Blog", href: "/blog" },
+      { name: "Careers", href: "/careers" },
+      { name: "Contact", href: "/contact" },
+    ],
+    Support: [
+      { name: "Help Center", href: "/help" },
+      { name: "Community", href: "/community" },
+      { name: "Tutorials", href: "/tutorials" },
+      { name: "API Docs", href: "/docs" },
+    ],
+    Legal: [
+      { name: "Privacy Policy", href: "/privacy" },
+      { name: "Terms of Service", href: "/terms" },
+      { name: "Cookie Policy", href: "/cookies" },
+    ],
+  };
+
+  const socialLinks = [
+    { icon: Github, href: "https://github.com", label: "GitHub" },
+    { icon: Twitter, href: "https://twitter.com", label: "Twitter" },
+    { icon: Instagram, href: "https://instagram.com", label: "Instagram" },
+  ];
+
   return (
-    <footer className="bg-[#1E293B] text-white py-16">
-      <div className="container mx-auto px-4">
-        <div className="grid md:grid-cols-4 gap-12">
-          {/* Brand */}
-          <div className="md:col-span-2">
+    <footer className="bg-foreground text-white">
+      <div className="container mx-auto px-4 py-16">
+        {/* Main Footer Content */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-12 mb-12">
+          {/* Brand Section */}
+          <div className="lg:col-span-2">
             <Link to="/" className="flex items-center gap-2 mb-6">
-              <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center">
-                <Pencil className="w-5 h-5 text-white" />
-              </div>
-              <span className="font-sketch text-2xl font-bold text-white">
+              <img src="/logo.png" alt="Logo" className="w-10 h-10" />
+              <span className="font-sketch text-2xl font-normal text-white">
                 SketchNote
               </span>
             </Link>
-            <p className="font-body text-gray-400 max-w-sm mb-6">
-              The leading sketchnote app to help you take notes and create anytime, anywhere.
+
+            <p className="font-body text-gray-400 mb-6 leading-relaxed">
+              Transform your ideas into beautiful visual notes. SketchNote makes
+              it easy to capture, organize, and share your thoughts creatively.
             </p>
-            <div className="flex items-center gap-4">
-              <a
-                href="#"
-                className="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors"
-              >
-                <Instagram className="w-5 h-5 text-gray-400" />
-              </a>
-              <a
-                href="#"
-                className="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors"
-              >
-                <Facebook className="w-5 h-5 text-gray-400" />
-              </a>
-              <a
-                href="#"
-                className="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors"
-              >
-                <Twitter className="w-5 h-5 text-gray-400" />
-              </a>
+
+            {/* Social Links */}
+            <div className="flex gap-4">
+              {socialLinks.map((social, index) => (
+                <a
+                  key={index}
+                  href={social.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={social.label}
+                  className="w-10 h-10 rounded-xl flex items-center justify-center text-gray-400 transition-all duration-300 hover:text-white"
+                  style={{ backgroundColor: "rgba(8, 79, 140, 0.3)" }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.backgroundColor = "#084F8C")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.backgroundColor =
+                      "rgba(8, 79, 140, 0.3)")
+                  }
+                >
+                  <social.icon className="w-5 h-5" />
+                </a>
+              ))}
             </div>
           </div>
 
-          {/* Links */}
-          <div>
-            <h4 className="font-sketch text-xl font-medium mb-6 text-white">Links</h4>
-            <ul className="space-y-3">
-              <li>
-                <Link
-                  to="/"
-                  className="font-body text-gray-400 hover:text-white transition-colors"
-                >
-                  Home
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/features"
-                  className="font-body text-gray-400 hover:text-white transition-colors"
-                >
-                  Features
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/gallery"
-                  className="font-body text-gray-400 hover:text-white transition-colors"
-                >
-                  Gallery
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/about"
-                  className="font-body text-gray-400 hover:text-white transition-colors"
-                >
-                  About Us
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          {/* Contact */}
-          <div>
-            <h4 className="font-sketch text-xl font-medium mb-6 text-white">Contact</h4>
-            <ul className="space-y-3">
-              <li className="flex items-center gap-3">
-                <Mail className="w-4 h-4 text-gray-400" />
-                <span className="font-body text-gray-400">
-                  hello@sketchnote.app
-                </span>
-              </li>
-            </ul>
-          </div>
+          {/* Links Sections */}
+          {Object.entries(footerLinks).map(([title, links]) => (
+            <div key={title}>
+              <h4 className="font-sketch text-lg font-normal mb-4">{title}</h4>
+              <ul className="space-y-3">
+                {links.map((link, index) => (
+                  <li key={index}>
+                    <Link
+                      to={link.href}
+                      className="font-body text-gray-400 transition-colors"
+                      onMouseEnter={(e) => (e.target.style.color = "#5B9BD5")}
+                      onMouseLeave={(e) => (e.target.style.color = "")}
+                    >
+                      {link.name}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </div>
 
-        {/* Bottom */}
-        <div className="mt-12 pt-8 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="font-body text-sm text-gray-500">
-            © 2024 SketchNote. All rights reserved.
-          </p>
-          <p className="font-hand text-sm text-gray-500 flex items-center gap-1">
-            Made with <Heart className="w-4 h-4 text-primary fill-primary" />{" "}
-            for creators
-          </p>
+        {/* Divider */}
+        <div className="border-t border-gray-800 pt-8">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <p className="font-body text-gray-400 text-sm">
+              © {currentYear} SketchNote. All rights reserved.
+            </p>
+
+            <p className="font-body text-gray-400 text-sm flex items-center gap-1">
+              Made with{" "}
+              <Heart
+                className="w-4 h-4 fill-current"
+                style={{ color: "#084F8C" }}
+              />{" "}
+              by the SketchNote Team
+            </p>
+          </div>
         </div>
       </div>
     </footer>

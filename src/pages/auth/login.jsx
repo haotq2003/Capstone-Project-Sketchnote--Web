@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { authService } from "../../service/authService";
 import {
   PenTool,
@@ -9,6 +9,7 @@ import {
   Mail,
   Lock,
   ArrowRight,
+  ArrowLeft,
   Brush,
   Palette,
   Pencil,
@@ -172,28 +173,32 @@ const SketchnoteLogin = () => {
       const { roles } = await authService.login(email, password);
 
       // Check if user is CUSTOMER only (not ADMIN or STAFF)
-      const isCustomerOnly = roles.includes("CUSTOMER") &&
+      const isCustomerOnly =
+        roles.includes("CUSTOMER") &&
         !roles.includes("ADMIN") &&
         !roles.includes("STAFF");
 
       if (isCustomerOnly) {
-        // Show access denied modal for customers
         message.error({
           content: (
             <div>
               <div className="font-semibold mb-2">Access Restricted</div>
-              <div className="text-sm">This web platform is for Admin and Staff only.</div>
-              <div className="text-sm mt-1">Please use our Mobile App instead.</div>
+              <div className="text-sm">
+                This web platform is for Admin and Staff only.
+              </div>
+              <div className="text-sm mt-1">
+                Please use our Mobile App instead.
+              </div>
             </div>
           ),
           duration: 5,
           style: { marginTop: "20vh" },
         });
 
-        // Logout and clear session
-        localStorage.removeItem('token');
-        localStorage.removeItem('userInfo');
-        localStorage.removeItem('roles');
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("refreshToken");
+        localStorage.removeItem("userInfo");
+        localStorage.removeItem("roles");
 
         setLoading(false);
         return;
@@ -227,7 +232,7 @@ const SketchnoteLogin = () => {
     }
   };
 
-  // Floating icons data - giống app vẽ vời
+  // Floating icons data
   const floatingIcons = [
     {
       Icon: Brush,
@@ -358,7 +363,37 @@ const SketchnoteLogin = () => {
   ];
 
   return (
-    <div className="relative flex flex-col items-center justify-center min-h-screen overflow-hidden bg-gradient-to-br from-[#1e3a8a] via-[#3b82f6] to-[#06b6d4]">
+    <div className="relative flex flex-col items-center justify-center min-h-screen overflow-hidden bg-gradient-to-br from-[#0a3d6e] via-[#084F8C] to-[#0891b2]">
+      {/* Google Fonts - Pacifico */}
+      <style>
+        {`
+          @import url('https://fonts.googleapis.com/css2?family=Pacifico&display=swap');
+          .font-pacifico {
+            font-family: 'Pacifico', cursive;
+          }
+        `}
+      </style>
+
+      {/* Back to Home Button */}
+      <motion.div
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.5, delay: 0.2 }}
+        className="absolute top-6 left-6"
+        style={{ zIndex: 20 }}
+      >
+        <Link to="/">
+          <motion.button
+            whileHover={{ scale: 1.05, x: -5 }}
+            whileTap={{ scale: 0.95 }}
+            className="flex items-center gap-2 px-4 py-2.5 bg-white/20 backdrop-blur-md text-white rounded-xl border border-white/30 hover:bg-white/30 transition-all duration-300 shadow-lg"
+          >
+            <ArrowLeft size={20} />
+            <span className="font-normal">Back to Home</span>
+          </motion.button>
+        </Link>
+      </motion.div>
+
       {/* Three.js Canvas Background */}
       <canvas
         ref={canvasRef}
@@ -368,11 +403,11 @@ const SketchnoteLogin = () => {
 
       {/* Animated gradient overlay */}
       <div
-        className="absolute inset-0 bg-gradient-to-br from-blue-600/20 via-transparent to-cyan-500/20"
+        className="absolute inset-0 bg-gradient-to-br from-[#084F8C]/30 via-transparent to-[#0e7490]/30"
         style={{ zIndex: 2 }}
       />
 
-      {/* Floating drawing tool icons - scattered everywhere */}
+      {/* Floating drawing tool icons */}
       {floatingIcons.map(
         ({ Icon, position, delay, duration, color }, index) => (
           <motion.div
@@ -411,13 +446,10 @@ const SketchnoteLogin = () => {
         )
       )}
 
-      {/* Additional decorative elements */}
+      {/* Decorative circles */}
       <motion.div
         className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
-        animate={{
-          rotate: 360,
-          scale: [1, 1.1, 1],
-        }}
+        animate={{ rotate: 360, scale: [1, 1.1, 1] }}
         transition={{
           rotate: { repeat: Infinity, duration: 20, ease: "linear" },
           scale: { repeat: Infinity, duration: 3, ease: "easeInOut" },
@@ -429,10 +461,7 @@ const SketchnoteLogin = () => {
 
       <motion.div
         className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
-        animate={{
-          rotate: -360,
-          scale: [1, 1.15, 1],
-        }}
+        animate={{ rotate: -360, scale: [1, 1.15, 1] }}
         transition={{
           rotate: { repeat: Infinity, duration: 25, ease: "linear" },
           scale: { repeat: Infinity, duration: 4, ease: "easeInOut" },
@@ -444,7 +473,7 @@ const SketchnoteLogin = () => {
 
       {/* Content Container */}
       <div className="relative z-10 flex flex-col items-center w-full px-4">
-        {/* Logo and Slogan with drawing icon */}
+        {/* Logo and Slogan */}
         <motion.div
           initial={{ opacity: 0, y: -50 }}
           animate={{ opacity: 1, y: 0 }}
@@ -461,10 +490,10 @@ const SketchnoteLogin = () => {
               animate={{ rotate: [0, -10, 10, -10, 0] }}
               transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
             >
-              <Palette size={48} className="text-white" strokeWidth={2} />
+              <img src="/logo.png" alt="Logo" className="w-12 h-12" />
             </motion.div>
-            <h1 className="text-6xl md:text-7xl font-black text-white tracking-tight">
-              Sketchnote
+            <h1 className="font-pacifico text-6xl md:text-7xl text-white tracking-tight">
+              SketchNote
             </h1>
             <motion.div
               animate={{ rotate: [0, 15, -15, 15, 0] }}
@@ -507,7 +536,10 @@ const SketchnoteLogin = () => {
             >
               <div className="flex items-center justify-center gap-2 mb-2">
                 <Sparkles className="text-blue-600" size={24} />
-                <h2 className="text-3xl font-bold text-center bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
+                <h2
+                  className="text-3xl text-center font-normal"
+                  style={{ color: "#084F8C" }}
+                >
                   Welcome Back
                 </h2>
                 <Sparkles className="text-cyan-600" size={24} />
@@ -519,7 +551,7 @@ const SketchnoteLogin = () => {
               <form onSubmit={handleLogin} className="space-y-6">
                 {/* Email Input */}
                 <motion.div whileTap={{ scale: 0.995 }} className="relative">
-                  <label className="block text-gray-700 font-medium mb-2 text-sm">
+                  <label className="block text-gray-700 font-normal mb-2 text-sm">
                     Email Address
                   </label>
                   <div className="relative">
@@ -533,10 +565,11 @@ const SketchnoteLogin = () => {
                       onChange={(e) => setEmail(e.target.value)}
                       onFocus={() => setFocusedInput("email")}
                       onBlur={() => setFocusedInput(null)}
-                      className={`w-full pl-12 pr-4 py-3.5 border-2 rounded-xl transition-all duration-300 ${focusedInput === "email"
-                        ? "border-blue-500 shadow-lg shadow-blue-500/20"
-                        : "border-gray-200 hover:border-gray-300"
-                        } focus:outline-none bg-gray-50 focus:bg-white`}
+                      className={`w-full pl-12 pr-4 py-3.5 border-2 rounded-xl transition-all duration-300 ${
+                        focusedInput === "email"
+                          ? "border-[#084F8C] shadow-lg shadow-[#084F8C]/20"
+                          : "border-gray-200 hover:border-gray-300"
+                      } focus:outline-none bg-gray-50 focus:bg-white`}
                       placeholder="you@example.com"
                       required
                     />
@@ -545,7 +578,7 @@ const SketchnoteLogin = () => {
 
                 {/* Password Input */}
                 <motion.div whileTap={{ scale: 0.995 }} className="relative">
-                  <label className="block text-gray-700 font-medium mb-2 text-sm">
+                  <label className="block text-gray-700 font-normal mb-2 text-sm">
                     Password
                   </label>
                   <div className="relative">
@@ -559,10 +592,11 @@ const SketchnoteLogin = () => {
                       onChange={(e) => setPassword(e.target.value)}
                       onFocus={() => setFocusedInput("password")}
                       onBlur={() => setFocusedInput(null)}
-                      className={`w-full pl-12 pr-4 py-3.5 border-2 rounded-xl transition-all duration-300 ${focusedInput === "password"
-                        ? "border-blue-500 shadow-lg shadow-blue-500/20"
-                        : "border-gray-200 hover:border-gray-300"
-                        } focus:outline-none bg-gray-50 focus:bg-white`}
+                      className={`w-full pl-12 pr-4 py-3.5 border-2 rounded-xl transition-all duration-300 ${
+                        focusedInput === "password"
+                          ? "border-[#084F8C] shadow-lg shadow-[#084F8C]/20"
+                          : "border-gray-200 hover:border-gray-300"
+                      } focus:outline-none bg-gray-50 focus:bg-white`}
                       placeholder="••••••••"
                       required
                     />
@@ -575,8 +609,13 @@ const SketchnoteLogin = () => {
                   disabled={loading}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  className={`w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white py-4 rounded-xl font-semibold transition-all duration-300 shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40 flex items-center justify-center gap-2 ${loading ? "opacity-70 cursor-not-allowed" : ""
-                    }`}
+                  className={`w-full py-4 rounded-xl text-white font-normal transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center gap-2 ${
+                    loading ? "opacity-70 cursor-not-allowed" : ""
+                  }`}
+                  style={{
+                    backgroundColor: "#084F8C",
+                    boxShadow: "0 10px 25px -5px rgba(8, 79, 140, 0.3)",
+                  }}
                 >
                   {loading ? (
                     <div className="flex items-center gap-2">
@@ -612,7 +651,8 @@ const SketchnoteLogin = () => {
           className="text-white/70 text-sm mt-8 flex items-center gap-2"
         >
           <Palette size={16} />
-          © 2025 Sketchnote. All rights reserved.
+          <span className="font-pacifico">© 2025 SketchNote.</span> All rights
+          reserved.
           <Brush size={16} />
         </motion.p>
       </div>
