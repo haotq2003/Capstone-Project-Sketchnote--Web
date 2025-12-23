@@ -88,7 +88,7 @@ const OrderTransactions = () => {
       width: 100,
       render: (_, record) => (
         <Button
-          style={{ background: "#a1f0ecff", color: "white" }}
+          type="primary"
           onClick={() => handleViewDetail(record)}
         >
           View

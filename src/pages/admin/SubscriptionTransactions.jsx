@@ -81,7 +81,7 @@ const SubscriptionTransactions = () => {
       width: 100,
       render: (_, record) => (
         <Button
-          style={{ background: "#a1f0ecff", color: "black" }}
+          type="primary"
           onClick={() => handleViewDetail(record)}
         >
           View

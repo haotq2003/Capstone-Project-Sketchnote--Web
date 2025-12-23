@@ -165,7 +165,7 @@ const TransactionsManagement = () => {
       width: 100,
       render: (_, record) => (
         <Button
-
+          type="primary"
           onClick={() => handleViewDetail(record)}
         >
           View
