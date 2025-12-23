@@ -133,14 +133,18 @@ const ResourceReviewPage = () => {
 
   const columns = [
     {
-      title: "ID",
-      dataIndex: "resourceTemplateId",
-      key: "id",
-      width: 80,
+      title: "No.",
+      key: "index",
+      width: 60,
+      render: (_, __, index) => {
+        const { current, pageSize } = pagination;
+        return (current - 1) * pageSize + index + 1;
+      },
     },
     {
       title: "Thumbnail",
       key: "thumbnail",
+      width: 150,
       render: (_, record) => (
         <Image
           src={record.images?.[0]?.imageUrl || "https://via.placeholder.com/80"}
@@ -153,6 +157,8 @@ const ResourceReviewPage = () => {
       title: "Name",
       dataIndex: "name",
       key: "name",
+      width: 150,
+      ellipsis: true,
       render: (text) => <b>{text}</b>,
     },
     {
@@ -190,20 +196,18 @@ const ResourceReviewPage = () => {
 
   const versionColumns = [
     {
-      title: "Version ID",
-      dataIndex: "versionId",
-      key: "versionId",
-      width: 80,
-    },
-    {
-      title: "Template ID",
-      dataIndex: "templateId",
-      key: "templateId",
-      width: 100,
+      title: "No.",
+      key: "index",
+      width: 60,
+      render: (_, __, index) => {
+        const { current, pageSize } = versionPagination;
+        return (current - 1) * pageSize + index + 1;
+      },
     },
     {
       title: "Thumbnail",
       key: "thumbnail",
+      width: 150,
       render: (_, record) => (
         <Image
           src={record.images?.[0]?.imageUrl || "https://via.placeholder.com/80"}
@@ -216,18 +220,22 @@ const ResourceReviewPage = () => {
       title: "Name",
       dataIndex: "name",
       key: "name",
+      width: 120,
+      ellipsis: true,
       render: (text) => <b>{text}</b>,
     },
     {
       title: "Version",
       dataIndex: "versionNumber",
       key: "versionNumber",
+      width: 120,
       render: (versionNumber) => <Tag color="purple">v{versionNumber}</Tag>,
     },
     {
       title: "Type",
       dataIndex: "type",
       key: "type",
+      width: 120,
       render: (type) => <Tag color="blue">{type}</Tag>,
     },
     {
@@ -327,7 +335,7 @@ const ResourceReviewPage = () => {
       {/* View Details Modal */}
       <Modal
         open={isModalVisible}
-        title={`Resource Details - Version ${selectedResource?.versionNumber || 'N/A'}`}
+        title={<span style={{ fontSize: 18, fontWeight: 600 }}>Resource Details </span>}
         onCancel={() => setIsModalVisible(false)}
         footer={[
           <Button key="close" onClick={() => setIsModalVisible(false)}>
@@ -337,63 +345,139 @@ const ResourceReviewPage = () => {
         width={700}
       >
         {selectedResource && (
-          <>
-            <Descriptions bordered column={1} size="middle">
-              <Descriptions.Item label="Name">{selectedResource.name}</Descriptions.Item>
-              <Descriptions.Item label="Description">{selectedResource.description}</Descriptions.Item>
-              <Descriptions.Item label="Type">{selectedResource.type}</Descriptions.Item>
+          <div style={{ maxHeight: '70vh', overflowY: 'auto' }}>
+            <Descriptions bordered column={1} size="small" labelStyle={{ fontWeight: 600, width: '30%' }}>
+              <Descriptions.Item label="Name">
+                <span style={{ fontWeight: 600, fontSize: 15 }}>{selectedResource.name}</span>
+              </Descriptions.Item>
+              <Descriptions.Item label="Description">
+                {selectedResource.description || 'N/A'}
+              </Descriptions.Item>
+              <Descriptions.Item label="Type">
+                <Tag color="blue">{selectedResource.type}</Tag>
+              </Descriptions.Item>
               <Descriptions.Item label="Status">
-                <Tag color="orange">{selectedResource.status}</Tag>
+                <Tag color={
+                  selectedResource.status === "PENDING_REVIEW" ? "orange" :
+                    selectedResource.status === "APPROVED" ? "green" : "red"
+                }>
+                  {selectedResource.status}
+                </Tag>
               </Descriptions.Item>
               <Descriptions.Item label="Price">
-                {new Intl.NumberFormat("vi-VN", {
-                  style: "currency",
-                  currency: "VND",
-                }).format(selectedResource.price)}
+                <span style={{ fontSize: 16, fontWeight: 600, color: '#52c41a' }}>
+                  {new Intl.NumberFormat("vi-VN", {
+                    style: "currency",
+                    currency: "VND",
+                  }).format(selectedResource.price)}
+                </span>
               </Descriptions.Item>
-              <Descriptions.Item label="Expired Time">{selectedResource.expiredTime}</Descriptions.Item>
-              <Descriptions.Item label="Release Date">{selectedResource.releaseDate}</Descriptions.Item>
+              <Descriptions.Item label="Release Date">
+                {selectedResource.releaseDate ? new Date(selectedResource.releaseDate).toLocaleDateString('vi-VN') : 'N/A'}
+              </Descriptions.Item>
               {selectedResource.versionNumber && (
                 <Descriptions.Item label="Version">
                   <Tag color="purple">v{selectedResource.versionNumber}</Tag>
                 </Descriptions.Item>
               )}
-              {selectedResource.versionId && (
-                <Descriptions.Item label="Version ID">{selectedResource.versionId}</Descriptions.Item>
-              )}
-              {selectedResource.templateId && (
-                <Descriptions.Item label="Template ID">{selectedResource.templateId}</Descriptions.Item>
-              )}
             </Descriptions>
 
-            <div style={{ marginTop: 16 }}>
-              <h4>Images</h4>
-              <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-                {selectedResource.images?.length > 0 ? (
-                  selectedResource.images.map((img) => (
-                    <Image key={img.id} src={img.imageUrl} alt="resource" width={120} />
-                  ))
-                ) : (
-                  <p>No images</p>
-                )}
-              </div>
-
-              <h4 style={{ marginTop: 16 }}>Items</h4>
-
-              <ul className="flex gap-3">
-                {selectedResource.items?.length > 0 ? (
-                  selectedResource.items.map((item) => (
-                    <li key={item.resourceItemId} className="gap-3">
-                      <img src={item.imageUrl} alt={`Price ${item.itemIndex}`} style={{ maxWidth: '200px' }} />
-                    </li>
-                  ))
-                ) : (
-                  <p>No items</p>
-                )}
-              </ul>
-
+            {/* Images Gallery */}
+            <div style={{ marginTop: 24 }}>
+              <h4 style={{
+                fontSize: 15,
+                fontWeight: 600,
+                marginBottom: 12,
+                paddingBottom: 8,
+                borderBottom: '2px solid #fa8c16',
+                color: '#fa8c16'
+              }}>
+                Images Gallery
+              </h4>
+              {selectedResource.images?.length > 0 ? (
+                <Image.PreviewGroup>
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))',
+                    gap: 12
+                  }}>
+                    {selectedResource.images.map((img) => (
+                      <div key={img.id} style={{
+                        border: '1px solid #d9d9d9',
+                        borderRadius: 8,
+                        overflow: 'hidden',
+                        aspectRatio: '1/1',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                        transition: 'transform 0.2s',
+                        cursor: 'pointer'
+                      }}
+                        onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+                        onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                      >
+                        <Image
+                          src={img.imageUrl}
+                          alt="resource"
+                          width="100%"
+                          height="100%"
+                          style={{ objectFit: 'cover' }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </Image.PreviewGroup>
+              ) : (
+                <p style={{ color: '#999', fontStyle: 'italic' }}>No images available</p>
+              )}
             </div>
-          </>
+
+            {/* Items Gallery */}
+            <div style={{ marginTop: 24 }}>
+              <h4 style={{
+                fontSize: 15,
+                fontWeight: 600,
+                marginBottom: 12,
+                paddingBottom: 8,
+                borderBottom: '2px solid #13c2c2',
+                color: '#13c2c2'
+              }}>
+                Items Gallery
+              </h4>
+              {selectedResource.items?.length > 0 ? (
+                <Image.PreviewGroup>
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
+                    gap: 12
+                  }}>
+                    {selectedResource.items.map((item) => (
+                      <div key={item.resourceItemId} style={{
+                        border: '1px solid #d9d9d9',
+                        borderRadius: 8,
+                        overflow: 'hidden',
+                        aspectRatio: '1/1',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                        transition: 'transform 0.2s',
+                        cursor: 'pointer'
+                      }}
+                        onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+                        onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                      >
+                        <Image
+                          src={item.imageUrl}
+                          alt={`Item ${item.itemIndex}`}
+                          width="100%"
+                          height="100%"
+                          style={{ objectFit: 'cover' }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </Image.PreviewGroup>
+              ) : (
+                <p style={{ color: '#999', fontStyle: 'italic' }}>No items available</p>
+              )}
+            </div>
+          </div>
         )}
       </Modal>
     </div>

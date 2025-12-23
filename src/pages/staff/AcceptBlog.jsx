@@ -10,6 +10,8 @@ const AcceptBlog = () => {
   const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 });
   const [selectedBlog, setSelectedBlog] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [moderationInfo, setModerationInfo] = useState(null);
+  const [loadingModeration, setLoadingModeration] = useState(false);
 
   const paginatedBlogs = useMemo(() => {
     const start = (pagination.current - 1) * pagination.pageSize;
@@ -20,9 +22,9 @@ const AcceptBlog = () => {
   const fetchBlogs = async (page = 1, size = pagination.pageSize) => {
     try {
       setLoading(true);
-      const res = await BlogService.getBlogsStatusDraft(pagination.current, pagination.pageSize, "DRAFT");
+      const res = await BlogService.getBlogsStatus(pagination.current, pagination.pageSize, "AI_REJECTED");
       console.log(res);
-      
+
       // Transform API data to match table structure
       const transformedBlogs = res.map((blog) => ({
         id: blog.id,
@@ -40,11 +42,11 @@ const AcceptBlog = () => {
       }));
 
       setAllBlogs(transformedBlogs);
-      setPagination((prev) => ({ 
-        ...prev, 
-        current: page, 
-        pageSize: size, 
-        total: transformedBlogs.length 
+      setPagination((prev) => ({
+        ...prev,
+        current: page,
+        pageSize: size,
+        total: transformedBlogs.length
       }));
     } catch (err) {
       message.error(err.message || "Failed to load blog list");
@@ -66,13 +68,13 @@ const AcceptBlog = () => {
           if (isAccept) {
             await BlogService.acceptBlog(record.id, "PUBLISHED");
           } else {
-            await BlogService.acceptBlog(record.id, "ARCHIVED");
+            await BlogService.acceptBlog(record.id, "REJECTED");
           }
-          
+
           // Update local state
-          const next = allBlogs.map((b) => 
-            b.id === record.id 
-              ? { ...b, status: isAccept ? "PUBLISHED" : "ARCHIVED" } 
+          const next = allBlogs.map((b) =>
+            b.id === record.id
+              ? { ...b, status: isAccept ? "PUBLISHED" : "REJECTED" }
               : b
           );
           setAllBlogs(next);
@@ -85,9 +87,23 @@ const AcceptBlog = () => {
     });
   };
 
-  const handleView = (record) => {
+  const handleView = async (record) => {
     setSelectedBlog(record);
     setIsModalVisible(true);
+    setModerationInfo(null);
+
+    // Fetch moderation info if blog is AI_REJECTED
+    if (record.status === "AI_REJECTED") {
+      try {
+        setLoadingModeration(true);
+        const moderationData = await BlogService.checkBlog(record.id);
+        setModerationInfo(moderationData);
+      } catch (err) {
+        console.error("Failed to fetch moderation info:", err);
+      } finally {
+        setLoadingModeration(false);
+      }
+    }
   };
 
   const getStatusColor = (status) => {
@@ -101,6 +117,7 @@ const AcceptBlog = () => {
         return "green";
       case "REJECTED":
       case "ARCHIVED":
+      case "AI_REJECTED":
         return "red";
       default:
         return "default";
@@ -108,15 +125,24 @@ const AcceptBlog = () => {
   };
 
   const columns = [
-    { title: "ID", dataIndex: "id", key: "id", width: 80 },
+    {
+      title: "No.",
+      key: "index",
+      width: 60,
+      render: (_, __, index) => {
+        const { current, pageSize } = pagination;
+        return (current - 1) * pageSize + index + 1;
+      },
+    },
     {
       title: "Cover Image",
       key: "cover",
+      width: 120,
       render: (_, record) => (
-        <Image 
-          src={record.coverUrl} 
-          alt="cover" 
-          width={80} 
+        <Image
+          src={record.coverUrl}
+          alt="cover"
+          width={80}
           fallback="https://via.placeholder.com/80x80?text=No+Image"
         />
       ),
@@ -125,27 +151,40 @@ const AcceptBlog = () => {
       title: "Title",
       dataIndex: "title",
       key: "title",
+      ellipsis: true,
       render: (text) => <b>{text}</b>,
     },
-    { title: "Author", dataIndex: "author", key: "author" },
+    {
+      title: "Author",
+      dataIndex: "author",
+      key: "author",
+      width: 150,
+    },
     {
       title: "Status",
       dataIndex: "status",
       key: "status",
+      width: 130,
       render: (status) => (
         <Tag color={getStatusColor(status)}>
           {status}
         </Tag>
       ),
     },
-    { title: "Created Date", dataIndex: "createdAt", key: "createdAt" },
+    {
+      title: "Created Date",
+      dataIndex: "createdAt",
+      key: "createdAt",
+      width: 120,
+    },
     {
       title: "Actions",
       key: "actions",
+      width: 260,
       render: (_, record) => (
         <Space>
           <Button onClick={() => handleView(record)}>View</Button>
-          {record.status === "DRAFT" && (
+          {(record.status === "DRAFT" || record.status === "PENDING_REVIEW" || record.status === "AI_REJECTED") && (
             <>
               <Button type="primary" onClick={() => handleAction(record, true)}>
                 Approve
@@ -162,7 +201,6 @@ const AcceptBlog = () => {
 
   return (
     <div style={{ padding: 24 }}>
-    
       <Table
         columns={columns}
         dataSource={paginatedBlogs}
@@ -181,58 +219,217 @@ const AcceptBlog = () => {
 
       <Modal
         open={isModalVisible}
-        title={`Blog Details #${selectedBlog?.id}`}
+        title={<span style={{ fontSize: 18, fontWeight: 600 }}>Blog Details</span>}
         onCancel={() => setIsModalVisible(false)}
         footer={[
           <Button key="close" onClick={() => setIsModalVisible(false)}>
             Close
           </Button>
         ]}
-        width={800}
+        width={900}
       >
         {selectedBlog && (
-          <>
-            <Descriptions bordered column={1} size="middle">
-              <Descriptions.Item label="Title">{selectedBlog.title}</Descriptions.Item>
-              <Descriptions.Item label="Author">{selectedBlog.author}</Descriptions.Item>
-              <Descriptions.Item label="Status">
-                <Tag color={getStatusColor(selectedBlog.status)}>
-                  {selectedBlog.status}
-                </Tag>
-              </Descriptions.Item>
-              <Descriptions.Item label="Created Date">{selectedBlog.createdAt}</Descriptions.Item>
-              <Descriptions.Item label="Tags">
-                {selectedBlog.tags?.length ? (
-                  selectedBlog.tags.map((t) => <Tag key={t}>{t}</Tag>)
-                ) : (
-                  "No tags"
+          <div style={{ maxHeight: '70vh', overflowY: 'auto' }}>
+            {/* Basic Information Section */}
+            <div style={{ marginBottom: 24 }}>
+              <h4 style={{
+                fontSize: 15,
+                fontWeight: 600,
+                marginBottom: 12,
+                paddingBottom: 8,
+                borderBottom: '2px solid #1890ff',
+                color: '#1890ff'
+              }}>
+                Basic Information
+              </h4>
+              <Descriptions bordered column={1} size="small" labelStyle={{ fontWeight: 600, width: '25%' }}>
+                <Descriptions.Item label="Title">
+                  <span style={{ fontWeight: 600, fontSize: 15 }}>{selectedBlog.title}</span>
+                </Descriptions.Item>
+                <Descriptions.Item label="Author">{selectedBlog.author}</Descriptions.Item>
+                <Descriptions.Item label="Status">
+                  <Tag color={getStatusColor(selectedBlog.status)}>
+                    {selectedBlog.status}
+                  </Tag>
+                </Descriptions.Item>
+                <Descriptions.Item label="Created Date">{selectedBlog.createdAt}</Descriptions.Item>
+                {selectedBlog.excerpt && (
+                  <Descriptions.Item label="Summary">{selectedBlog.excerpt}</Descriptions.Item>
                 )}
-              </Descriptions.Item>
-              <Descriptions.Item label="Summary">{selectedBlog.excerpt}</Descriptions.Item>
-            </Descriptions>
+                {selectedBlog.tags?.length > 0 && (
+                  <Descriptions.Item label="Tags">
+                    {selectedBlog.tags.map((t) => <Tag key={t}>{t}</Tag>)}
+                  </Descriptions.Item>
+                )}
+              </Descriptions>
+            </div>
 
-            <div style={{ marginTop: 16 }}>
-              <h4>Content</h4>
+            {/* AI Moderation Information Section */}
+            {selectedBlog.status === "AI_REJECTED" && (
+              <div style={{ marginBottom: 24 }}>
+                <h4 style={{
+                  fontSize: 15,
+                  fontWeight: 600,
+                  marginBottom: 12,
+                  paddingBottom: 8,
+                  borderBottom: '2px solid #ff4d4f',
+                  color: '#ff4d4f'
+                }}>
+                  AI Moderation Information
+                </h4>
+                {loadingModeration ? (
+                  <div style={{ textAlign: 'center', padding: 20 }}>
+                    <span>Loading moderation information...</span>
+                  </div>
+                ) : moderationInfo ? (
+                  <Descriptions bordered column={1} size="small" labelStyle={{ fontWeight: 600, width: '25%' }}>
+                    <Descriptions.Item label="Safety Status">
+                      <Tag color={moderationInfo.isSafe ? "green" : "red"}>
+                        {moderationInfo.isSafe ? "SAFE" : "UNSAFE"}
+                      </Tag>
+                    </Descriptions.Item>
+                    <Descriptions.Item label="Safety Score">
+                      <span style={{
+                        fontWeight: 600,
+                        fontSize: 16,
+                        color: moderationInfo.safetyScore >= 70 ? '#52c41a' : moderationInfo.safetyScore >= 40 ? '#faad14' : '#ff4d4f'
+                      }}>
+                        {moderationInfo.safetyScore}/100
+                      </span>
+                    </Descriptions.Item>
+                    <Descriptions.Item label="Rejection Reason">
+                      <div style={{
+                        padding: 12,
+                        backgroundColor: '#fff2e8',
+                        borderRadius: 6,
+                        border: '1px solid #ffbb96',
+                        lineHeight: 1.6
+                      }}>
+                        {moderationInfo.reason}
+                      </div>
+                    </Descriptions.Item>
+                    <Descriptions.Item label="Checked At">
+                      {new Date(moderationInfo.checkedAt).toLocaleString('en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit'
+                      })}
+                    </Descriptions.Item>
+                    <Descriptions.Item label="Previous Status">
+                      <Tag color="blue">{moderationInfo.previousStatus}</Tag>
+                    </Descriptions.Item>
+                  </Descriptions>
+                ) : (
+                  <div style={{
+                    textAlign: 'center',
+                    padding: 20,
+                    color: '#999',
+                    fontStyle: 'italic'
+                  }}>
+                    No moderation information available
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Cover Image Section */}
+            {selectedBlog.coverUrl && (
+              <div style={{ marginBottom: 24 }}>
+                <h4 style={{
+                  fontSize: 15,
+                  fontWeight: 600,
+                  marginBottom: 12,
+                  paddingBottom: 8,
+                  borderBottom: '2px solid #52c41a',
+                  color: '#52c41a'
+                }}>
+                  Cover Image
+                </h4>
+                <Image
+                  src={selectedBlog.coverUrl}
+                  alt="cover"
+                  style={{
+                    maxWidth: '100%',
+                    borderRadius: 8,
+                    border: '1px solid #d9d9d9',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                  }}
+                />
+              </div>
+            )}
+
+            {/* Content Section */}
+            <div style={{ marginBottom: 24 }}>
+              <h4 style={{
+                fontSize: 15,
+                fontWeight: 600,
+                marginBottom: 12,
+                paddingBottom: 8,
+                borderBottom: '2px solid #fa8c16',
+                color: '#fa8c16'
+              }}>
+                Content
+              </h4>
               {selectedBlog.contents?.length > 0 ? (
                 selectedBlog.contents.map((section, index) => (
-                  <div key={index} style={{ marginBottom: 16 }}>
-                    <h5>{section.sectionTitle}</h5>
-                    <p style={{ whiteSpace: "pre-wrap" }}>{section.content}</p>
+                  <div
+                    key={index}
+                    style={{
+                      marginBottom: 20,
+                      padding: 16,
+                      backgroundColor: '#fafafa',
+                      borderRadius: 8,
+                      border: '1px solid #e8e8e8'
+                    }}
+                  >
+                    <h5 style={{
+                      fontSize: 14,
+                      fontWeight: 600,
+                      marginBottom: 12,
+                      color: '#262626'
+                    }}>
+                      {section.sectionTitle}
+                    </h5>
+                    <p style={{
+                      whiteSpace: "pre-wrap",
+                      lineHeight: 1.6,
+                      color: '#595959',
+                      marginBottom: section.contentUrl && section.contentUrl !== "string" ? 12 : 0
+                    }}>
+                      {section.content}
+                    </p>
                     {section.contentUrl && section.contentUrl !== "string" && (
-                      <Image 
-                        src={section.contentUrl} 
-                        alt={`content-${index}`} 
-                        width={300}
-                        style={{ marginTop: 8 }}
+                      <Image
+                        src={section.contentUrl}
+                        alt={`content-${index}`}
+                        style={{
+                          maxWidth: '100%',
+                          borderRadius: 8,
+                          border: '1px solid #d9d9d9',
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                        }}
                       />
                     )}
                   </div>
                 ))
               ) : (
-                <p style={{ whiteSpace: "pre-wrap" }}>{selectedBlog.content}</p>
+                <p style={{
+                  whiteSpace: "pre-wrap",
+                  lineHeight: 1.6,
+                  color: '#595959',
+                  padding: 16,
+                  backgroundColor: '#fafafa',
+                  borderRadius: 8,
+                  border: '1px solid #e8e8e8'
+                }}>
+                  {selectedBlog.content || "No content available"}
+                </p>
               )}
             </div>
-          </>
+          </div>
         )}
       </Modal>
     </div>
