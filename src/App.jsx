@@ -18,6 +18,9 @@ import ResourceTemplate from "./pages/staff/ResourceTemplate";
 import NotFound from "./pages/NotFound";
 import Welcome from "./pages/welcome/Welcome";
 import HomeScreen from "./pages/home/HomeScreen";
+import Features from "./pages/home/Features";
+import Gallery from "./pages/home/Gallery";
+import AboutUs from "./pages/home/AboutUs";
 
 import DesignerResourceManager from "./pages/designer/ResourceManager";
 import DesignerReportView from "./pages/designer/ReportView";
@@ -52,6 +55,9 @@ function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/welcome" element={<Welcome />} />
       <Route path="/home" element={<HomeScreen />} />
+      <Route path="/features" element={<Features />} />
+      <Route path="/gallery" element={<Gallery />} />
+      <Route path="/about" element={<AboutUs />} />
       {/* Payment callback routes (public) */}
       <Route path="/payment-callback" element={<PaymentCallback />} />
       <Route path="/wallet-success" element={<PaymentSuccess />} />

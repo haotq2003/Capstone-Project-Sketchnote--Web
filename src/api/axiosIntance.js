@@ -5,16 +5,19 @@ const API_URL = import.meta.env.VITE_API_URL;
 export const publicApi = axios.create({
   baseURL: API_URL,
 });
+  baseURL: API_URL,
+});
 
 export const privateApi = axios.create({
   baseURL: API_URL,
 });
 
+// Flag để tránh gọi refresh token nhiều lần cùng lúc
 let isRefreshing = false;
 let failedQueue = [];
 
 const processQueue = (error, token = null) => {
-  failedQueue.forEach(prom => {
+  failedQueue.forEach((prom) => {
     if (error) {
       prom.reject(error);
     } else {
@@ -24,108 +27,98 @@ const processQueue = (error, token = null) => {
   failedQueue = [];
 };
 
-const attachAuthInterceptor = (instance) => {
-  // 🪪 Attach token before each request
-  instance.interceptors.request.use(async (config) => {
+// Hàm logout
+const handleLogout = () => {
+  localStorage.removeItem("accessToken");
+  localStorage.removeItem("refreshToken");
+  localStorage.removeItem("roles");
+  localStorage.removeItem("userInfo");
+  window.location.href = "/login";
+};
+
+privateApi.interceptors.request.use(
+  async (config) => {
     const token = localStorage.getItem("accessToken");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
-  });
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
 
-  // 🔄 Auto refresh token on 401
-  instance.interceptors.response.use(
-    (response) => response,
-    async (error) => {
-      const originalRequest = error.config;
+privateApi.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
 
-      // Only attempt refresh for 401 errors and if not already retried
-      if (error.response?.status === 401 && !originalRequest._retry) {
-        // Check if refresh token exists before attempting refresh
-        const refreshToken = localStorage.getItem("refreshToken");
-
-        // If no refresh token, clear all auth data and reject immediately
-        if (!refreshToken) {
-          console.warn("No refresh token found, clearing auth state");
-          localStorage.removeItem("accessToken");
-          localStorage.removeItem("refreshToken");
-          localStorage.removeItem("token");
-          localStorage.removeItem("userInfo");
-          localStorage.removeItem("roles");
-          // Redirect to login
-          window.location.href = "/login";
-          return Promise.reject(error);
-        }
-
-        // If already refreshing, queue this request
-        if (isRefreshing) {
-          return new Promise((resolve, reject) => {
-            failedQueue.push({ resolve, reject });
+    // Nếu lỗi 401 và chưa retry
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      // Nếu đang refresh token, đưa request vào queue
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        })
+          .then((token) => {
+            originalRequest.headers.Authorization = `Bearer ${token}`;
+            return privateApi(originalRequest);
           })
-            .then(token => {
-              originalRequest.headers.Authorization = `Bearer ${token}`;
-              return instance(originalRequest);
-            })
-            .catch(err => Promise.reject(err));
-        }
-
-        originalRequest._retry = true;
-        isRefreshing = true;
-
-        try {
-          const res = await axios.post(`${API_URL}api/auth/refresh-token`, {
-            refreshToken,
+          .catch((err) => {
+            return Promise.reject(err);
           });
-
-          const newToken = res?.data?.result?.accessToken;
-          const newRefreshToken = res?.data?.result?.refreshToken;
-
-          if (newToken) {
-            // Save new tokens
-            localStorage.setItem("accessToken", newToken);
-            localStorage.setItem("token", newToken); // For backward compatibility
-            if (newRefreshToken) {
-              localStorage.setItem("refreshToken", newRefreshToken);
-            }
-
-            // Update request header
-            originalRequest.headers.Authorization = `Bearer ${newToken}`;
-
-            // Process queued requests
-            processQueue(null, newToken);
-            isRefreshing = false;
-
-            // Retry original request
-            return instance(originalRequest);
-          } else {
-            throw new Error("No access token in refresh response");
-          }
-        } catch (refreshError) {
-          // Log as warning (not error) since expired tokens are expected
-          console.warn("Refresh token expired or invalid - user needs to log in again");
-
-          // Clear all auth data on refresh failure
-          localStorage.removeItem("accessToken");
-          localStorage.removeItem("refreshToken");
-          localStorage.removeItem("token");
-          localStorage.removeItem("userInfo");
-          localStorage.removeItem("roles");
-
-          // Process queued requests with error
-          processQueue(refreshError, null);
-          isRefreshing = false;
-
-          // Redirect to login
-          window.location.href = "/login";
-
-          return Promise.reject(refreshError);
-        }
       }
 
-      return Promise.reject(error);
-    }
-  );
-};
+      originalRequest._retry = true;
+      isRefreshing = true;
 
-attachAuthInterceptor(privateApi);
+      const refreshToken = localStorage.getItem("refreshToken");
+
+      // Nếu không có refresh token, logout
+      if (!refreshToken) {
+        isRefreshing = false;
+        handleLogout();
+        return Promise.reject(error);
+      }
+
+      try {
+        // Gọi API refresh token - dùng publicApi để tránh loop
+        const response = await publicApi.post("/api/auth/refresh-token", {
+          refreshToken,
+        });
+
+        if (response.data?.code === 200 && response.data?.result?.accessToken) {
+          const { accessToken, refreshToken: newRefreshToken } =
+            response.data.result;
+
+          // Lưu token mới
+          localStorage.setItem("accessToken", accessToken);
+          if (newRefreshToken) {
+            localStorage.setItem("refreshToken", newRefreshToken);
+          }
+
+          // Update header cho request gốc
+          originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+
+          // Xử lý các request đang chờ
+          processQueue(null, accessToken);
+
+          isRefreshing = false;
+
+          // Retry request gốc
+          return privateApi(originalRequest);
+        } else {
+          throw new Error("Refresh token failed");
+        }
+      } catch (refreshError) {
+        processQueue(refreshError, null);
+        isRefreshing = false;
+        handleLogout();
+        return Promise.reject(refreshError);
+      }
+    }
+
+    return Promise.reject(error);
+  }
+);
