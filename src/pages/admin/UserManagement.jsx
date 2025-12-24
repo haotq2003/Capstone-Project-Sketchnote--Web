@@ -66,7 +66,7 @@ export default function ManageUsers() {
       render: (_, record) => (
         <Space>
           <Button type="primary" onClick={() => handleViewDetail(record)}>
-            Edit
+            View
           </Button>
           <Popconfirm
             title="Delete the user"
@@ -289,7 +289,7 @@ export default function ManageUsers() {
                 >
                   <Select placeholder="Choose a role" size="large">
                     {roles
-                      .filter((role) => ALLOWED_ROLES.includes(role.name))
+                      .filter((role) => ALLOWED_ROLES.includes(role.name) && role.name !== "ADMIN")
                       .map((role) => (
                         <Select.Option key={role.id} value={role.name}>
                           {role.name}

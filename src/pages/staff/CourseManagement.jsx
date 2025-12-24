@@ -75,7 +75,14 @@ const CourseManagement = () => {
     try {
       const res = await courseService.getAllCourse();
 
-      setCourses(res.result || []);
+      // Sort courses by updatedAt in descending order (newest first)
+      const sortedCourses = (res.result || []).sort((a, b) => {
+        const dateA = new Date(a.updatedAt || a.createdAt);
+        const dateB = new Date(b.updatedAt || b.createdAt);
+        return dateB - dateA; // Descending order
+      });
+
+      setCourses(sortedCourses);
     } catch (error) {
       message.error(error.message);
     } finally {
@@ -387,50 +394,45 @@ const CourseManagement = () => {
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       <div className="bg-white p-6 rounded-lg shadow-md">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <Title level={3} className="!m-0">
-            <BookOutlined />
-          </Title>
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={() => setIsCreateModalVisible(true)}
-            size="large"
-          >
-            Create New Course
-          </Button>
-        </div>
-
-        {/* Search and Filter */}
+        {/* Search, Filter, and Actions */}
         <div className="mb-6">
-          <Space size="middle" style={{ width: '100%' }}>
-            <Input.Search
-              placeholder="Search courses..."
+          <Space size="middle" style={{ width: '100%', justifyContent: 'space-between' }}>
+            <Space size="middle">
+              <Input.Search
+                placeholder="Search courses..."
+                size="large"
+                style={{ width: 300 }}
+                onSearch={(value) => setSearchTerm(value)}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                allowClear
+              />
+              <Select
+                placeholder="Filter by category"
+                size="large"
+                style={{ width: 200 }}
+                value={selectedCategory}
+                onChange={setSelectedCategory}
+              >
+                <Select.Option value="all">All categories</Select.Option>
+                <Select.Option value="Icons">Icons</Select.Option>
+                <Select.Option value="Characters">Characters</Select.Option>
+                <Select.Option value="ShapesAndFrames">Shapes and Frames</Select.Option>
+                <Select.Option value="Layouts">Layouts</Select.Option>
+                <Select.Option value="EverydayObjects">Everyday Objects</Select.Option>
+                <Select.Option value="LessonNote">Lesson Note</Select.Option>
+              </Select>
+              <Text type="secondary">
+                Total: {getFilteredCourses().length} courses
+              </Text>
+            </Space>
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={() => setIsCreateModalVisible(true)}
               size="large"
-              style={{ width: 300 }}
-              onSearch={(value) => setSearchTerm(value)}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              allowClear
-            />
-            <Select
-              placeholder="Filter by category"
-              size="large"
-              style={{ width: 200 }}
-              value={selectedCategory}
-              onChange={setSelectedCategory}
             >
-              <Select.Option value="all">All categories</Select.Option>
-              <Select.Option value="Icons">Icons</Select.Option>
-              <Select.Option value="Characters">Characters</Select.Option>
-              <Select.Option value="ShapesAndFrames">Shapes and Frames</Select.Option>
-              <Select.Option value="Layouts">Layouts</Select.Option>
-              <Select.Option value="EverydayObjects">Everyday Objects</Select.Option>
-              <Select.Option value="LessonNote">Lesson Note</Select.Option>
-            </Select>
-            <Text type="secondary">
-              Total: {getFilteredCourses().length} courses
-            </Text>
+              Create New Course
+            </Button>
           </Space>
         </div>
 

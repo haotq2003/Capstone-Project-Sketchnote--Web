@@ -34,7 +34,6 @@ const ResourceReviewPage = () => {
     try {
       setLoading(true);
       const data = await resourceService.getResourceByStatus("PENDING_REVIEW", page - 1, size, "createdAt", "DESC");
-      console.log(data);
       setResources(data.content || []);
       setPagination({
         ...pagination,
@@ -53,7 +52,6 @@ const ResourceReviewPage = () => {
     try {
       setLoading(true);
       const data = await resourceService.getResourceVersion(page - 1, size);
-      console.log("Version resources:", data);
       setVersionResources(data.content || []);
       setVersionPagination({
         current: page,

@@ -698,7 +698,7 @@ export default function ResourceTemplate() {
     <div className="p-8 bg-[#fcfcfd] min-h-screen">
       <style>{customStyles}</style>
       <div className="max-w-7xl mx-auto">
-        <div className="resource-header">
+        {/* <div className="resource-header">
           <Row align="middle" justify="space-between">
             <Col>
               <Title level={1} className="!m-0 !text-white !font-bold">
@@ -717,7 +717,7 @@ export default function ResourceTemplate() {
               </div>
             </Col>
           </Row>
-        </div>
+        </div> */}
 
         <Tabs
           activeKey={activeTab}
