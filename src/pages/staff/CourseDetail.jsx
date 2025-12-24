@@ -356,42 +356,6 @@ const CourseDetail = ({ course, onBack }) => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header Section */}
-      <div className="border-b border-gray-200 bg-white shadow-sm sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button
-                icon={<ArrowLeftOutlined />}
-                onClick={onBack}
-                size="large"
-                className="hover:bg-gray-100 transition-all"
-                style={{ borderRadius: '8px' }}
-              >
-                Back
-              </Button>
-              <div className="border-l border-gray-300 pl-4">
-                <Title level={3} className="!m-0 !mb-1">
-                  {course.title}
-                </Title>
-                <Text type="secondary" className="text-sm">
-                  {course.subtitle}
-                </Text>
-              </div>
-            </div>
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              onClick={() => showLessonModal('add')}
-              size="large"
-              style={{ borderRadius: '8px' }}
-            >
-              Add Lesson
-            </Button>
-          </div>
-        </div>
-      </div>
-
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-6 py-8">
 
@@ -408,9 +372,15 @@ const CourseDetail = ({ course, onBack }) => {
             >
               <div className="space-y-4">
                 <div>
-                  <Text type="secondary" className="block mb-2" style={{ fontSize: '12px', fontWeight: '600' }}>
-                    Course Title
-                  </Text>
+                  <Button
+                    type="link"
+                    icon={<ArrowLeftOutlined />}
+                    onClick={onBack}
+                    className="!p-0 !mb-2"
+                    style={{ fontSize: '14px' }}
+                  >
+                    Back
+                  </Button>
                   <Title level={4} className="!m-0">
                     {course.title}
                   </Title>
@@ -502,13 +472,23 @@ const CourseDetail = ({ course, onBack }) => {
                 </div>
               }
               extra={
-                <Input.Search
-                  placeholder="Search lessons..."
-                  style={{ width: 250 }}
-                  onSearch={handleSearch}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  allowClear
-                />
+                <div className="flex items-center gap-3">
+                  <Input.Search
+                    placeholder="Search lessons..."
+                    style={{ width: 300 }}
+                    onSearch={handleSearch}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    allowClear
+                  />
+                  <Button
+                    type="primary"
+                    icon={<PlusOutlined />}
+                    onClick={() => showLessonModal('add')}
+                    size="middle"
+                  >
+                    Add Lesson
+                  </Button>
+                </div>
               }
             >
               {getFilteredLessons().length > 0 ? (
