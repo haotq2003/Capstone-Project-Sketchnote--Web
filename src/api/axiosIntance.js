@@ -6,7 +6,6 @@ export const publicApi = axios.create({
   baseURL: API_URL,
 });
 
-
 export const privateApi = axios.create({
   baseURL: API_URL,
 });
