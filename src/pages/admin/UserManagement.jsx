@@ -19,10 +19,11 @@ export default function ManageUsers() {
 
   const columns = [
     {
-      title: "ID",
-      dataIndex: "id",
-      key: "id",
-      width: 80,
+      title: "No.",
+      key: "no",
+      width: 60,
+      align: "center",
+      render: (_, __, index) => (pagination.current - 1) * pagination.pageSize + index + 1,
     },
     {
       title: "Name",
@@ -64,8 +65,8 @@ export default function ManageUsers() {
       align: "right",
       render: (_, record) => (
         <Space>
-          <Button type="primary" size="small" onClick={() => handleViewDetail(record)}>
-            Edit
+          <Button type="primary" onClick={() => handleViewDetail(record)}>
+            View
           </Button>
           <Popconfirm
             title="Delete the user"
@@ -74,7 +75,7 @@ export default function ManageUsers() {
             okText="Yes"
             cancelText="No"
           >
-            <Button type="primary" danger size="small">
+            <Button type="primary" danger   >
               Delete
             </Button>
           </Popconfirm>
@@ -216,7 +217,7 @@ export default function ManageUsers() {
                 ))}
             </Select>
           </Form.Item>
-          
+
           <Form.Item>
             <Button className="le" type="primary" onClick={() => fetchUser(1, pagination.pageSize)}>Search</Button>
           </Form.Item>
@@ -242,52 +243,53 @@ export default function ManageUsers() {
       </Card>
 
       <Modal
-        title="User Details"
+        title={
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 18, fontWeight: 600 }}>User Details</span>
+          </div>
+        }
         open={isModalVisible}
         onCancel={() => {
-          setIsModalVisible(false);
+          setIsModalVisible(false); c
           form.resetFields();
         }}
         footer={null}
+        width={600}
       >
         {selectedUser && (
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <p className="text-gray-500">Full Name</p>
-                <p className="font-medium">{selectedUser.name}</p>
+                <p className="text-gray-500" style={{ marginBottom: 4, fontSize: 13 }}>Full Name</p>
+                <p className="font-medium" style={{ fontSize: 15 }}>{selectedUser.name}</p>
               </div>
               <div>
-                <p className="text-gray-500">Email</p>
-                <p className="font-medium">{selectedUser.email}</p>
+                <p className="text-gray-500" style={{ marginBottom: 4, fontSize: 13 }}>Email</p>
+                <p className="font-medium" style={{ fontSize: 15 }}>{selectedUser.email}</p>
               </div>
               <div>
-                <p className="text-gray-500">User ID</p>
-                <p className="font-medium">{selectedUser.id}</p>
-              </div>
-              <div>
-                <p className="text-gray-500">Current Role</p>
+                <p className="text-gray-500" style={{ marginBottom: 4, fontSize: 13 }}>Current Role</p>
                 <Tag color={
                   selectedUser.role === "ADMIN" ? "blue" :
                     selectedUser.role === "STAFF" ? "cyan" :
                       selectedUser.role === "DESIGNER" ? "purple" : "green"
-                }>
+                } style={{ fontSize: 13, padding: '4px 12px' }}>
                   {selectedUser.role}
                 </Tag>
               </div>
             </div>
 
-            <div className="border-t pt-4 mt-4">
-              <h3 className="font-medium mb-3">Update Role</h3>
+            <div className="border-t pt-4 mt-4" style={{ borderTop: '1px solid #f0f0f0', paddingTop: 16, marginTop: 16 }}>
+              <h3 className="font-medium mb-3" style={{ fontSize: 15, fontWeight: 600, marginBottom: 12 }}>Update Role</h3>
               <Form form={form} onFinish={handleUpdateRole} layout="vertical">
                 <Form.Item
                   name="role"
                   label="Select New Role"
                   rules={[{ required: true, message: "Please select a role" }]}
                 >
-                  <Select placeholder="Choose a role">
+                  <Select placeholder="Choose a role" size="large">
                     {roles
-                      .filter((role) => ALLOWED_ROLES.includes(role.name))
+                      .filter((role) => ALLOWED_ROLES.includes(role.name) && role.name !== "ADMIN")
                       .map((role) => (
                         <Select.Option key={role.id} value={role.name}>
                           {role.name}
@@ -295,16 +297,27 @@ export default function ManageUsers() {
                       ))}
                   </Select>
                 </Form.Item>
-                <Form.Item className="mb-0 text-right">
-                  <Button onClick={() => {
-                    setIsModalVisible(false);
-                    form.resetFields();
-                  }} className="mr-2">
-                    Cancel
-                  </Button>
-                  <Button type="primary" htmlType="submit">
-                    Update Role
-                  </Button>
+                <Form.Item className="mb-0" style={{ marginBottom: 0, marginTop: 24 }}>
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+                    <Button
+                      onClick={() => {
+                        setIsModalVisible(false);
+                        form.resetFields();
+                      }}
+                      size="large"
+                      style={{ minWidth: 100 }}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="primary"
+                      htmlType="submit"
+                      size="large"
+                      style={{ minWidth: 120 }}
+                    >
+                      Update Role
+                    </Button>
+                  </div>
                 </Form.Item>
               </Form>
             </div>

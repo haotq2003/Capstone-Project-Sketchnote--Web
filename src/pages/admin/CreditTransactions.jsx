@@ -89,7 +89,7 @@ const CreditTransactions = () => {
       width: 100,
       render: (_, record) => (
         <Button
-          style={{ background: "#eeea15ff", color: "black" }}
+           type="primary"
           onClick={() => handleViewDetail(record)}
         >
           View

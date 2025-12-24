@@ -26,22 +26,22 @@ const ImageUploader = ({ onImageUploaded, multiple = false, resetTrigger }) => {
     );
 
     if (validFiles.length !== files.length) {
-      message.warning('Một số file không hợp lệ (chỉ nhận ảnh dưới 5MB)');
+      message.warning('Some files are invalid (only accept images under 5MB)');
     }
 
     try {
       setUploading(true);
       const results = [];
-      
+
       for (const file of validFiles) {
         const result = await uploadService.uploadImage(file);
         results.push(result);
       }
 
       setUploadedImages((prev) => [...prev, ...results]);
-      message.success(`Đã tải lên ${results.length} ảnh thành công!`);
+      message.success(`Upload ${results.length} success!`);
     } catch (err) {
-      message.error('Lỗi khi tải ảnh: ' + err.message);
+      message.error('Upload failed: ' + err.message);
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -94,19 +94,19 @@ const ImageUploader = ({ onImageUploaded, multiple = false, resetTrigger }) => {
           color: 'white',
         }}
       >
-        Chọn ảnh {multiple && '(nhiều ảnh)'}
+        Upload {multiple && '(multiple)'}
       </Button>
 
       {uploading && (
         <div style={{ textAlign: 'center', margin: '16px 0' }}>
-          <Spin tip="Đang tải ảnh lên..." />
+          <Spin tip="Uploading..." />
         </div>
       )}
 
       {uploadedImages.length > 0 && (
         <div className="mt-3">
           <p className="text-sm text-gray-600 mb-2">
-            Nhấn vào ngôi sao để chọn ảnh làm thumbnail
+            Click star to select thumbnail
           </p>
           <div className="flex flex-wrap gap-3">
             {uploadedImages.map((img, i) => (
@@ -125,7 +125,7 @@ const ImageUploader = ({ onImageUploaded, multiple = false, resetTrigger }) => {
                     objectFit: 'cover',
                   }}
                 />
-                
+
                 {/* Nút chọn thumbnail */}
                 <button
                   onClick={() => handleSetThumbnail(i)}
