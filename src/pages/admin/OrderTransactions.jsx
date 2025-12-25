@@ -191,30 +191,36 @@ const OrderTransactions = () => {
             Close
           </Button>,
         ]}
-        width={900}
+        width={700}
       >
         {selectedRecord && (
-          <div style={{ maxHeight: '70vh', overflowY: 'auto' }}>
-            {/* Order Information Section */}
+          <div>
+            {/* Order & Payment Information */}
             <div style={{ marginBottom: 24 }}>
               <h3 style={{
-                fontSize: 16,
+                fontSize: 15,
                 fontWeight: 600,
-                marginBottom: 16,
+                marginBottom: 12,
                 paddingBottom: 8,
                 borderBottom: '2px solid #1890ff',
                 color: '#1890ff'
               }}>
                 Order Information
               </h3>
-              <Descriptions bordered column={1} size="small">
+              <Descriptions
+                bordered
+                column={1}
+                size="middle"
+                labelStyle={{ width: '180px', fontWeight: 500 }}
+              >
                 {selectedRecord.invoiceNumber && (
                   <Descriptions.Item label="Invoice Number">
-                    <span style={{ fontFamily: 'monospace', fontWeight: 500 }}>
+                    <span style={{ fontFamily: 'monospace', color: '#1890ff' }}>
                       {selectedRecord.invoiceNumber}
                     </span>
                   </Descriptions.Item>
                 )}
+
                 <Descriptions.Item label="Order Status">
                   {(() => {
                     let color = "default";
@@ -224,34 +230,7 @@ const OrderTransactions = () => {
                     return <Tag color={color}>{selectedRecord.orderStatus}</Tag>;
                   })()}
                 </Descriptions.Item>
-                {selectedRecord.createdAt && (
-                  <Descriptions.Item label="Order Date">
-                    {new Date(selectedRecord.createdAt).toLocaleString('vi-VN', {
-                      year: 'numeric',
-                      month: '2-digit',
-                      day: '2-digit',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                      second: '2-digit'
-                    })}
-                  </Descriptions.Item>
-                )}
-              </Descriptions>
-            </div>
 
-            {/* Payment Information Section */}
-            <div style={{ marginBottom: 24 }}>
-              <h3 style={{
-                fontSize: 16,
-                fontWeight: 600,
-                marginBottom: 16,
-                paddingBottom: 8,
-                borderBottom: '2px solid #52c41a',
-                color: '#52c41a'
-              }}>
-                Payment Information
-              </h3>
-              <Descriptions bordered column={1} size="small">
                 <Descriptions.Item label="Payment Status">
                   {(() => {
                     let color = "default";
@@ -261,35 +240,54 @@ const OrderTransactions = () => {
                     return <Tag color={color}>{selectedRecord.paymentStatus}</Tag>;
                   })()}
                 </Descriptions.Item>
+
                 {selectedRecord.paymentMethod && (
                   <Descriptions.Item label="Payment Method">
                     {selectedRecord.paymentMethod}
                   </Descriptions.Item>
                 )}
+
                 <Descriptions.Item label="Total Amount">
                   <span style={{
-                    fontSize: 18,
-                    fontWeight: 'bold',
+                    fontSize: 16,
+                    fontWeight: 600,
                     color: '#52c41a'
                   }}>
                     {(selectedRecord.totalAmount || 0).toLocaleString()} đ
                   </span>
                 </Descriptions.Item>
+
+                <Descriptions.Item label="Order Date">
+                  {selectedRecord.createdAt ? new Date(selectedRecord.createdAt).toLocaleString('vi-VN', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                  }) : "-"}
+                </Descriptions.Item>
+
+                {selectedRecord.note && (
+                  <Descriptions.Item label="Note">
+                    {selectedRecord.note}
+                  </Descriptions.Item>
+                )}
               </Descriptions>
             </div>
 
-            {/* Order Items Section */}
+            {/* Order Items */}
             {selectedRecord.items && Array.isArray(selectedRecord.items) && selectedRecord.items.length > 0 && (
-              <div style={{ marginBottom: 24 }}>
+              <div>
                 <h3 style={{
-                  fontSize: 16,
+                  fontSize: 15,
                   fontWeight: 600,
-                  marginBottom: 16,
+                  marginBottom: 12,
                   paddingBottom: 8,
                   borderBottom: '2px solid #fa8c16',
                   color: '#fa8c16'
                 }}>
-                  Order Items
+                  Order Items ({selectedRecord.items.length})
                 </h3>
                 <Table
                   dataSource={selectedRecord.items}
@@ -340,27 +338,6 @@ const OrderTransactions = () => {
                     },
                   ]}
                 />
-              </div>
-            )}
-
-            {/* Additional Information Section */}
-            {selectedRecord.note && (
-              <div>
-                <h3 style={{
-                  fontSize: 16,
-                  fontWeight: 600,
-                  marginBottom: 16,
-                  paddingBottom: 8,
-                  borderBottom: '2px solid #722ed1',
-                  color: '#722ed1'
-                }}>
-                  Additional Information
-                </h3>
-                <Descriptions bordered column={1} size="small">
-                  <Descriptions.Item label="Note">
-                    {selectedRecord.note}
-                  </Descriptions.Item>
-                </Descriptions>
               </div>
             )}
           </div>

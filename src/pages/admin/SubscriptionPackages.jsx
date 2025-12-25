@@ -127,6 +127,12 @@ const SubscriptionPackages = () => {
       render: (d) => `${d} days`,
     },
     {
+      title: "Projects",
+      dataIndex: "numberOfProjects",
+      width: 80,
+      render: (num) => <Tag color="blue">{num || 0}</Tag>,
+    },
+    {
       title: "Actions",
       width: 180,
       render: (_, record) => (
@@ -213,13 +219,21 @@ const SubscriptionPackages = () => {
           <Form.Item name="description" label="Description">
             <Input.TextArea rows={3} />
           </Form.Item>
+
+          <Form.Item
+            name="numberOfProjects"
+            label="Number of Projects"
+            rules={[{ required: true, message: 'Please input number of projects' }]}
+          >
+            <InputNumber className="w-full" min={1} placeholder="e.g., 10" />
+          </Form.Item>
+
           <Form.Item name="active" label="Active">
             <Checkbox />
           </Form.Item>
         </Form>
       </Modal>
 
-      {/* DETAIL MODAL */}
       <Modal
         open={isDetailModal}
         footer={[
@@ -228,69 +242,66 @@ const SubscriptionPackages = () => {
           </Button>,
         ]}
         onCancel={() => setIsDetailModal(false)}
-        width={700}
+        width={600}
       >
         {detailData && (
-          <div style={{ maxHeight: '80vh', overflowY: 'auto' }}>
-            {/* Plan Information Section */}
-            <div style={{ marginBottom: 24 }}>
+          <div>
+            {/* Plan Information */}
+            <div>
               <h3 style={{
-                fontSize: 16,
+                fontSize: 15,
                 fontWeight: 600,
-                marginBottom: 16,
+                marginBottom: 12,
                 paddingBottom: 8,
                 borderBottom: '2px solid #1890ff',
                 color: '#1890ff'
               }}>
                 Plan Information
               </h3>
-              <Descriptions bordered column={1} size="small">
+              <Descriptions
+                bordered
+                column={1}
+                size="middle"
+                labelStyle={{ width: '180px', fontWeight: 500 }}
+              >
                 <Descriptions.Item label="Plan Name">
                   <span style={{ fontWeight: 600 }}>
                     {detailData.planName}
                   </span>
                 </Descriptions.Item>
+
                 {detailData.description && (
                   <Descriptions.Item label="Description">
                     {detailData.description}
                   </Descriptions.Item>
                 )}
+
                 <Descriptions.Item label="Plan Type">
                   <Tag color={detailData.planType === "DESIGNER" ? "purple" : "gold"}>
                     {detailData.planType}
                   </Tag>
                 </Descriptions.Item>
+
+                <Descriptions.Item label="Price">
+                  <span style={{ fontSize: 16, fontWeight: 600, color: '#52c41a' }}>
+                    {detailData.price.toLocaleString()} {detailData.currency}
+                  </span>
+                </Descriptions.Item>
+
                 <Descriptions.Item label="Duration">
                   <span style={{ fontSize: 16, fontWeight: 600, color: '#1677ff' }}>
                     {detailData.durationDays} days
                   </span>
                 </Descriptions.Item>
+
+                <Descriptions.Item label="Number of Projects">
+                  <Tag color="blue" style={{ fontSize: 14, padding: '4px 12px' }}>
+                    {detailData.numberOfProjects || 0} projects
+                  </Tag>
+                </Descriptions.Item>
+
                 <Descriptions.Item label="Published Date">
                   {new Date(detailData.createdAt).toLocaleDateString('vi-VN')}
-                </Descriptions.Item>
-              </Descriptions>
-            </div>
-
-            {/* Pricing Details Section */}
-            <div>
-              <h3 style={{
-                fontSize: 16,
-                fontWeight: 600,
-                marginBottom: 16,
-                paddingBottom: 8,
-                borderBottom: '2px solid #52c41a',
-                color: '#52c41a'
-              }}>
-                Pricing Details
-              </h3>
-              <Descriptions bordered column={1} size="small">
-                <Descriptions.Item label="Price">
-                  <span style={{ fontSize: 18, fontWeight: 'bold', color: '#52c41a' }}>
-                    {detailData.price.toLocaleString()} {detailData.currency}
-                  </span>
-                </Descriptions.Item>
-                <Descriptions.Item label="Currency">
-                  {detailData.currency}
                 </Descriptions.Item>
               </Descriptions>
             </div>

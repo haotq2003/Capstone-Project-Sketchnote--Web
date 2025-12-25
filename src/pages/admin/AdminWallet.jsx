@@ -53,6 +53,8 @@ const AdminWallet = () => {
     const [bankAccounts, setBankAccounts] = useState([]);
     const [selectedBankAccount, setSelectedBankAccount] = useState(null);
     const [bankManagementVisible, setBankManagementVisible] = useState(false);
+    const [detailModalVisible, setDetailModalVisible] = useState(false);
+    const [selectedTransaction, setSelectedTransaction] = useState(null);
 
     const formatCurrency = (amount) => {
         if (!amount && amount !== 0) return "0 đ";
@@ -88,7 +90,7 @@ const AdminWallet = () => {
             const res = await walletService.getWithdrawHistory(0, 50, "createdAt", "desc");
             setWithdrawHistory(res?.content || res || []);
         } catch (error) {
-            console.error("Failed to load withdraw history:", error);
+            console.warn("Failed to load withdraw history:", error);
         }
         setWithdrawLoading(false);
     };
@@ -98,7 +100,7 @@ const AdminWallet = () => {
             const res = await walletService.getBankAccountByUserId();
             setBankAccounts(res.result || res || []);
         } catch (error) {
-            console.error("Failed to load bank accounts:", error);
+            console.warn("Failed to load bank accounts:", error);
         }
     };
 
@@ -168,26 +170,36 @@ const AdminWallet = () => {
         }
     };
 
+    // Admin wallet: all transactions are INCOME (money coming IN)
     const getTransactionStyle = (type, status) => {
         const styles = {
-            DEPOSIT: { color: status === "SUCCESS" ? "#52c41a" : status === "PENDING" ? "#faad14" : "#ff4d4f", icon: <ArrowDownOutlined /> },
-            WITHDRAWAL: { color: "#ff4d4f", icon: <ArrowUpOutlined /> },
-            PURCHASE: { color: "#ff4d4f", icon: <ArrowUpOutlined /> },
-            COURSE_FEE: { color: "#722ed1", icon: <ArrowUpOutlined /> },
+            DEPOSIT: { color: "#52c41a", tagColor: "green" },
+            WITHDRAWAL: { color: "#ff4d4f", tagColor: "red" },
+            PURCHASE_AI_CREDITS: { color: "#1890ff", tagColor: "blue" },
+            COURSE_FEE: { color: "#722ed1", tagColor: "purple" },
+            SUBSCRIPTION: { color: "#13c2c2", tagColor: "cyan" },
+            RESOURCE: { color: "#fa8c16", tagColor: "orange" },
         };
-        return styles[type] || styles.PURCHASE;
+        return styles[type] || { color: "#52c41a", tagColor: "green" };
     };
 
     const transactionColumns = [
         {
+            title: "No.",
+            width: 60,
+            align: "center",
+            render: (_, __, index) => index + 1,
+        },
+        {
             title: "Type",
             dataIndex: "type",
-            width: 120,
-            render: (type, record) => {
-                const style = getTransactionStyle(type, record.status);
+            width: 160,
+            render: (type) => {
+                const style = getTransactionStyle(type);
+                const displayType = type?.replace(/_/g, " ") || "UNKNOWN";
                 return (
-                    <Tag color={style.color === "#52c41a" ? "green" : style.color === "#ff4d4f" ? "red" : style.color === "#faad14" ? "orange" : "purple"}>
-                        {type}
+                    <Tag color={style.tagColor}>
+                        {displayType}
                     </Tag>
                 );
             },
@@ -197,10 +209,10 @@ const AdminWallet = () => {
             dataIndex: "amount",
             width: 150,
             render: (amount, record) => {
-                const style = getTransactionStyle(record.type, record.status);
+                const style = getTransactionStyle(record.type);
                 return (
                     <Text style={{ color: style.color, fontWeight: 600 }}>
-                        {record.type === "DEPOSIT" ? "+" : "-"}{formatCurrency(Math.abs(amount))}
+                        +{formatCurrency(Math.abs(amount))}
                     </Text>
                 );
             },
@@ -210,12 +222,6 @@ const AdminWallet = () => {
             dataIndex: "balance",
             width: 150,
             render: (balance) => formatCurrency(balance),
-        },
-        {
-            title: "Order Code",
-            dataIndex: "orderCode",
-            width: 120,
-            render: (code) => code || "-",
         },
         {
             title: "Status",
@@ -232,6 +238,23 @@ const AdminWallet = () => {
             dataIndex: "createdAt",
             width: 180,
             render: (date) => formatDate(date),
+        },
+        {
+            title: "Action",
+            width: 100,
+            align: "center",
+            render: (_, record) => (
+                <Button
+                    type="link"
+                    size="small"
+                    onClick={() => {
+                        setSelectedTransaction(record);
+                        setDetailModalVisible(true);
+                    }}
+                >
+                    View Detail
+                </Button>
+            ),
         },
     ];
 
@@ -283,8 +306,9 @@ const AdminWallet = () => {
         .filter((t) => t.type === "DEPOSIT" && t.status === "SUCCESS")
         .reduce((sum, t) => sum + (t.amount || 0), 0);
 
-    const totalSpent = walletData.transactions
-        .filter((t) => t.type !== "DEPOSIT")
+    // Admin wallet: calculate revenue from services (not withdrawals)
+    const totalRevenue = walletData.transactions
+        .filter((t) => t.type !== "DEPOSIT" && t.type !== "WITHDRAWAL" && t.status === "SUCCESS")
         .reduce((sum, t) => sum + Math.abs(t.amount || 0), 0);
 
     const tabItems = [
@@ -467,76 +491,45 @@ const AdminWallet = () => {
                     </Card>
                 </Col>
 
-                {/* Stats Cards (Giữ nguyên phần bên phải) */}
+                {/* Total Revenue Card */}
                 <Col xs={24} lg={12}>
-                    <Row gutter={[16, 16]}>
-                        <Col span={24}>
-                            <Card
-                                style={{
-                                    borderRadius: 12,
-                                    border: "1px solid #f0f0f0",
-                                    boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
-                                    transition: "all 0.3s",
-                                }}
-                                styles={{ body: { padding: "20px 24px" } }}
-                            >
-                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                    <div>
-                                        <Text type="secondary" style={{ fontSize: 14, display: "block", marginBottom: 8 }}>
-                                            Total Deposited
-                                        </Text>
-                                        <Title level={3} style={{ margin: 0, color: "#52c41a", fontSize: 28, fontWeight: 700 }}>
-                                            {new Intl.NumberFormat("vi-VN").format(totalDeposit)} đ
-                                        </Title>
-                                    </div>
-                                    <div style={{
-                                        width: 56,
-                                        height: 56,
-                                        borderRadius: 12,
-                                        background: "linear-gradient(135deg, #52c41a15 0%, #52c41a25 100%)",
-                                        display: "flex",
-                                        alignItems: "center",
-                                        justifyContent: "center",
-                                    }}>
-                                        <ArrowDownOutlined style={{ fontSize: 24, color: "#52c41a" }} />
-                                    </div>
-                                </div>
-                            </Card>
-                        </Col>
-                        <Col span={24}>
-                            <Card
-                                style={{
-                                    borderRadius: 12,
-                                    border: "1px solid #f0f0f0",
-                                    boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
-                                    transition: "all 0.3s",
-                                }}
-                                styles={{ body: { padding: "20px 24px" } }}
-                            >
-                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                    <div>
-                                        <Text type="secondary" style={{ fontSize: 14, display: "block", marginBottom: 8 }}>
-                                            Total Spent
-                                        </Text>
-                                        <Title level={3} style={{ margin: 0, color: "#ff4d4f", fontSize: 28, fontWeight: 700 }}>
-                                            {new Intl.NumberFormat("vi-VN").format(totalSpent)} đ
-                                        </Title>
-                                    </div>
-                                    <div style={{
-                                        width: 56,
-                                        height: 56,
-                                        borderRadius: 12,
-                                        background: "linear-gradient(135deg, #ff4d4f15 0%, #ff4d4f25 100%)",
-                                        display: "flex",
-                                        alignItems: "center",
-                                        justifyContent: "center",
-                                    }}>
-                                        <ArrowUpOutlined style={{ fontSize: 24, color: "#ff4d4f" }} />
-                                    </div>
-                                </div>
-                            </Card>
-                        </Col>
-                    </Row>
+                    <Card
+                        style={{
+                            height: '100%',
+                            minHeight: 180,
+                            borderRadius: 12,
+                            border: "1px solid #f0f0f0",
+                            boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+                            display: 'flex',
+                            alignItems: 'center',
+                        }}
+                        styles={{ body: { padding: "24px", width: '100%' } }}
+                    >
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: '100%' }}>
+                            <div>
+                                <Text type="secondary" style={{ fontSize: 14, display: "block", marginBottom: 8 }}>
+                                    Total Revenue from Services
+                                </Text>
+                                <Title level={2} style={{ margin: 0, color: "#1890ff", fontSize: 36, fontWeight: 700 }}>
+                                    {new Intl.NumberFormat("vi-VN").format(totalRevenue)} đ
+                                </Title>
+                                <Text type="secondary" style={{ fontSize: 12, marginTop: 8, display: 'block' }}>
+                                    AI Credits, Courses, Subscriptions, Resources
+                                </Text>
+                            </div>
+                            <div style={{
+                                width: 64,
+                                height: 64,
+                                borderRadius: 16,
+                                background: "linear-gradient(135deg, #1890ff15 0%, #1890ff30 100%)",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                            }}>
+                                <ArrowDownOutlined style={{ fontSize: 28, color: "#1890ff" }} />
+                            </div>
+                        </div>
+                    </Card>
                 </Col>
             </Row>
 
@@ -825,6 +818,127 @@ const AdminWallet = () => {
                 destroyOnClose
             >
                 <BankAccountManagement onAccountChange={fetchBankAccounts} />
+            </Modal>
+
+            {/* Transaction Detail Modal */}
+            <Modal
+                title={
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <HistoryOutlined style={{ color: '#1890ff' }} />
+                        <span>Transaction Details</span>
+                    </div>
+                }
+                open={detailModalVisible}
+                onCancel={() => {
+                    setDetailModalVisible(false);
+                    setSelectedTransaction(null);
+                }}
+                footer={[
+                    <Button key="close" onClick={() => {
+                        setDetailModalVisible(false);
+                        setSelectedTransaction(null);
+                    }}>
+                        Close
+                    </Button>
+                ]}
+                width={500}
+            >
+                {selectedTransaction && (
+                    <div>
+                        {/* Type & Status */}
+                        <div style={{ marginBottom: 20, display: 'flex', gap: 10, alignItems: 'center' }}>
+                            <Tag color={getTransactionStyle(selectedTransaction.type).tagColor} style={{ fontSize: 14, padding: '4px 12px' }}>
+                                {selectedTransaction.type?.replace(/_/g, " ") || "UNKNOWN"}
+                            </Tag>
+                            <Tag color={selectedTransaction.status === "SUCCESS" ? "green" : selectedTransaction.status === "PENDING" ? "orange" : "red"}>
+                                {selectedTransaction.status}
+                            </Tag>
+                        </div>
+
+                        {/* Amount Card */}
+                        <Card size="small" style={{ marginBottom: 16, background: '#f6ffed', border: '1px solid #b7eb8f' }}>
+                            <div style={{ textAlign: 'center' }}>
+                                <Text type="secondary">Amount</Text>
+                                <Title level={3} style={{ margin: '8px 0 0', color: getTransactionStyle(selectedTransaction.type).color }}>
+                                    +{formatCurrency(Math.abs(selectedTransaction.amount))}
+                                </Title>
+                            </div>
+                        </Card>
+
+                        <Divider style={{ margin: '16px 0' }} />
+
+                        {/* Detail Rows */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                <Text type="secondary">Transaction ID</Text>
+                                <Text strong>{selectedTransaction.transactionId || "-"}</Text>
+                            </div>
+
+                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                <Text type="secondary">Balance After</Text>
+                                <Text strong>{formatCurrency(selectedTransaction.balance)}</Text>
+                            </div>
+
+                            {selectedTransaction.orderCode && (
+                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                    <Text type="secondary">Order Code</Text>
+                                    <Text code>{selectedTransaction.orderCode}</Text>
+                                </div>
+                            )}
+
+                            {selectedTransaction.orderId && (
+                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                    <Text type="secondary">Order ID</Text>
+                                    <Text>{selectedTransaction.orderId}</Text>
+                                </div>
+                            )}
+
+                            {selectedTransaction.provider && (
+                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                    <Text type="secondary">Provider</Text>
+                                    <Text>{selectedTransaction.provider}</Text>
+                                </div>
+                            )}
+
+                            {selectedTransaction.externalTransactionId && (
+                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                    <Text type="secondary">External ID</Text>
+                                    <Text code>{selectedTransaction.externalTransactionId}</Text>
+                                </div>
+                            )}
+
+                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                <Text type="secondary">Date</Text>
+                                <Text>{formatDate(selectedTransaction.createdAt)}</Text>
+                            </div>
+                        </div>
+
+                        {/* Description Section */}
+                        {(selectedTransaction.description || true) && (
+                            <>
+                                <Divider style={{ margin: '16px 0' }} />
+                                <div>
+                                    <Text type="secondary" style={{ display: 'block', marginBottom: 8 }}>Description</Text>
+                                    <Card size="small" style={{ background: '#fafafa' }}>
+                                        <Text>
+                                            {selectedTransaction.description || (() => {
+                                                const typeDescriptions = {
+                                                    DEPOSIT: "Admin wallet deposit via payment gateway",
+                                                    PURCHASE_AI_CREDITS: "Revenue from AI credits purchase",
+                                                    COURSE_FEE: "Revenue from course purchase",
+                                                    SUBSCRIPTION: "Revenue from subscription payment",
+                                                    RESOURCE: "Revenue from resource template purchase",
+                                                    WITHDRAWAL: "Withdrawal to bank account",
+                                                };
+                                                return typeDescriptions[selectedTransaction.type] || "Transaction completed";
+                                            })()}
+                                        </Text>
+                                    </Card>
+                                </div>
+                            </>
+                        )}
+                    </div>
+                )}
             </Modal>
         </div>
     );

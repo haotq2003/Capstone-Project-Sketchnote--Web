@@ -153,10 +153,11 @@ const AdminCreditPackages = () => {
 
   const columns = [
     {
-      title: "ID",
-      dataIndex: "id",
-      key: "id",
+      title: "No.",
+      key: "no",
       width: 50,
+      align: "center",
+      render: (_, __, index) => index + 1,
     },
     {
       title: "Package Name",
@@ -280,37 +281,6 @@ const AdminCreditPackages = () => {
   return (
     <div style={{ padding: 24, overflowX: "hidden" }}>
       <div style={{ maxWidth: "100%", margin: "0 auto" }}>
-        {/* Statistics Cards */}
-        <Row gutter={16} style={{ marginBottom: 24 }}>
-          <Col span={8}>
-            <Card>
-              <Statistic
-                title="Total Packages"
-                value={stats.total}
-                valueStyle={{ color: "#1677ff" }}
-              />
-            </Card>
-          </Col>
-          <Col span={8}>
-            <Card>
-              <Statistic
-                title="Active Packages"
-                value={stats.active}
-                valueStyle={{ color: "#52c41a" }}
-              />
-            </Card>
-          </Col>
-          <Col span={8}>
-            <Card>
-              <Statistic
-                title="Popular Packages"
-                value={stats.popular}
-                valueStyle={{ color: "#faad14" }}
-                prefix={<span>⭐</span>}
-              />
-            </Card>
-          </Col>
-        </Row>
 
         {/* Table */}
         <Card
@@ -332,7 +302,6 @@ const AdminCreditPackages = () => {
           />
         </Card>
 
-        {/* Detail Modal */}
         <Modal
           open={detailOpen}
           onCancel={() => setDetailOpen(false)}
@@ -341,23 +310,28 @@ const AdminCreditPackages = () => {
               Close
             </Button>,
           ]}
-          width={700}
+          width={600}
         >
           {selectedPackage && (
-            <div style={{ maxHeight: '70vh', overflowY: 'auto' }}>
-              {/* Package Information Section */}
+            <div>
+              {/* Package Information */}
               <div style={{ marginBottom: 24 }}>
                 <h3 style={{
-                  fontSize: 16,
+                  fontSize: 15,
                   fontWeight: 600,
-                  marginBottom: 16,
+                  marginBottom: 12,
                   paddingBottom: 8,
                   borderBottom: '2px solid #1890ff',
                   color: '#1890ff'
                 }}>
                   Package Information
                 </h3>
-                <Descriptions bordered column={1} size="small">
+                <Descriptions
+                  bordered
+                  column={1}
+                  size="middle"
+                  labelStyle={{ width: '180px', fontWeight: 500 }}
+                >
                   <Descriptions.Item label="Package Name">
                     <span style={{ fontWeight: 600 }}>
                       {selectedPackage.name}
@@ -368,85 +342,78 @@ const AdminCreditPackages = () => {
                       </Tag>
                     )}
                   </Descriptions.Item>
+
                   {selectedPackage.description && (
                     <Descriptions.Item label="Description">
                       {selectedPackage.description}
                     </Descriptions.Item>
                   )}
+
                   <Descriptions.Item label="Credit Amount">
                     <span style={{ fontSize: 16, fontWeight: 600, color: '#1677ff' }}>
                       {selectedPackage.creditAmount?.toLocaleString()} credits
                     </span>
                   </Descriptions.Item>
+
                   <Descriptions.Item label="Display Order">
                     #{selectedPackage.displayOrder}
                   </Descriptions.Item>
+
                   <Descriptions.Item label="Status">
                     <Tag color={selectedPackage.isActive ? "green" : "red"} icon={selectedPackage.isActive ? <CheckCircleOutlined /> : <StopOutlined />}>
                       {selectedPackage.isActive ? "Active" : "Inactive"}
                     </Tag>
                   </Descriptions.Item>
+
                   <Descriptions.Item label="Published Date">
                     {formatDate(selectedPackage.createdAt)}
                   </Descriptions.Item>
-
                 </Descriptions>
               </div>
 
-              {/* Pricing Details Section */}
-              <div style={{ marginBottom: 24 }}>
+              {/* Pricing & Discount */}
+              <div>
                 <h3 style={{
-                  fontSize: 16,
+                  fontSize: 15,
                   fontWeight: 600,
-                  marginBottom: 16,
+                  marginBottom: 12,
                   paddingBottom: 8,
                   borderBottom: '2px solid #52c41a',
                   color: '#52c41a'
                 }}>
-                  Pricing Details
+                  Pricing & Discount
                 </h3>
-                <Descriptions bordered column={1} size="small">
+                <Descriptions
+                  bordered
+                  column={1}
+                  size="middle"
+                  labelStyle={{ width: '180px', fontWeight: 500 }}
+                >
                   <Descriptions.Item label="Original Price">
                     <span style={{ textDecoration: 'line-through', color: '#999' }}>
                       {selectedPackage.originalPrice?.toLocaleString()} đ
                     </span>
                   </Descriptions.Item>
+
                   <Descriptions.Item label="Discounted Price">
-                    <span style={{ fontSize: 18, fontWeight: 'bold', color: '#52c41a' }}>
+                    <span style={{ fontSize: 16, fontWeight: 600, color: '#52c41a' }}>
                       {selectedPackage.discountedPrice?.toLocaleString()} đ
                     </span>
                   </Descriptions.Item>
-                  <Descriptions.Item label="Price per Credit">
-                    {selectedPackage.pricePerCredit?.toLocaleString()} đ
-                  </Descriptions.Item>
-                  <Descriptions.Item label="Currency">
-                    {selectedPackage.currency || "VND"}
-                  </Descriptions.Item>
-                </Descriptions>
-              </div>
 
-              {/* Discount Information Section */}
-              <div style={{ marginBottom: 24 }}>
-                <h3 style={{
-                  fontSize: 16,
-                  fontWeight: 600,
-                  marginBottom: 16,
-                  paddingBottom: 8,
-                  borderBottom: '2px solid #fa8c16',
-                  color: '#fa8c16'
-                }}>
-                  Discount Information
-                </h3>
-                <Descriptions bordered column={1} size="small">
                   <Descriptions.Item label="Discount Percent">
                     <Tag color="blue">{selectedPackage.discountPercent}%</Tag>
                   </Descriptions.Item>
+
                   <Descriptions.Item label="Savings Amount">
                     <Tag color="green">-{selectedPackage.savingsAmount?.toLocaleString()} đ</Tag>
                   </Descriptions.Item>
+
+                  <Descriptions.Item label="Price per Credit">
+                    {selectedPackage.pricePerCredit?.toLocaleString()} {selectedPackage.currency || "VND"}
+                  </Descriptions.Item>
                 </Descriptions>
               </div>
-
             </div>
           )}
         </Modal>

@@ -1,8 +1,9 @@
 import React, { useEffect, useState, useRef } from "react";
-import { Send, Smile, Paperclip, Search, MoreVertical } from "lucide-react";
+import { Send, Smile, Image as ImageIcon, Search, MoreVertical, X, Loader2 } from "lucide-react";
 import { chatService } from "../../service/chatService";
 import { webSocketService } from "../../service/webSocketService";
 import { authService } from "../../service/authService";
+import { uploadService } from "../../service/uploadService";
 
 const Chat = () => {
   const [selectedChat, setSelectedChat] = useState(null);
@@ -11,8 +12,12 @@ const Chat = () => {
   const [messages, setMessages] = useState([]);
   const [wsConnected, setWsConnected] = useState(false);
   const [currentUserId, setCurrentUserId] = useState(null);
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [uploading, setUploading] = useState(false);
   const subscriptionRef = useRef(null);
   const messagesEndRef = useRef(null);
+  const imageInputRef = useRef(null);
 
   // Use refs to avoid closure issues in WebSocket callback
   const selectedChatRef = useRef(null);
@@ -127,7 +132,7 @@ const Chat = () => {
             msg.senderId === message.senderId &&
             Math.abs(
               new Date(msg.createdAt) -
-                new Date(message.timestamp || message.createdAt)
+              new Date(message.timestamp || message.createdAt)
             ) < 1000
           );
         });
@@ -150,6 +155,7 @@ const Chat = () => {
             receiverName: message.receiverName,
             receiverAvatarUrl: message.receiverAvatarUrl,
             content: message.content,
+            isImage: message.isImage || message.image || false,
             createdAt: message.createdAt || message.timestamp,
             updatedAt: message.updatedAt,
           },
@@ -201,9 +207,12 @@ const Chat = () => {
         );
         console.log("Messages:", response.content);
 
-        const sortedMessages = [...response.content].sort(
-          (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
-        );
+        const sortedMessages = [...response.content]
+          .map(msg => ({
+            ...msg,
+            isImage: msg.isImage || msg.image || false, // Map 'image' field from backend to 'isImage'
+          }))
+          .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
         setMessages(sortedMessages);
       } else {
         setMessages([]);
@@ -222,61 +231,123 @@ const Chat = () => {
     setSelectedChat(conversation);
     selectedChatRef.current = conversation; // Update ref
     getConversationById(conversation.userId);
+    // Clear image preview when switching chat
+    clearImagePreview();
+  };
+
+  // Image handling functions
+  const handleImageSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file
+    if (!file.type.startsWith("image/")) {
+      alert("Please select an image file");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Image size must be less than 5MB");
+      return;
+    }
+
+    setImageFile(file);
+    const previewUrl = URL.createObjectURL(file);
+    setImagePreview(previewUrl);
+  };
+
+  const clearImagePreview = () => {
+    if (imagePreview) {
+      URL.revokeObjectURL(imagePreview);
+    }
+    setImageFile(null);
+    setImagePreview(null);
+    if (imageInputRef.current) {
+      imageInputRef.current.value = "";
+    }
+  };
+
+  // Helper function to send a single message
+  const sendSingleMessage = async (content, isImage) => {
+    const data = {
+      receiverId: selectedChat.userId,
+      content: content,
+      image: isImage,
+    };
+
+    const response = await chatService.sendMessage(data);
+    console.log("Message saved to database:", response);
+
+    const newMessage = {
+      id: response.id,
+      senderId: currentUserId,
+      senderName: response.senderName,
+      senderAvatarUrl: response.senderAvatarUrl,
+      receiverId: selectedChat.userId,
+      receiverName: selectedChat.userName,
+      receiverAvatarUrl: selectedChat.userAvatarUrl,
+      content: content,
+      isImage: isImage,
+      createdAt: response.createdAt || new Date().toISOString(),
+      updatedAt: response.updatedAt,
+    };
+
+    setMessages((prevMessages) => [...prevMessages, newMessage]);
+
+    // Send via WebSocket
+    if (wsConnected) {
+      const wsMessage = {
+        senderId: currentUserId,
+        senderName: response.senderName,
+        senderAvatarUrl: response.senderAvatarUrl,
+        receiverId: selectedChat.userId,
+        content: content,
+        image: isImage, // Use 'image' to match Java backend field serialization
+        timestamp: response.createdAt,
+      };
+      console.log("Message sent via WebSocket:", wsMessage);
+      webSocketService.send("/app/chat.private", wsMessage);
+    }
+
+    return response;
   };
 
   const handleSendMessage = async () => {
-    if (!inputText.trim() || !selectedChat) return;
+    // Check if we have either text or image
+    if (!selectedChat || (!inputText.trim() && !imageFile)) return;
 
     const messageContent = inputText.trim();
     setInputText("");
 
     try {
-      const data = {
-        receiverId: selectedChat.userId,
-        content: messageContent,
-      };
+      // If there's an image, upload and send it first
+      if (imageFile) {
+        setUploading(true);
+        try {
+          const uploadResult = await uploadService.uploadImage(imageFile);
+          const imageUrl = uploadResult.secure_url;
+          clearImagePreview();
 
-      // Step 1: Send via REST API
-      const response = await chatService.sendMessage(data);
-      console.log("Message saved to database:", response);
+          // Send image message
+          await sendSingleMessage(imageUrl, true);
+        } catch (uploadError) {
+          console.error("Image upload failed:", uploadError);
+          alert("Failed to upload image. Please try again.");
+          setUploading(false);
+          setInputText(messageContent); // Restore text
+          return;
+        }
+        setUploading(false);
+      }
 
-      const newMessage = {
-        id: response.id,
-        senderId: currentUserId,
-        senderName: response.senderName,
-        senderAvatarUrl: response.senderAvatarUrl,
-        receiverId: selectedChat.userId,
-        receiverName: selectedChat.userName,
-        receiverAvatarUrl: selectedChat.userAvatarUrl,
-        content: messageContent,
-        createdAt: response.createdAt || new Date().toISOString(),
-        updatedAt: response.updatedAt,
-      };
+      // If there's also text, send it as a separate message
+      if (messageContent) {
+        await sendSingleMessage(messageContent, false);
+      }
 
-      console.log("🕐 Backend createdAt:", response.createdAt);
-      console.log("🕐 Parsed as Date:", new Date(response.createdAt));
-      console.log("🕐 UTC Hours:", new Date(response.createdAt).getUTCHours());
-      console.log("🕐 Local Hours:", new Date(response.createdAt).getHours());
-
-      setMessages((prevMessages) => [...prevMessages, newMessage]);
-
-      // ✅ CẬP NHẬT DANH SÁCH CONVERSATIONS NGAY SAU KHI GỬI
+      // Update conversations list
       fetchAllConversations();
 
-      // Step 2: Send via WebSocket
-      if (wsConnected) {
-        const wsMessage = {
-          senderId: currentUserId,
-          senderName: response.senderName,
-          senderAvatarUrl: response.senderAvatarUrl,
-          receiverId: selectedChat.userId,
-          content: messageContent,
-          timestamp: response.createdAt, // ✅ Backend cần "timestamp"
-        };
-        console.log("Message sent via WebSocket:", wsMessage);
-        webSocketService.send("/app/chat.private", wsMessage);
-        console.log("Message sent via WebSocket:", wsMessage);
-      }
     } catch (error) {
       console.error("Error sending message:", error);
       setInputText(messageContent);
@@ -350,9 +421,8 @@ const Chat = () => {
               <div
                 key={conv.userId}
                 onClick={() => handleSelectChat(conv)}
-                className={`px-4 py-3 flex items-center space-x-3 hover:bg-gray-50 cursor-pointer transition-colors ${
-                  selectedChat?.userId === conv.userId ? "bg-blue-50" : ""
-                }`}
+                className={`px-4 py-3 flex items-center space-x-3 hover:bg-gray-50 cursor-pointer transition-colors ${selectedChat?.userId === conv.userId ? "bg-blue-50" : ""
+                  }`}
               >
                 {/* Avatar */}
                 <div className="relative">
@@ -441,14 +511,12 @@ const Chat = () => {
                 return (
                   <div
                     key={message.id || `msg-${index}`}
-                    className={`flex ${
-                      isMine ? "justify-end" : "justify-start"
-                    }`}
+                    className={`flex ${isMine ? "justify-end" : "justify-start"
+                      }`}
                   >
                     <div
-                      className={`flex items-start space-x-2 max-w-md ${
-                        isMine ? "flex-row-reverse space-x-reverse" : ""
-                      }`}
+                      className={`flex items-start space-x-2 max-w-md ${isMine ? "flex-row-reverse space-x-reverse" : ""
+                        }`}
                     >
                       {!isMine && (
                         <div className="w-8 h-8 rounded-full flex-shrink-0">
@@ -468,18 +536,33 @@ const Chat = () => {
                       )}
                       <div>
                         <div
-                          className={`px-4 py-2 rounded-2xl ${
-                            isMine
-                              ? "bg-blue-500 text-white rounded-br-none"
-                              : "bg-white text-gray-800 rounded-bl-none shadow-sm"
-                          }`}
+                          className={`rounded-2xl ${message.isImage
+                              ? "p-1"
+                              : isMine
+                                ? "px-4 py-2 bg-blue-500 text-white rounded-br-none"
+                                : "px-4 py-2 bg-white text-gray-800 rounded-bl-none shadow-sm"
+                            }`}
                         >
-                          <p className="text-sm">{message.content}</p>
+                          {message.isImage ? (
+                            <a href={message.content} target="_blank" rel="noopener noreferrer">
+                              <img
+                                src={message.content}
+                                alt="Shared image"
+                                className="rounded-xl cursor-pointer hover:opacity-90 transition-opacity"
+                                style={{
+                                  width: "240px",
+                                  height: "180px",
+                                  objectFit: "cover",
+                                }}
+                              />
+                            </a>
+                          ) : (
+                            <p className="text-sm">{message.content}</p>
+                          )}
                         </div>
                         <p
-                          className={`text-xs text-gray-500 mt-1 ${
-                            isMine ? "text-right" : "text-left"
-                          }`}
+                          className={`text-xs text-gray-500 mt-1 ${isMine ? "text-right" : "text-left"
+                            }`}
                         >
                           {messageTime || "N/A"}
                         </p>
@@ -493,34 +576,72 @@ const Chat = () => {
 
             {/* Input Area */}
             <div className="bg-white border-t border-gray-200 px-6 py-4">
+              {/* Image Preview */}
+              {imagePreview && (
+                <div className="mb-3 relative inline-block">
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
+                    className="max-h-32 rounded-lg border border-gray-200"
+                  />
+                  <button
+                    onClick={clearImagePreview}
+                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              )}
+
               <div className="flex items-end space-x-3">
-                <button className="p-2 text-gray-500 hover:text-gray-700 transition-colors">
-                  <Paperclip size={20} />
+                {/* Hidden file input */}
+                <input
+                  type="file"
+                  ref={imageInputRef}
+                  accept="image/*"
+                  onChange={handleImageSelect}
+                  className="hidden"
+                />
+
+                {/* Image picker button */}
+                <button
+                  onClick={() => imageInputRef.current?.click()}
+                  disabled={uploading}
+                  className="p-2 text-gray-500 hover:text-blue-500 transition-colors disabled:opacity-50"
+                  title="Send image"
+                >
+                  <ImageIcon size={20} />
                 </button>
+
                 <div className="flex-1 bg-gray-100 rounded-3xl px-4 py-2 flex items-center">
                   <input
                     type="text"
                     value={inputText}
                     onChange={(e) => setInputText(e.target.value)}
                     onKeyPress={handleKeyPress}
-                    placeholder="Enter message..."
+                    placeholder={imageFile ? "Add a caption (optional)..." : "Enter message..."}
                     className="flex-1 bg-transparent outline-none text-sm text-gray-800 placeholder-gray-500"
-                    disabled={!wsConnected}
+                    disabled={!wsConnected || uploading}
                   />
                   <button className="p-1 text-gray-500 hover:text-gray-700 transition-colors">
                     <Smile size={20} />
                   </button>
                 </div>
+
+                {/* Send button */}
                 <button
                   onClick={handleSendMessage}
-                  disabled={!wsConnected || !inputText.trim()}
-                  className={`p-3 rounded-full transition-colors shadow-md ${
-                    wsConnected && inputText.trim()
-                      ? "bg-blue-500 text-white hover:bg-blue-600"
-                      : "bg-gray-300 text-gray-500 cursor-not-allowed"
-                  }`}
+                  disabled={!wsConnected || uploading || (!inputText.trim() && !imageFile)}
+                  className={`p-3 rounded-full transition-colors shadow-md ${wsConnected && !uploading && (inputText.trim() || imageFile)
+                    ? "bg-blue-500 text-white hover:bg-blue-600"
+                    : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    }`}
                 >
-                  <Send size={18} />
+                  {uploading ? (
+                    <Loader2 size={18} className="animate-spin" />
+                  ) : (
+                    <Send size={18} />
+                  )}
                 </button>
               </div>
             </div>

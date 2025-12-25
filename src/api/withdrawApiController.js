@@ -13,11 +13,14 @@ export const withdrawalsApiController = {
             }
         });
     },
-    approveWithdrawal: async (id) => {
-        return await privateApi.put(`/api/admin/withdraw/${id}/approve`);
+    approveWithdrawal: async (id, billImage) => {
+        const body = billImage && typeof billImage === 'string' && billImage.trim() !== '' 
+            ? { billImage } 
+            : {};
+        return await privateApi.put(`/api/admin/withdraw/${id}/approve`, body);
     },
-    rejectWithdrawal: async (id) => {
-        return await privateApi.put(`/api/admin/withdraw/${id}/reject`);
+    rejectWithdrawal: async (id, rejectReason) => {
+        return await privateApi.put(`/api/admin/withdraw/${id}/reject`, { rejectionReason: rejectReason });
     },
 
 }

@@ -253,7 +253,7 @@ const TransactionsManagement = () => {
       </Card>
 
       <Modal
-   
+       
         open={isModalVisible}
         onCancel={() => setIsModalVisible(false)}
         footer={[
@@ -261,30 +261,28 @@ const TransactionsManagement = () => {
             Close
           </Button>,
         ]}
-        width={700}
+        width={600}
       >
         {selectedRecord && (
-          <div style={{ maxHeight: '70vh', overflowY: 'auto' }}>
-            {/* Transaction Information Section */}
+          <div>
+            {/* Transaction Information */}
             <div style={{ marginBottom: 24 }}>
               <h3 style={{
-                fontSize: 16,
+                fontSize: 15,
                 fontWeight: 600,
-                marginBottom: 16,
+                marginBottom: 12,
                 paddingBottom: 8,
                 borderBottom: '2px solid #1890ff',
                 color: '#1890ff'
               }}>
                 Transaction Information
               </h3>
-              <Descriptions bordered column={1} size="small">
-                {selectedRecord.orderCode && (
-                  <Descriptions.Item label="Order Code">
-                    <span style={{ fontFamily: 'monospace', fontWeight: 500 }}>
-                      {selectedRecord.orderCode}
-                    </span>
-                  </Descriptions.Item>
-                )}
+              <Descriptions
+                bordered
+                column={1}
+                size="middle"
+                labelStyle={{ width: '180px', fontWeight: 500 }}
+              >
                 <Descriptions.Item label="Transaction Type">
                   {(() => {
                     const type = selectedRecord.type;
@@ -293,21 +291,13 @@ const TransactionsManagement = () => {
                       "PAYMENT", "WITHDRAW", "COURSE_FEE", "SUBSCRIPTION",
                       "PURCHASE_RESOURCE", "PURCHASE_AI_CREDITS", "PURCHASE_SUBSCRIPTION"
                     ].includes(type);
-
                     let color = "blue";
-                    let icon = null;
-
-                    if (isIncoming) {
-                      color = "green";
-                      icon = <ArrowDownOutlined style={{ marginRight: 4 }} />;
-                    } else if (isOutgoing) {
-                      color = "red";
-                      icon = <ArrowUpOutlined style={{ marginRight: 4 }} />;
-                    }
-
-                    return <Tag color={color} icon={icon}>{type}</Tag>;
+                    if (isIncoming) color = "green";
+                    else if (isOutgoing) color = "red";
+                    return <Tag color={color}>{type}</Tag>;
                   })()}
                 </Descriptions.Item>
+
                 <Descriptions.Item label="Status">
                   {(() => {
                     let color = "default";
@@ -317,70 +307,71 @@ const TransactionsManagement = () => {
                     return <Tag color={color}>{selectedRecord.status}</Tag>;
                   })()}
                 </Descriptions.Item>
-                {selectedRecord.createdAt && (
-                  <Descriptions.Item label="Transaction Date">
-                    {new Date(selectedRecord.createdAt).toLocaleString('vi-VN', {
-                      year: 'numeric',
-                      month: '2-digit',
-                      day: '2-digit',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                      second: '2-digit'
-                    })}
+
+                <Descriptions.Item label="User Email">
+                  {selectedRecord.userEmail || "-"}
+                </Descriptions.Item>
+
+                {selectedRecord.orderCode && (
+                  <Descriptions.Item label="Order Code">
+                    <span style={{ fontFamily: 'monospace', color: '#1890ff' }}>
+                      {selectedRecord.orderCode}
+                    </span>
                   </Descriptions.Item>
                 )}
+        {selectedRecord.description && (
+                  <Descriptions.Item label="Description">
+                    {selectedRecord.description}
+                  </Descriptions.Item>
+                )}
+                <Descriptions.Item label="Transaction Date">
+                  {selectedRecord.createdAt ? new Date(selectedRecord.createdAt).toLocaleString('vi-VN', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                  }) : "-"}
+                </Descriptions.Item>
               </Descriptions>
             </div>
 
-            {/* User Information Section */}
-            <div style={{ marginBottom: 24 }}>
+            {/* Financial Details */}
+            <div>
               <h3 style={{
-                fontSize: 16,
+                fontSize: 15,
                 fontWeight: 600,
-                marginBottom: 16,
-                paddingBottom: 8,
-                borderBottom: '2px solid #52c41a',
-                color: '#52c41a'
-              }}>
-                User Information
-              </h3>
-              <Descriptions bordered column={1} size="small">
-                {selectedRecord.userEmail && (
-                  <Descriptions.Item label="Email">
-                    {selectedRecord.userEmail}
-                  </Descriptions.Item>
-                )}
-              </Descriptions>
-            </div>
-
-            {/* Financial Details Section */}
-            <div style={{ marginBottom: 24 }}>
-              <h3 style={{
-                fontSize: 16,
-                fontWeight: 600,
-                marginBottom: 16,
+                marginBottom: 12,
                 paddingBottom: 8,
                 borderBottom: '2px solid #fa8c16',
                 color: '#fa8c16'
               }}>
                 Financial Details
               </h3>
-              <Descriptions bordered column={1} size="small">
+              <Descriptions
+                bordered
+                column={1}
+                size="middle"
+                labelStyle={{ width: '180px', fontWeight: 500 }}
+              >
                 <Descriptions.Item label="Amount">
                   <span style={{
-                    fontSize: 18,
-                    fontWeight: 'bold',
+                    fontSize: 16,
+                    fontWeight: 600,
                     color: selectedRecord.type === "DEPOSIT" ? '#52c41a' : '#f5222d'
                   }}>
                     {selectedRecord.type === "DEPOSIT" ? '+' : '-'}
                     {Math.abs(selectedRecord.amount || 0).toLocaleString()} đ
                   </span>
                 </Descriptions.Item>
+
                 {selectedRecord.balanceBefore !== null && selectedRecord.balanceBefore !== undefined && (
                   <Descriptions.Item label="Balance Before">
                     {(selectedRecord.balanceBefore || 0).toLocaleString()} đ
                   </Descriptions.Item>
                 )}
+
                 {selectedRecord.balanceAfter !== null && selectedRecord.balanceAfter !== undefined && (
                   <Descriptions.Item label="Balance After">
                     <span style={{ fontWeight: 600 }}>
@@ -388,29 +379,10 @@ const TransactionsManagement = () => {
                     </span>
                   </Descriptions.Item>
                 )}
+
+              
               </Descriptions>
             </div>
-
-            {/* Additional Information Section */}
-            {selectedRecord.description && (
-              <div>
-                <h3 style={{
-                  fontSize: 16,
-                  fontWeight: 600,
-                  marginBottom: 16,
-                  paddingBottom: 8,
-                  borderBottom: '2px solid #722ed1',
-                  color: '#722ed1'
-                }}>
-                  Additional Information
-                </h3>
-                <Descriptions bordered column={1} size="small">
-                  <Descriptions.Item label="Description">
-                    {selectedRecord.description}
-                  </Descriptions.Item>
-                </Descriptions>
-              </div>
-            )}
           </div>
         )}
       </Modal>
