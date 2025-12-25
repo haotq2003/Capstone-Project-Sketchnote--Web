@@ -485,7 +485,7 @@ const Chat = () => {
                       {selectedChat.userName}
                     </h2>
                     <p className="text-xs text-gray-500">
-                      {wsConnected ? "Đang hoạt động" : "Không hoạt động"}
+                      {wsConnected ? "Connected" : "Disconnected"}
                     </p>
                   </div>
                 </div>

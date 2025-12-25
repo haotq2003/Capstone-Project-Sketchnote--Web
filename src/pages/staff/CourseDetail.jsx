@@ -265,6 +265,13 @@ const CourseDetail = ({ course, onBack }) => {
       }
     } catch (error) {
       message.error(error.message || 'Error while saving lesson');
+
+      // Close modal if error is about purchased course (cannot be fixed by user)
+      if (error.message && error.message.includes('purchased')) {
+        setTimeout(() => {
+          handleLessonCancel();
+        }, 1500); // Give user time to read the error message
+      }
     }
   };
 
