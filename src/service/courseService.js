@@ -44,10 +44,17 @@ export const courseService = {
   createLesson : async (id,lessonData) =>{
     try {
       const res = await courseApiController.createLesson(id,lessonData);
+      
+      // Check if backend returned error in response body
+      if (res.data.code && res.data.code !== 200) {
+        const errorMsg = res.data.result || res.data.message || "Create lesson failed.";
+        throw new Error(errorMsg);
+      }
+      
       return res.data;
     } catch (error) {
       const message =
-        error.response?.data?.message || error.message || "Create lesson failed.";
+        error.response?.data?.result || error.response?.data?.message || error.message || "Create lesson failed.";
       throw new Error(message);
     }
   },

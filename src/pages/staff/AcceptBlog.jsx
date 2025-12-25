@@ -219,7 +219,7 @@ const AcceptBlog = () => {
 
       <Modal
         open={isModalVisible}
-        title={<span style={{ fontSize: 18, fontWeight: 600 }}>Blog Details</span>}
+
         onCancel={() => setIsModalVisible(false)}
         footer={[
           <Button key="close" onClick={() => setIsModalVisible(false)}>
@@ -303,9 +303,38 @@ const AcceptBlog = () => {
                         backgroundColor: '#fff2e8',
                         borderRadius: 6,
                         border: '1px solid #ffbb96',
-                        lineHeight: 1.6
+                        lineHeight: 1.8
                       }}>
-                        {moderationInfo.reason}
+                        {moderationInfo.reason.split('\\n').filter(line => !line.toLowerCase().includes('safety score')).map((line, index) => {
+                          // Check if line starts with "- "
+                          if (line.trim().startsWith('- ')) {
+                            return (
+                              <div key={index} style={{
+                                marginLeft: 16,
+                                marginBottom: 4,
+                                display: 'flex',
+                                alignItems: 'flex-start'
+                              }}>
+                                <span style={{
+                                  color: '#ff4d4f',
+                                  marginRight: 8,
+                                  fontWeight: 600
+                                }}>•</span>
+                                <span style={{ flex: 1 }}>{line.substring(2)}</span>
+                              </div>
+                            );
+                          }
+                          // Regular line
+                          return (
+                            <div key={index} style={{
+                              fontWeight: line.includes('Violations detected') ? 600 : 400,
+                              color: line.includes('Violations detected') ? '#ff4d4f' : '#595959',
+                              marginBottom: 4
+                            }}>
+                              {line || '\u00A0'}
+                            </div>
+                          );
+                        })}
                       </div>
                     </Descriptions.Item>
                     <Descriptions.Item label="Checked At">

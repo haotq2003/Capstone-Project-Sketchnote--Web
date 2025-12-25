@@ -363,7 +363,7 @@ export default function AdminDashboard() {
                 onMouseLeave={(e) => (e.currentTarget.style.transform = "translateY(0)")}
               >
                 <Statistic
-                  title="Token Balance"
+                  title="AI Credits Balance"
                   value={walletOverview.tokenBalance}
                   precision={0}
                   suffix="₫"
@@ -562,16 +562,6 @@ export default function AdminDashboard() {
             >
               This Year
             </Button>
-
-            <Button
-              icon={<ReloadOutlined />}
-              onClick={() => {
-                setDateRange(null);
-                fetchRevenueData();
-              }}
-            >
-              All Time
-            </Button>
           </Space>
 
           {/* Custom Filter */}
@@ -633,19 +623,20 @@ export default function AdminDashboard() {
         </Space>
       </Card>
 
+      {/* Revenue Over Time - Full Width Row */}
       <Row gutter={[16, 16]}>
-        <Col xs={24} lg={16}>
+        <Col span={24}>
           <Card title={<><BarChartOutlined style={{ marginRight: 8, color: "#1677ff" }} />Revenue Over Time</>} bordered={false} style={{ borderRadius: '12px' }}>
             <Spin spinning={loadingRevenue}>
               <ResponsiveContainer width="100%" height={400}>
                 <BarChart data={chartData}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
+                  <XAxis dataKey="date" tick={{ fontSize: 12 }} />
                   <YAxis />
                   <Tooltip formatter={(value) => `${value.toLocaleString()} đ`} />
                   <Legend />
                   <Bar dataKey="subscription" name="Subscription" fill="#3B82F6" stackId="a" />
-                  <Bar dataKey="token" name="Token" fill="#F59E0B" stackId="a" />
+                  <Bar dataKey="token" name="AI Credits" fill="#F59E0B" stackId="a" />
                   <Bar dataKey="course" name="Course" fill="#8B5CF6" stackId="a" />
                 </BarChart>
               </ResponsiveContainer>
@@ -658,17 +649,23 @@ export default function AdminDashboard() {
             </Spin>
           </Card>
         </Col>
-        <Col xs={24} lg={8}>
+      </Row>
+
+      {/* Revenue Breakdown - Separate Row */}
+      <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
+        <Col xs={24} md={12} lg={8}>
           <Card title={<><RiseOutlined style={{ marginRight: 8, color: "#52c41a" }} />Revenue Breakdown</>} bordered={false} style={{ borderRadius: '12px' }}>
             <Spin spinning={loadingRevenue}>
-              <ResponsiveContainer width="100%" height={400}>
+              <ResponsiveContainer width="100%" height={350}>
                 <PieChart>
                   <Pie
                     data={pieData}
                     cx="50%"
-                    cy="50%"
-                    outerRadius={100}
-                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(1)}%`}
+                    cy="45%"
+                    outerRadius={90}
+                    innerRadius={40}
+                    label={({ percent }) => `${(percent * 100).toFixed(1)}%`}
+                    labelLine={false}
                     dataKey="value"
                   >
                     {pieData.map((entry, index) => (
@@ -676,6 +673,7 @@ export default function AdminDashboard() {
                     ))}
                   </Pie>
                   <Tooltip formatter={(value) => `${value.toLocaleString()} đ`} />
+                  <Legend />
                 </PieChart>
               </ResponsiveContainer>
               {!loadingRevenue && pieData.length === 0 && (
@@ -685,6 +683,74 @@ export default function AdminDashboard() {
                 />
               )}
             </Spin>
+          </Card>
+        </Col>
+
+        {/* Revenue Summary Cards */}
+        <Col xs={24} md={12} lg={16}>
+          <Card title={<><DollarOutlined style={{ marginRight: 8, color: "#faad14" }} />Revenue Summary</>} bordered={false} style={{ borderRadius: '12px' }}>
+            <Row gutter={[16, 16]}>
+              <Col span={8}>
+                <Card
+                  style={{
+                    background: 'linear-gradient(135deg, #3B82F6 0%, #1d4ed8 100%)',
+                    borderRadius: 12,
+                    border: 'none'
+                  }}
+                  bodyStyle={{ padding: 20 }}
+                >
+                  <Statistic
+                    title={<span style={{ color: 'rgba(255,255,255,0.85)' }}>Subscription Revenue</span>}
+                    value={revenueStats?.totalSubscriptionRevenue || 0}
+                    suffix="₫"
+                    valueStyle={{ color: '#fff', fontSize: 20, fontWeight: 600 }}
+                  />
+                </Card>
+              </Col>
+              <Col span={8}>
+                <Card
+                  style={{
+                    background: 'linear-gradient(135deg, #F59E0B 0%, #d97706 100%)',
+                    borderRadius: 12,
+                    border: 'none'
+                  }}
+                  bodyStyle={{ padding: 20 }}
+                >
+                  <Statistic
+                    title={<span style={{ color: 'rgba(255,255,255,0.85)' }}>AI Credits Revenue</span>}
+                    value={revenueStats?.totalTokenRevenue || 0}
+                    suffix="₫"
+                    valueStyle={{ color: '#fff', fontSize: 20, fontWeight: 600 }}
+                  />
+                </Card>
+              </Col>
+              <Col span={8}>
+                <Card
+                  style={{
+                    background: 'linear-gradient(135deg, #8B5CF6 0%, #6d28d9 100%)',
+                    borderRadius: 12,
+                    border: 'none'
+                  }}
+                  bodyStyle={{ padding: 20 }}
+                >
+                  <Statistic
+                    title={<span style={{ color: 'rgba(255,255,255,0.85)' }}>Course Revenue</span>}
+                    value={revenueStats?.totalCourseRevenue || 0}
+                    suffix="₫"
+                    valueStyle={{ color: '#fff', fontSize: 20, fontWeight: 600 }}
+                  />
+                </Card>
+              </Col>
+            </Row>
+            <div style={{ marginTop: 20, padding: 16, background: '#f6ffed', borderRadius: 8, border: '1px solid #b7eb8f' }}>
+              <Statistic
+                title="Total Revenue"
+                value={(revenueStats?.totalSubscriptionRevenue || 0) + (revenueStats?.totalTokenRevenue || 0) + (revenueStats?.totalCourseRevenue || 0)}
+                suffix="₫"
+                valueStyle={{ color: '#52c41a', fontSize: 28, fontWeight: 700 }}
+                prefix={<DollarOutlined />}
+              />
+            </div>
           </Card>
         </Col>
       </Row>
@@ -723,7 +789,7 @@ function processPieData(revenueStats) {
   if (!revenueStats) return [];
   return [
     { name: 'Subscription', value: revenueStats.totalSubscriptionRevenue || 0, fill: '#3B82F6' },
-    { name: 'Token', value: revenueStats.totalTokenRevenue || 0, fill: '#F59E0B' },
+    { name: 'AI Credits', value: revenueStats.totalTokenRevenue || 0, fill: '#F59E0B' },
     { name: 'Course', value: revenueStats.totalCourseRevenue || 0, fill: '#8B5CF6' }
   ].filter(item => item.value > 0);
 }
