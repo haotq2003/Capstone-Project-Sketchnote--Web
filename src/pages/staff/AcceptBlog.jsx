@@ -352,7 +352,9 @@ const AcceptBlog = () => {
                   src={selectedBlog.coverUrl}
                   alt="cover"
                   style={{
-                    maxWidth: '100%',
+                    width: '600px',
+                    height: '300px',
+                    objectFit: 'cover',
                     borderRadius: 8,
                     border: '1px solid #d9d9d9',
                     boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
@@ -406,7 +408,9 @@ const AcceptBlog = () => {
                         src={section.contentUrl}
                         alt={`content-${index}`}
                         style={{
-                          maxWidth: '100%',
+                          width: '600px',
+                          height: '300px',
+                          objectFit: 'cover',
                           borderRadius: 8,
                           border: '1px solid #d9d9d9',
                           boxShadow: '0 2px 8px rgba(0,0,0,0.1)'

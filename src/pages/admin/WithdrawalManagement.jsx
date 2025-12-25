@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { Card, Table, Form, Input, Select, Button, Row, Col, message, Modal, Descriptions, Tag, Space, Popconfirm } from "antd";
+import { Card, Table, Form, Input, Select, Button, Row, Col, message, Modal, Descriptions, Tag, Space } from "antd";
 import { withdrawalsService } from "../../service/withdrawalsService";
+import ImageUploader from "../../common/ImageUploader";
 
 const AdminWithdrawalManagement = () => {
     const [loading, setLoading] = useState(false);
@@ -9,6 +10,13 @@ const AdminWithdrawalManagement = () => {
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [selectedRecord, setSelectedRecord] = useState(null);
     const [form] = Form.useForm();
+
+    // Approve/Reject modals
+    const [approveModalVisible, setApproveModalVisible] = useState(false);
+    const [rejectModalVisible, setRejectModalVisible] = useState(false);
+    const [currentWithdrawalId, setCurrentWithdrawalId] = useState(null);
+    const [billImageUrl, setBillImageUrl] = useState('');
+    const [rejectReason, setRejectReason] = useState('');
 
     const normalizeResult = (result) => {
         if (!result) return { items: [], total: 0 };
@@ -88,26 +96,26 @@ const AdminWithdrawalManagement = () => {
                     </Button>
                     {record.status === "PENDING" && (
                         <>
-                            <Popconfirm
-                                title="Approve this withdrawal?"
-                                onConfirm={() => handleApprove(record.id)}
-                                okText="Yes"
-                                cancelText="No"
+                            <Button
+                                type="primary"
+                                style={{ backgroundColor: "#52c41a" }}
+                                onClick={() => {
+                                    setCurrentWithdrawalId(record.id);
+                                    setApproveModalVisible(true);
+                                }}
                             >
-                                <Button type="primary" style={{ backgroundColor: "#52c41a" }}>
-                                    Approve
-                                </Button>
-                            </Popconfirm>
-                            <Popconfirm
-                                title="Reject this withdrawal?"
-                                onConfirm={() => handleReject(record.id)}
-                                okText="Yes"
-                                cancelText="No"
+                                Approve
+                            </Button>
+                            <Button
+                                type="primary"
+                                danger
+                                onClick={() => {
+                                    setCurrentWithdrawalId(record.id);
+                                    setRejectModalVisible(true);
+                                }}
                             >
-                                <Button type="primary" danger>
-                                    Reject
-                                </Button>
-                            </Popconfirm>
+                                Reject
+                            </Button>
                         </>
                     )}
                 </Space>
@@ -120,22 +128,42 @@ const AdminWithdrawalManagement = () => {
         setIsModalVisible(true);
     };
 
-    const handleApprove = async (id) => {
+    const handleApproveSubmit = async () => {
         try {
-            await withdrawalsService.approveWithdrawal(id);
+            console.log('Approving withdrawal:', currentWithdrawalId);
+            console.log('Bill Image URL:', billImageUrl);
+            console.log('Type of billImageUrl:', typeof billImageUrl);
+            await withdrawalsService.approveWithdrawal(currentWithdrawalId, billImageUrl);
             message.success("Withdrawal approved successfully");
+            setApproveModalVisible(false);
+            setBillImageUrl('');
+            setCurrentWithdrawalId(null);
             fetchData(pagination.current, pagination.pageSize);
         } catch (error) {
+            console.log('Approve error:', error);
+            console.log('Error response:', error.response?.data);
             message.error(error.message || "Failed to approve withdrawal");
         }
     };
 
-    const handleReject = async (id) => {
+    const handleRejectSubmit = async () => {
+        if (!rejectReason || rejectReason.trim() === '') {
+            message.error('Please provide a rejection reason');
+            return;
+        }
         try {
-            await withdrawalsService.rejectWithdrawal(id);
+            console.log('Rejecting withdrawal:', currentWithdrawalId);
+            console.log('Rejection Reason:', rejectReason);
+            console.log('Type of rejectReason:', typeof rejectReason);
+            await withdrawalsService.rejectWithdrawal(currentWithdrawalId, rejectReason);
             message.success("Withdrawal rejected successfully");
+            setRejectModalVisible(false);
+            setRejectReason('');
+            setCurrentWithdrawalId(null);
             fetchData(pagination.current, pagination.pageSize);
         } catch (error) {
+            console.log('Reject error:', error);
+            console.log('Error response:', error.response?.data);
             message.error(error.message || "Failed to reject withdrawal");
         }
     };
@@ -227,23 +255,28 @@ const AdminWithdrawalManagement = () => {
                         Close
                     </Button>,
                 ]}
-                width={700}
+                width={600}
             >
                 {selectedRecord && (
-                    <div style={{ maxHeight: '70vh', overflowY: 'auto' }}>
-                        {/* Withdrawal Information Section */}
+                    <div>
+                        {/* Withdrawal Information */}
                         <div style={{ marginBottom: 24 }}>
                             <h3 style={{
-                                fontSize: 16,
+                                fontSize: 15,
                                 fontWeight: 600,
-                                marginBottom: 16,
+                                marginBottom: 12,
                                 paddingBottom: 8,
                                 borderBottom: '2px solid #1890ff',
                                 color: '#1890ff'
                             }}>
                                 Withdrawal Information
                             </h3>
-                            <Descriptions bordered column={1} size="small">
+                            <Descriptions
+                                bordered
+                                column={1}
+                                size="middle"
+                                labelStyle={{ width: '180px', fontWeight: 500 }}
+                            >
                                 <Descriptions.Item label="Status">
                                     {(() => {
                                         let color = "default";
@@ -253,6 +286,17 @@ const AdminWithdrawalManagement = () => {
                                         return <Tag color={color}>{selectedRecord.status}</Tag>;
                                     })()}
                                 </Descriptions.Item>
+
+                                <Descriptions.Item label="Withdrawal Amount">
+                                    <span style={{
+                                        fontSize: 16,
+                                        fontWeight: 600,
+                                        color: '#f5222d'
+                                    }}>
+                                        {(selectedRecord.amount || 0).toLocaleString()} đ
+                                    </span>
+                                </Descriptions.Item>
+
                                 {selectedRecord.createdAt && (
                                     <Descriptions.Item label="Request Date">
                                         {new Date(selectedRecord.createdAt).toLocaleString('vi-VN', {
@@ -265,6 +309,7 @@ const AdminWithdrawalManagement = () => {
                                         })}
                                     </Descriptions.Item>
                                 )}
+
                                 {selectedRecord.updatedAt && (
                                     <Descriptions.Item label="Last Updated">
                                         {new Date(selectedRecord.updatedAt).toLocaleString('vi-VN', {
@@ -277,22 +322,60 @@ const AdminWithdrawalManagement = () => {
                                         })}
                                     </Descriptions.Item>
                                 )}
+
+                                {selectedRecord.rejectionReason && (
+                                    <Descriptions.Item label="Rejection Reason">
+                                        <span style={{ color: '#f5222d' }}>
+                                            {selectedRecord.rejectionReason}
+                                        </span>
+                                    </Descriptions.Item>
+                                )}
+
+                                {selectedRecord.billImage && (
+                                    <Descriptions.Item label="Bill Image">
+                                        <a
+                                            href={selectedRecord.billImage}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            style={{ color: '#1890ff' }}
+                                        >
+                                            View Image
+                                        </a>
+                                        <div style={{ marginTop: 8 }}>
+                                            <img
+                                                src={selectedRecord.billImage}
+                                                alt="Bill"
+                                                style={{
+                                                    maxWidth: '100%',
+                                                    maxHeight: 200,
+                                                    borderRadius: 8,
+                                                    border: '1px solid #d9d9d9'
+                                                }}
+                                            />
+                                        </div>
+                                    </Descriptions.Item>
+                                )}
                             </Descriptions>
                         </div>
 
-                        {/* Bank Account Details Section */}
-                        <div style={{ marginBottom: 24 }}>
+                        {/* Bank Account Details */}
+                        <div>
                             <h3 style={{
-                                fontSize: 16,
+                                fontSize: 15,
                                 fontWeight: 600,
-                                marginBottom: 16,
+                                marginBottom: 12,
                                 paddingBottom: 8,
                                 borderBottom: '2px solid #52c41a',
                                 color: '#52c41a'
                             }}>
                                 Bank Account Details
                             </h3>
-                            <Descriptions bordered column={1} size="small">
+                            <Descriptions
+                                bordered
+                                column={1}
+                                size="middle"
+                                labelStyle={{ width: '180px', fontWeight: 500 }}
+                            >
                                 {selectedRecord.bankName && (
                                     <Descriptions.Item label="Bank Name">
                                         <span style={{ fontWeight: 500 }}>
@@ -300,13 +383,15 @@ const AdminWithdrawalManagement = () => {
                                         </span>
                                     </Descriptions.Item>
                                 )}
+
                                 {selectedRecord.bankAccountNumber && (
                                     <Descriptions.Item label="Account Number">
-                                        <span style={{ fontFamily: 'monospace', fontWeight: 500 }}>
+                                        <span style={{ fontFamily: 'monospace', fontWeight: 500, color: '#1890ff' }}>
                                             {selectedRecord.bankAccountNumber}
                                         </span>
                                     </Descriptions.Item>
                                 )}
+
                                 {selectedRecord.bankAccountHolder && (
                                     <Descriptions.Item label="Account Holder">
                                         {selectedRecord.bankAccountHolder}
@@ -314,54 +399,67 @@ const AdminWithdrawalManagement = () => {
                                 )}
                             </Descriptions>
                         </div>
-
-                        {/* Amount Details Section */}
-                        <div style={{ marginBottom: 24 }}>
-                            <h3 style={{
-                                fontSize: 16,
-                                fontWeight: 600,
-                                marginBottom: 16,
-                                paddingBottom: 8,
-                                borderBottom: '2px solid #fa8c16',
-                                color: '#fa8c16'
-                            }}>
-                                Amount Details
-                            </h3>
-                            <Descriptions bordered column={1} size="small">
-                                <Descriptions.Item label="Withdrawal Amount">
-                                    <span style={{
-                                        fontSize: 18,
-                                        fontWeight: 'bold',
-                                        color: '#f5222d'
-                                    }}>
-                                        {(selectedRecord.amount || 0).toLocaleString()} đ
-                                    </span>
-                                </Descriptions.Item>
-                            </Descriptions>
-                        </div>
-
-                        {/* Additional Information Section */}
-                        {selectedRecord.note && (
-                            <div>
-                                <h3 style={{
-                                    fontSize: 16,
-                                    fontWeight: 600,
-                                    marginBottom: 16,
-                                    paddingBottom: 8,
-                                    borderBottom: '2px solid #722ed1',
-                                    color: '#722ed1'
-                                }}>
-                                    Additional Information
-                                </h3>
-                                <Descriptions bordered column={1} size="small">
-                                    <Descriptions.Item label="Note">
-                                        {selectedRecord.note}
-                                    </Descriptions.Item>
-                                </Descriptions>
-                            </div>
-                        )}
                     </div>
                 )}
+            </Modal>
+
+            {/* Approve Modal */}
+            <Modal
+                title="Approve Withdrawal"
+                open={approveModalVisible}
+                onCancel={() => {
+                    setApproveModalVisible(false);
+                    setBillImageUrl('');
+                }}
+                onOk={handleApproveSubmit}
+                okText="Approve"
+                okButtonProps={{ style: { backgroundColor: '#52c41a' } }}
+                width={600}
+            >
+                <div>
+                    <p style={{ marginBottom: 12 }}>Upload bill/receipt image (optional):</p>
+                    <ImageUploader
+                        onImageUploaded={(urls) => {
+                            if (urls && urls.length > 0) {
+                                // Extract imageUrl string from object
+                                const imageUrl = typeof urls[0] === 'string' ? urls[0] : urls[0]?.imageUrl;
+                                setBillImageUrl(imageUrl || '');
+                                message.success('Image uploaded successfully');
+                            }
+                        }}
+                        multiple={false}
+                    />
+                    {billImageUrl && (
+                        <div style={{ marginTop: 12 }}>
+                            <p style={{ color: '#52c41a', fontSize: 12 }}>✓ Image uploaded</p>
+                        </div>
+                    )}
+                </div>
+            </Modal>
+
+            {/* Reject Modal */}
+            <Modal
+                title="Reject Withdrawal"
+                open={rejectModalVisible}
+                onCancel={() => {
+                    setRejectModalVisible(false);
+                    setRejectReason('');
+                }}
+                onOk={handleRejectSubmit}
+                okText="Reject"
+                okButtonProps={{ danger: true }}
+                width={500}
+            >
+                <div>
+                    <p style={{ marginBottom: 8 }}>Please provide a reason for rejection:</p>
+                    <Input.TextArea
+                        value={rejectReason}
+                        onChange={(e) => setRejectReason(e.target.value)}
+                        placeholder="Enter rejection reason"
+                        rows={4}
+                        required
+                    />
+                </div>
             </Modal>
         </div>
     );

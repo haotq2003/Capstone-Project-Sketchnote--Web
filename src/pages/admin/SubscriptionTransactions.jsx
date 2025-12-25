@@ -170,30 +170,36 @@ const SubscriptionTransactions = () => {
             Close
           </Button>,
         ]}
-        width={700}
+        width={600}
       >
         {selectedRecord && (
-          <div style={{ maxHeight: '70vh', overflowY: 'auto' }}>
-            {/* Subscription Information Section */}
+          <div>
+            {/* Subscription Information */}
             <div style={{ marginBottom: 24 }}>
               <h3 style={{
-                fontSize: 16,
+                fontSize: 15,
                 fontWeight: 600,
-                marginBottom: 16,
+                marginBottom: 12,
                 paddingBottom: 8,
                 borderBottom: '2px solid #1890ff',
                 color: '#1890ff'
               }}>
                 Subscription Information
               </h3>
-              <Descriptions bordered column={1} size="small">
+              <Descriptions
+                bordered
+                column={1}
+                size="middle"
+                labelStyle={{ width: '180px', fontWeight: 500 }}
+              >
                 {selectedRecord.planName && (
                   <Descriptions.Item label="Plan">
-                    <Tag color="purple" style={{ fontSize: 14, padding: '4px 12px' }}>
+                    <Tag color="purple" style={{ fontSize: 14, padding: '4px 12px', margin: 0 }}>
                       {selectedRecord.planName}
                     </Tag>
                   </Descriptions.Item>
                 )}
+
                 <Descriptions.Item label="Status">
                   {(() => {
                     let color = "default";
@@ -203,68 +209,49 @@ const SubscriptionTransactions = () => {
                     return <Tag color={color}>{selectedRecord.status}</Tag>;
                   })()}
                 </Descriptions.Item>
-              </Descriptions>
-            </div>
 
-            {/* User Information Section */}
-            <div style={{ marginBottom: 24 }}>
-              <h3 style={{
-                fontSize: 16,
-                fontWeight: 600,
-                marginBottom: 16,
-                paddingBottom: 8,
-                borderBottom: '2px solid #52c41a',
-                color: '#52c41a'
-              }}>
-                User Information
-              </h3>
-              <Descriptions bordered column={1} size="small">
                 {selectedRecord.userEmail && (
-                  <Descriptions.Item label="Email">
+                  <Descriptions.Item label="User Email">
                     {selectedRecord.userEmail}
                   </Descriptions.Item>
                 )}
-              </Descriptions>
-            </div>
 
-            {/* Payment Details Section */}
-            <div style={{ marginBottom: 24 }}>
-              <h3 style={{
-                fontSize: 16,
-                fontWeight: 600,
-                marginBottom: 16,
-                paddingBottom: 8,
-                borderBottom: '2px solid #fa8c16',
-                color: '#fa8c16'
-              }}>
-                Payment Details
-              </h3>
-              <Descriptions bordered column={1} size="small">
                 <Descriptions.Item label="Price">
                   <span style={{
-                    fontSize: 18,
-                    fontWeight: 'bold',
+                    fontSize: 16,
+                    fontWeight: 600,
                     color: '#52c41a'
                   }}>
                     {(selectedRecord.price || 0).toLocaleString()} đ
                   </span>
                 </Descriptions.Item>
+
+                {selectedRecord.description && (
+                  <Descriptions.Item label="Description">
+                    {selectedRecord.description}
+                  </Descriptions.Item>
+                )}
               </Descriptions>
             </div>
 
-            {/* Subscription Period Section */}
-            <div style={{ marginBottom: 24 }}>
+            {/* Subscription Period */}
+            <div>
               <h3 style={{
-                fontSize: 16,
+                fontSize: 15,
                 fontWeight: 600,
-                marginBottom: 16,
+                marginBottom: 12,
                 paddingBottom: 8,
                 borderBottom: '2px solid #13c2c2',
                 color: '#13c2c2'
               }}>
                 Subscription Period
               </h3>
-              <Descriptions bordered column={1} size="small">
+              <Descriptions
+                bordered
+                column={1}
+                size="middle"
+                labelStyle={{ width: '180px', fontWeight: 500 }}
+              >
                 {selectedRecord.createdAt && (
                   <Descriptions.Item label="Start Date">
                     {new Date(selectedRecord.createdAt).toLocaleString('vi-VN', {
@@ -277,6 +264,7 @@ const SubscriptionTransactions = () => {
                     })}
                   </Descriptions.Item>
                 )}
+
                 {selectedRecord.endDate && (
                   <Descriptions.Item label="End Date">
                     {new Date(selectedRecord.endDate).toLocaleString('vi-VN', {
@@ -291,27 +279,6 @@ const SubscriptionTransactions = () => {
                 )}
               </Descriptions>
             </div>
-
-            {/* Additional Information Section */}
-            {selectedRecord.description && (
-              <div>
-                <h3 style={{
-                  fontSize: 16,
-                  fontWeight: 600,
-                  marginBottom: 16,
-                  paddingBottom: 8,
-                  borderBottom: '2px solid #722ed1',
-                  color: '#722ed1'
-                }}>
-                  Additional Information
-                </h3>
-                <Descriptions bordered column={1} size="small">
-                  <Descriptions.Item label="Description">
-                    {selectedRecord.description}
-                  </Descriptions.Item>
-                </Descriptions>
-              </div>
-            )}
           </div>
         )}
       </Modal>

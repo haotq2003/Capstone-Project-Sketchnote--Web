@@ -145,23 +145,50 @@ const WalletsManagement = () => {
             Close
           </Button>,
         ]}
-        width={700}
+        width={550}
       >
         {selectedRecord && (
-          <div style={{ maxHeight: '70vh', overflowY: 'auto' }}>
-            {/* Wallet Information Section */}
-            <div style={{ marginBottom: 24 }}>
+          <div>
+            {/* Wallet Information */}
+            <div>
               <h3 style={{
-                fontSize: 16,
+                fontSize: 15,
                 fontWeight: 600,
-                marginBottom: 16,
+                marginBottom: 12,
                 paddingBottom: 8,
                 borderBottom: '2px solid #1890ff',
                 color: '#1890ff'
               }}>
                 Wallet Information
               </h3>
-              <Descriptions bordered column={1} size="small">
+              <Descriptions
+                bordered
+                column={1}
+                size="middle"
+                labelStyle={{ width: '180px', fontWeight: 500 }}
+              >
+                {selectedRecord.userName && (
+                  <Descriptions.Item label="User Name">
+                    {selectedRecord.userName}
+                  </Descriptions.Item>
+                )}
+
+                {selectedRecord.userEmail && (
+                  <Descriptions.Item label="User Email">
+                    {selectedRecord.userEmail}
+                  </Descriptions.Item>
+                )}
+
+                <Descriptions.Item label="Current Balance">
+                  <span style={{
+                    fontSize: 16,
+                    fontWeight: 600,
+                    color: '#52c41a'
+                  }}>
+                    {(selectedRecord.balance || 0).toLocaleString()} đ
+                  </span>
+                </Descriptions.Item>
+
                 {selectedRecord.createdAt && (
                   <Descriptions.Item label="Created Date">
                     {new Date(selectedRecord.createdAt).toLocaleString('vi-VN', {
@@ -174,57 +201,6 @@ const WalletsManagement = () => {
                     })}
                   </Descriptions.Item>
                 )}
-              </Descriptions>
-            </div>
-
-            {/* User Information Section */}
-            <div style={{ marginBottom: 24 }}>
-              <h3 style={{
-                fontSize: 16,
-                fontWeight: 600,
-                marginBottom: 16,
-                paddingBottom: 8,
-                borderBottom: '2px solid #52c41a',
-                color: '#52c41a'
-              }}>
-                User Information
-              </h3>
-              <Descriptions bordered column={1} size="small">
-                {selectedRecord.userName && (
-                  <Descriptions.Item label="Name">
-                    {selectedRecord.userName}
-                  </Descriptions.Item>
-                )}
-                {selectedRecord.userEmail && (
-                  <Descriptions.Item label="Email">
-                    {selectedRecord.userEmail}
-                  </Descriptions.Item>
-                )}
-              </Descriptions>
-            </div>
-
-            {/* Balance Details Section */}
-            <div style={{ marginBottom: 24 }}>
-              <h3 style={{
-                fontSize: 16,
-                fontWeight: 600,
-                marginBottom: 16,
-                paddingBottom: 8,
-                borderBottom: '2px solid #fa8c16',
-                color: '#fa8c16'
-              }}>
-                Balance Details
-              </h3>
-              <Descriptions bordered column={1} size="small">
-                <Descriptions.Item label="Current Balance">
-                  <span style={{
-                    fontSize: 18,
-                    fontWeight: 'bold',
-                    color: '#52c41a'
-                  }}>
-                    {(selectedRecord.balance || 0).toLocaleString()} đ
-                  </span>
-                </Descriptions.Item>
               </Descriptions>
             </div>
           </div>

@@ -89,7 +89,7 @@ const CreditTransactions = () => {
       width: 100,
       render: (_, record) => (
         <Button
-           type="primary"
+          type="primary"
           onClick={() => handleViewDetail(record)}
         >
           View
@@ -172,6 +172,7 @@ const CreditTransactions = () => {
       </Card>
 
       <Modal
+        title={<span style={{ color: '#1890ff', fontWeight: 600 }}>Credit Transaction Details</span>}
         open={isModalVisible}
         onCancel={() => setIsModalVisible(false)}
         footer={[
@@ -179,120 +180,66 @@ const CreditTransactions = () => {
             Close
           </Button>,
         ]}
-        width={700}
+        width={500}
       >
         {selectedRecord && (
-          <div style={{ maxHeight: '70vh', overflowY: 'auto' }}>
-            {/* Transaction Information Section */}
-            <div style={{ marginBottom: 24 }}>
-              <h3 style={{
-                fontSize: 16,
-                fontWeight: 600,
-                marginBottom: 16,
-                paddingBottom: 8,
-                borderBottom: '2px solid #1890ff',
-                color: '#1890ff'
-              }}>
-                Transaction Information
-              </h3>
-              <Descriptions bordered column={1} size="small">
-                <Descriptions.Item label="Transaction Type">
-                  <Tag color="blue">{selectedRecord.type}</Tag>
-                </Descriptions.Item>
-                {selectedRecord.createdAt && (
-                  <Descriptions.Item label="Transaction Date">
-                    {new Date(selectedRecord.createdAt).toLocaleString('vi-VN', {
-                      year: 'numeric',
-                      month: '2-digit',
-                      day: '2-digit',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                      second: '2-digit'
-                    })}
-                  </Descriptions.Item>
-                )}
-              </Descriptions>
-            </div>
-
-            {/* User Information Section */}
-            <div style={{ marginBottom: 24 }}>
-              <h3 style={{
-                fontSize: 16,
-                fontWeight: 600,
-                marginBottom: 16,
-                paddingBottom: 8,
-                borderBottom: '2px solid #52c41a',
-                color: '#52c41a'
-              }}>
-                User Information
-              </h3>
-              <Descriptions bordered column={1} size="small">
-                {selectedRecord.userEmail && (
-                  <Descriptions.Item label="Email">
-                    {selectedRecord.userEmail}
-                  </Descriptions.Item>
-                )}
-              </Descriptions>
-            </div>
-
-            {/* Credit Details Section */}
-            <div style={{ marginBottom: 24 }}>
-              <h3 style={{
-                fontSize: 16,
-                fontWeight: 600,
-                marginBottom: 16,
-                paddingBottom: 8,
-                borderBottom: '2px solid #fa8c16',
-                color: '#fa8c16'
-              }}>
-                Credit Details
-              </h3>
-              <Descriptions bordered column={1} size="small">
-                <Descriptions.Item label="Amount">
-                  <span style={{
-                    fontSize: 18,
-                    fontWeight: 'bold',
-                    color: (selectedRecord.amount || 0) > 0 ? '#52c41a' : '#f5222d'
-                  }}>
-                    {(selectedRecord.amount || 0) > 0 ? '+' : ''}
-                    {(selectedRecord.amount || 0).toLocaleString()} credits
-                  </span>
-                </Descriptions.Item>
-                {selectedRecord.balanceBefore !== null && selectedRecord.balanceBefore !== undefined && (
-                  <Descriptions.Item label="Balance Before">
-                    {(selectedRecord.balanceBefore || 0).toLocaleString()} credits
-                  </Descriptions.Item>
-                )}
-                {selectedRecord.balanceAfter !== null && selectedRecord.balanceAfter !== undefined && (
-                  <Descriptions.Item label="Balance After">
-                    <span style={{ fontWeight: 600 }}>
-                      {(selectedRecord.balanceAfter || 0).toLocaleString()} credits
-                    </span>
-                  </Descriptions.Item>
-                )}
-              </Descriptions>
-            </div>
-
-            {/* Additional Information Section */}
-            {selectedRecord.description && (
-              <div>
-                <h3 style={{
-                  fontSize: 16,
-                  fontWeight: 600,
-                  marginBottom: 16,
-                  paddingBottom: 8,
-                  borderBottom: '2px solid #722ed1',
-                  color: '#722ed1'
-                }}>
-                  Additional Information
-                </h3>
-                <Descriptions bordered column={1} size="small">
-                  <Descriptions.Item label="Description">
-                    {selectedRecord.description.replace(/null/g, "đ")}
-                  </Descriptions.Item>
-                </Descriptions>
+          <div>
+            {/* Amount Highlight Card */}
+            <div style={{
+              background: 'linear-gradient(135deg, #f6ffed 0%, #d9f7be 100%)',
+              borderRadius: 12,
+              padding: 20,
+              marginBottom: 20,
+              textAlign: 'center',
+              border: '1px solid #b7eb8f'
+            }}>
+              <div style={{ color: '#389e0d', fontSize: 13, marginBottom: 4 }}>Amount</div>
+              <div style={{ fontSize: 28, fontWeight: 700, color: '#52c41a' }}>
+                +{Math.abs(selectedRecord.amount || 0).toLocaleString()} credits
               </div>
-            )}
+            </div>
+
+            {/* Info Rows */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: '#fafafa', borderRadius: 8 }}>
+                <span style={{ color: '#8c8c8c' }}>Type</span>
+                <Tag color="blue" style={{ margin: 0 }}>{selectedRecord.type}</Tag>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: '#fafafa', borderRadius: 8 }}>
+                <span style={{ color: '#8c8c8c' }}>User Email</span>
+                <span style={{ fontWeight: 500 }}>{selectedRecord.userEmail || "-"}</span>
+              </div>
+
+              {selectedRecord.balanceBefore !== null && selectedRecord.balanceBefore !== undefined && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: '#fafafa', borderRadius: 8 }}>
+                  <span style={{ color: '#8c8c8c' }}>Balance Before</span>
+                  <span style={{ color: '#fa8c16' }}>{(selectedRecord.balanceBefore || 0).toLocaleString()} credits</span>
+                </div>
+              )}
+
+              {selectedRecord.balanceAfter !== null && selectedRecord.balanceAfter !== undefined && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: '#fafafa', borderRadius: 8 }}>
+                  <span style={{ color: '#8c8c8c' }}>Balance After</span>
+                  <span style={{ fontWeight: 600, color: '#1890ff' }}>{(selectedRecord.balanceAfter || 0).toLocaleString()} credits</span>
+                </div>
+              )}
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: '#fafafa', borderRadius: 8 }}>
+                <span style={{ color: '#8c8c8c' }}>Date</span>
+                <span>{selectedRecord.createdAt ? new Date(selectedRecord.createdAt).toLocaleString('vi-VN', {
+                  year: 'numeric', month: '2-digit', day: '2-digit',
+                  hour: '2-digit', minute: '2-digit', second: '2-digit'
+                }) : "-"}</span>
+              </div>
+
+              {selectedRecord.description && (
+                <div style={{ padding: '12px', background: '#f0f5ff', borderRadius: 8, border: '1px solid #adc6ff' }}>
+                  <div style={{ color: '#2f54eb', fontSize: 12, marginBottom: 4 }}>Description</div>
+                  <div style={{ color: '#434343' }}>{selectedRecord.description.replace(/null/g, "đ")}</div>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </Modal>

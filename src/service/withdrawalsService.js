@@ -11,9 +11,9 @@ export const withdrawalsService = {
       throw new Error(message);
        }
     },
-    approveWithdrawal: async (id) => {
+    approveWithdrawal: async (id,billImage) => {
        try {
-          const res = await withdrawalsApiController.approveWithdrawal(id);
+          const res = await withdrawalsApiController.approveWithdrawal(id,billImage);
           return res.data.result;
        } catch (error) {
          const message =
@@ -21,9 +21,9 @@ export const withdrawalsService = {
       throw new Error(message);
        }
     },
-    rejectWithdrawal: async (id) => {
+    rejectWithdrawal: async (id,rejectReason) => {
        try {
-          const res = await withdrawalsApiController.rejectWithdrawal(id);
+          const res = await withdrawalsApiController.rejectWithdrawal(id,rejectReason);
           return res.data.result;
        } catch (error) {
          const message =
