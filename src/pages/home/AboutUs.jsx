@@ -165,35 +165,35 @@ const AboutUs = () => {
 
   const teamMembers = [
     {
-      name: "Alex Johnson",
-      role: "Founder & CEO",
+      name: "Trần Gia Thịnh",
+      role: "Team Leader",
       image:
-        "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=300&fit=crop&crop=face",
-      bio: "Passionate about visual thinking and education technology.",
+        "https://res.cloudinary.com/dk3yac2ie/image/upload/v1766690628/dsi6xzal9cm7pvyxwyay.jpg",
+      bio: "Leading the SketchNote project and coordinating the team to build a powerful visual note-taking platform.",
       color: "#084F8C",
     },
     {
-      name: "Sarah Chen",
-      role: "Head of Design",
+      name: "Hà Huy Tài",
+      role: "Back-End Developer",
       image:
-        "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=300&h=300&fit=crop&crop=face",
-      bio: "Creating beautiful and intuitive user experiences.",
+        "https://res.cloudinary.com/dk3yac2ie/image/upload/v1766690952/yho4eknref8pgkhda0ax.png",
+      bio: "Developing server-side logic, APIs, and database systems for SketchNote.",
       color: "#7c3aed",
     },
     {
-      name: "Michael Park",
-      role: "Lead Developer",
+      name: "Đỗ Minh Quang",
+      role: "Front-End Developer",
       image:
-        "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300&h=300&fit=crop&crop=face",
-      bio: "Building the technology that powers your creativity.",
+        "https://res.cloudinary.com/dk3yac2ie/image/upload/v1766691071/i8czjvcw7ybt04dm2ube.jpg",
+      bio: "Designing and implementing interactive features on the SketchNote web app.",
       color: "#059669",
     },
     {
-      name: "Emily Davis",
-      role: "Community Manager",
+      name: "Trần Quang Hào",
+      role: "Front-End Developer",
       image:
-        "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=300&h=300&fit=crop&crop=face",
-      bio: "Connecting and supporting our amazing community.",
+        "https://res.cloudinary.com/dk3yac2ie/image/upload/v1766714849/akztstdztgtuze1c3s0k.jpg",
+      bio: "Designing and implementing interactive features on the SketchNote web app.",
       color: "#db2777",
     },
   ];
@@ -231,27 +231,24 @@ const AboutUs = () => {
 
   const milestones = [
     {
-      year: "2022",
-      title: "Founded",
-      description: "SketchNote was born from a simple idea.",
+      year: "Oct 2025",
+      title: "Idea & Planning",
+      description:
+        "Defined the concept, features, and system architecture of SketchNote.",
       icon: Rocket,
     },
     {
-      year: "2023",
-      title: "10K Users",
-      description: "Reached our first major milestone.",
-      icon: Users,
-    },
-    {
-      year: "2024",
-      title: "Mobile Launch",
-      description: "Launched our mobile application.",
+      year: "Nov 2025",
+      title: "Development Phase",
+      description:
+        "Built core features including sketching, notes, and user management.",
       icon: Zap,
     },
     {
-      year: "2025",
-      title: "Global Reach",
-      description: "Serving users in 50+ countries.",
+      year: "Dec 2025",
+      title: "Product Launch",
+      description:
+        "Completed, tested, and delivered SketchNote as a working product.",
       icon: Globe,
     },
   ];
@@ -643,7 +640,7 @@ const AboutUs = () => {
                 </div>
               </motion.div>
 
-              <motion.div
+              {/* <motion.div
                 className="absolute -bottom-4 -left-4 bg-white rounded-2xl px-4 py-3 shadow-xl"
                 animate={{ y: [0, 10, 0] }}
                 transition={{ duration: 4, repeat: Infinity, delay: 1 }}
@@ -654,7 +651,7 @@ const AboutUs = () => {
                     10K+ Users
                   </span>
                 </div>
-              </motion.div>
+              </motion.div> */}
             </motion.div>
           </div>
         </div>
