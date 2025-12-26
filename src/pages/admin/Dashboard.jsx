@@ -629,10 +629,18 @@ export default function AdminDashboard() {
           <Card title={<><BarChartOutlined style={{ marginRight: 8, color: "#1677ff" }} />Revenue Over Time</>} bordered={false} style={{ borderRadius: '12px' }}>
             <Spin spinning={loadingRevenue}>
               <ResponsiveContainer width="100%" height={400}>
-                <BarChart data={chartData}>
+                <BarChart data={chartData} margin={{ left: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-                  <YAxis />
+                  <YAxis
+                    width={80}
+                    tick={{ fontSize: 11 }}
+                    tickFormatter={(value) => {
+                      if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
+                      if (value >= 1000) return `${(value / 1000).toFixed(0)}K`;
+                      return value;
+                    }}
+                  />
                   <Tooltip formatter={(value) => `${value.toLocaleString()} đ`} />
                   <Legend />
                   <Bar dataKey="subscription" name="Subscription" fill="#3B82F6" stackId="a" />

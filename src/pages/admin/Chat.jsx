@@ -537,10 +537,10 @@ const Chat = () => {
                       <div>
                         <div
                           className={`rounded-2xl ${message.isImage
-                              ? "p-1"
-                              : isMine
-                                ? "px-4 py-2 bg-blue-500 text-white rounded-br-none"
-                                : "px-4 py-2 bg-white text-gray-800 rounded-bl-none shadow-sm"
+                            ? "p-1"
+                            : isMine
+                              ? "px-4 py-2 bg-blue-500 text-white rounded-br-none"
+                              : "px-4 py-2 bg-white text-gray-800 rounded-bl-none shadow-sm"
                             }`}
                         >
                           {message.isImage ? (
@@ -593,7 +593,7 @@ const Chat = () => {
                 </div>
               )}
 
-              <div className="flex items-end space-x-3">
+              <div className="flex items-center space-x-3">
                 {/* Hidden file input */}
                 <input
                   type="file"
@@ -613,19 +613,16 @@ const Chat = () => {
                   <ImageIcon size={20} />
                 </button>
 
-                <div className="flex-1 bg-gray-100 rounded-3xl px-4 py-2 flex items-center">
+                <div className="flex-1 bg-gray-100 rounded-3xl px-4 py-2">
                   <input
                     type="text"
                     value={inputText}
                     onChange={(e) => setInputText(e.target.value)}
                     onKeyPress={handleKeyPress}
                     placeholder={imageFile ? "Add a caption (optional)..." : "Enter message..."}
-                    className="flex-1 bg-transparent outline-none text-sm text-gray-800 placeholder-gray-500"
+                    className="w-full bg-transparent outline-none text-sm text-gray-800 placeholder-gray-500"
                     disabled={!wsConnected || uploading}
                   />
-                  <button className="p-1 text-gray-500 hover:text-gray-700 transition-colors">
-                    <Smile size={20} />
-                  </button>
                 </div>
 
                 {/* Send button */}

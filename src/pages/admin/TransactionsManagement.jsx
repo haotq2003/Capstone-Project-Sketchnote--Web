@@ -60,10 +60,18 @@ const TransactionsManagement = () => {
       title: "Type",
       dataIndex: "type",
       key: "type",
-      render: (type) => {
+      render: (type, record) => {
+        const { userEmail, description } = record;
+
+        // Check if this is an admin transaction (admin email or description contains "admin")
+        const isAdminTransaction =
+          userEmail === "huytainp@gmail.com" ||
+          (description && description.toLowerCase().includes("admin"));
+
         // Determine if transaction is incoming (+) or outgoing (-)
-        const isIncoming = type === "DEPOSIT";
-        const isOutgoing = [
+        // Admin transactions are always treated as incoming
+        const isIncoming = type === "DEPOSIT" || isAdminTransaction;
+        const isOutgoing = !isAdminTransaction && [
           "PAYMENT",
           "WITHDRAW",
           "COURSE_FEE",
@@ -96,7 +104,12 @@ const TransactionsManagement = () => {
       dataIndex: "amount",
       key: "amount",
       render: (amount, record) => {
-        const { type, status } = record;
+        const { type, status, userEmail, description } = record;
+
+        // Check if this is an admin transaction (admin email or description contains "admin")
+        const isAdminTransaction =
+          userEmail === "huytainp@gmail.com" ||
+          (description && description.toLowerCase().includes("admin"));
 
         // If PENDING, show amount without sign
         if (status === "PENDING") {
@@ -109,7 +122,8 @@ const TransactionsManagement = () => {
 
         // If SUCCESS, show with +/- based on type
         if (status === "SUCCESS") {
-          const isIncoming = type === "DEPOSIT";
+          // Admin transactions are always incoming (+)
+          const isIncoming = type === "DEPOSIT" || isAdminTransaction;
           const sign = isIncoming ? "+" : "-";
           const color = isIncoming ? "#52c41a" : "#f5222d";
 
@@ -253,7 +267,7 @@ const TransactionsManagement = () => {
       </Card>
 
       <Modal
-       
+
         open={isModalVisible}
         onCancel={() => setIsModalVisible(false)}
         footer={[
@@ -319,7 +333,7 @@ const TransactionsManagement = () => {
                     </span>
                   </Descriptions.Item>
                 )}
-        {selectedRecord.description && (
+                {selectedRecord.description && (
                   <Descriptions.Item label="Description">
                     {selectedRecord.description}
                   </Descriptions.Item>
@@ -356,14 +370,24 @@ const TransactionsManagement = () => {
                 labelStyle={{ width: '180px', fontWeight: 500 }}
               >
                 <Descriptions.Item label="Amount">
-                  <span style={{
-                    fontSize: 16,
-                    fontWeight: 600,
-                    color: selectedRecord.type === "DEPOSIT" ? '#52c41a' : '#f5222d'
-                  }}>
-                    {selectedRecord.type === "DEPOSIT" ? '+' : '-'}
-                    {Math.abs(selectedRecord.amount || 0).toLocaleString()} đ
-                  </span>
+                  {(() => {
+                    // Check if this is an admin transaction
+                    const isAdminTransaction =
+                      selectedRecord.userEmail === "huytainp@gmail.com" ||
+                      (selectedRecord.description && selectedRecord.description.toLowerCase().includes("admin"));
+                    const isIncoming = selectedRecord.type === "DEPOSIT" || isAdminTransaction;
+
+                    return (
+                      <span style={{
+                        fontSize: 16,
+                        fontWeight: 600,
+                        color: isIncoming ? '#52c41a' : '#f5222d'
+                      }}>
+                        {isIncoming ? '+' : '-'}
+                        {Math.abs(selectedRecord.amount || 0).toLocaleString()} đ
+                      </span>
+                    );
+                  })()}
                 </Descriptions.Item>
 
                 {selectedRecord.balanceBefore !== null && selectedRecord.balanceBefore !== undefined && (
@@ -380,7 +404,7 @@ const TransactionsManagement = () => {
                   </Descriptions.Item>
                 )}
 
-              
+
               </Descriptions>
             </div>
           </div>

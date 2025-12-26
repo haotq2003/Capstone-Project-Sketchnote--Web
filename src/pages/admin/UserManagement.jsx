@@ -69,14 +69,14 @@ export default function ManageUsers() {
             View
           </Button>
           <Popconfirm
-            title="Delete the user"
-            description="Are you sure to delete this user?"
-            onConfirm={() => deleteUser(record.id)}
+            title="Inactive User"
+            description="Are you sure to inactive this user?"
+            onConfirm={() => inactiveUser(record.id)}
             okText="Yes"
             cancelText="No"
           >
-            <Button type="primary" danger   >
-              Delete
+            <Button type="primary" danger>
+              Inactive
             </Button>
           </Popconfirm>
         </Space>
@@ -84,14 +84,14 @@ export default function ManageUsers() {
     },
   ];
 
-  const deleteUser = async (id) => {
+  const inactiveUser = async (id) => {
     try {
       await userService.deleteUser(id);
-      message.success("User deleted successfully");
+      message.success("User has been inactivated successfully");
       fetchUser(pagination.current, pagination.pageSize);
     } catch (error) {
-      console.error("Error deleting user:", error);
-      message.error("Failed to delete user");
+      console.error("Error inactivating user:", error);
+      message.error("Failed to inactive user");
     }
   };
 
@@ -279,47 +279,17 @@ export default function ManageUsers() {
               </div>
             </div>
 
-            <div className="border-t pt-4 mt-4" style={{ borderTop: '1px solid #f0f0f0', paddingTop: 16, marginTop: 16 }}>
-              <h3 className="font-medium mb-3" style={{ fontSize: 15, fontWeight: 600, marginBottom: 12 }}>Update Role</h3>
-              <Form form={form} onFinish={handleUpdateRole} layout="vertical">
-                <Form.Item
-                  name="role"
-                  label="Select New Role"
-                  rules={[{ required: true, message: "Please select a role" }]}
-                >
-                  <Select placeholder="Choose a role" size="large">
-                    {roles
-                      .filter((role) => ALLOWED_ROLES.includes(role.name) && role.name !== "ADMIN")
-                      .map((role) => (
-                        <Select.Option key={role.id} value={role.name}>
-                          {role.name}
-                        </Select.Option>
-                      ))}
-                  </Select>
-                </Form.Item>
-                <Form.Item className="mb-0" style={{ marginBottom: 0, marginTop: 24 }}>
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-                    <Button
-                      onClick={() => {
-                        setIsModalVisible(false);
-                        form.resetFields();
-                      }}
-                      size="large"
-                      style={{ minWidth: 100 }}
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      type="primary"
-                      htmlType="submit"
-                      size="large"
-                      style={{ minWidth: 120 }}
-                    >
-                      Update Role
-                    </Button>
-                  </div>
-                </Form.Item>
-              </Form>
+            <div style={{ marginTop: 24, display: 'flex', justifyContent: 'flex-end' }}>
+              <Button
+                onClick={() => {
+                  setIsModalVisible(false);
+                  form.resetFields();
+                }}
+                size="large"
+                style={{ minWidth: 100 }}
+              >
+                Close
+              </Button>
             </div>
           </div>
         )}
